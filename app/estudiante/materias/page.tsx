@@ -42,13 +42,11 @@ export default function Page() {
           <Table aria-label="Tabla de materias asignadas">
             <TableHeader>
               <TableColumn>MATERIA</TableColumn>
-              <TableColumn>PROFESOR</TableColumn>
               <TableColumn>CONSULTAR</TableColumn>
             </TableHeader>
             <TableBody>
               {areas?.map((area, index) => (
                 <TableRow key={index}>
-                  <TableCell>{area.nombre}</TableCell>
                   <TableCell>{area.nombre}</TableCell>
                   <TableCell>
                     <Button
@@ -101,7 +99,6 @@ export default function Page() {
                 <h2 className="text-xl font-semibold text-gray-800">
                   {area.nombre}
                 </h2>
-                <p className="text-gray-600 mt-2">Profesor: {area.nombre}</p>
                 <div className="mt-4 flex justify-end">
                   <Button
                     onPress={() =>
