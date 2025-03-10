@@ -212,7 +212,7 @@ export default function Page() {
                     className="border rounded-lg shadow-sm hover:shadow-md transition-shadow"
                   >
                     <div className="relative aspect-square">
-                      <Image
+                      <img
                         src={url}
                         alt={`Imagen ${index + 1}`}
                         className="w-full h-full object-cover"
