@@ -1,4 +1,4 @@
-'use client'; // Asegurar que es un componente de cliente
+"use client";
 
 import React, { useEffect } from 'react';
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@heroui/table";

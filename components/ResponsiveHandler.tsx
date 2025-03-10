@@ -1,4 +1,4 @@
-'use client'; // Marca este componente como Client Component
+"use client";
 
 import { useMediaQuery } from 'react-responsive';
 

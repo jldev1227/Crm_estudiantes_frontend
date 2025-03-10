@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useMutation, useQuery } from "@apollo/client";
 import EstudiantesResponsive from "@/components/estudiantesResponsive";

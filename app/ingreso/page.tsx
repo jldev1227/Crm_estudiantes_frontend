@@ -1,4 +1,5 @@
-'use client';
+"use client";
+
 import { useMutation } from '@apollo/client';
 import { Button } from '@heroui/button';
 import { Input } from '@heroui/input';
