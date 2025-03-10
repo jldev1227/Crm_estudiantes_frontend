@@ -9,6 +9,7 @@ import DropzoneActividad from "@/components/dropzoneActividad";
 import { formatearFechaColombiaParaInput } from "@/helpers/formatearFechaColombiaParaInput";
 import { ACTUALIZAR_ACTIVIDAD } from "@/app/graphql/mutation/actualizarActividad";
 import { OBTENER_ACTIVIDAD } from "@/app/graphql/queries/obtenerActividad";
+import Image from "next/image";
 
 interface FormData {
   nombre: string;
@@ -333,7 +334,7 @@ export default function ActualizarActividadPage() {
                   className="border rounded-lg shadow-sm hover:shadow-md transition-shadow"
                 >
                   <div className="relative aspect-square">
-                    <img
+                    <Image
                       src={getImageSrc(url)}
                       alt={`Imagen ${index + 1}`}
                       className="w-full h-full object-cover"

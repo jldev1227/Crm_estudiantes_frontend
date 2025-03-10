@@ -12,7 +12,7 @@ import { LOGIN_MAESTRO } from "../graphql/mutation/loginMaestro";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
 
-export default function page() {
+export default function Page() {
   const [numeroIdentificacion, setNumeroIdentificacion] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");

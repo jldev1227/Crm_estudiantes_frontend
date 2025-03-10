@@ -8,6 +8,7 @@ import { useParams, useRouter } from "next/navigation";
 import DropzoneActividad from "@/components/dropzoneActividad";
 import { CREAR_ACTIVIDAD } from "@/app/graphql/mutation/crearActividad";
 import { formatearFechaColombiaParaInput } from "@/helpers/formatearFechaColombiaParaInput";
+import Image from "next/image";
 
 interface FormData {
   nombre: string;
@@ -211,7 +212,7 @@ export default function Page() {
                     className="border rounded-lg shadow-sm hover:shadow-md transition-shadow"
                   >
                     <div className="relative aspect-square">
-                      <img
+                      <Image
                         src={url}
                         alt={`Imagen ${index + 1}`}
                         className="w-full h-full object-cover"

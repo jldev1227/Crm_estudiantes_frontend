@@ -10,7 +10,6 @@ import {
   TableCell,
 } from "@heroui/table";
 import React from "react";
-import ResponsiveHandler from "@/components/ResponsiveHandler"; // Importa el nuevo componente
 
 interface Estudiante {
   id: string;
