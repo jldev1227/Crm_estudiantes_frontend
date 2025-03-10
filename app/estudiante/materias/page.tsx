@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useEffect } from 'react';
+import React, { useEffect } from "react";
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@heroui/table";
-import { Button } from '@heroui/button';
-import { useRouter } from 'next/navigation';
-import { useEstudiante } from '@/app/context/EstudianteContext';
-import { useMediaQuery } from 'react-responsive';
+import { Button } from "@heroui/button";
+import { useRouter } from "next/navigation";
+import { useEstudiante } from "@/app/context/EstudianteContext";
+import { useMediaQuery } from "react-responsive";
 
 export default function Page() {
   const route = useRouter();

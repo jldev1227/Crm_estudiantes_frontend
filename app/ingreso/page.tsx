@@ -1,16 +1,16 @@
 "use client";
 
-import { useMutation } from '@apollo/client';
-import { Button } from '@heroui/button';
-import { Input } from '@heroui/input';
-import Image from 'next/image'
-import React, { useEffect, useState } from 'react'
-import { LOGIN_ESTUDIANTE } from '../graphql/mutation/loginEstudiante';
-import ToggleMaestroEstudiante from '@/components/toggleIngreso';
-import LoaderIngreso from '@/components/loaderIngreso';
-import { LOGIN_MAESTRO } from '../graphql/mutation/loginMaestro';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '../context/AuthContext';
+import { useMutation } from "@apollo/client";
+import { Button } from "@heroui/button";
+import { Input } from "@heroui/input";
+import Image from "next/image"
+import React, { useEffect, useState } from "react"
+import { LOGIN_ESTUDIANTE } from "../graphql/mutation/loginEstudiante";
+import ToggleMaestroEstudiante from "@/components/toggleIngreso";
+import LoaderIngreso from "@/components/loaderIngreso";
+import { LOGIN_MAESTRO } from "../graphql/mutation/loginMaestro";
+import { useRouter } from "next/navigation";
+import { useAuth } from "../context/AuthContext";
 
 export default function page() {
     const [numeroIdentificacion, setNumeroIdentificacion] = useState("");

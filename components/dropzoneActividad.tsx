@@ -1,10 +1,10 @@
 "use client";
 ;
 
-import React, { useCallback, useState } from 'react';
-import { useDropzone } from 'react-dropzone';
-import { Card, CardBody } from '@heroui/card';
-import { Spinner } from '@heroui/spinner';
+import React, { useCallback, useState } from "react";
+import { useDropzone } from "react-dropzone";
+import { Card, CardBody } from "@heroui/card";
+import { Spinner } from "@heroui/spinner";
 
 interface DropzoneActividadProps {
   onFileUpload: (urls: string[]) => void;

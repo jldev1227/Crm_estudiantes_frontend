@@ -1,10 +1,10 @@
 "use client";
 
-import React from 'react';
-import { useMediaQuery } from 'react-responsive';
-import TablaEstudiantes from '@/components/TablaEstudiantes';
-import { Card } from '@heroui/card'; // Importamos Card de HeroUI
-import { Estudiante } from '@/types';
+import React from "react";
+import { useMediaQuery } from "react-responsive";
+import TablaEstudiantes from "@/components/TablaEstudiantes";
+import { Card } from "@heroui/card"; // Importamos Card de HeroUI
+import { Estudiante } from "@/types";
 
 // Componente para mostrar estudiantes según el tamaño de pantalla
 export default function EstudiantesResponsive({ estudiantes } : {estudiantes : Estudiante[]}) {

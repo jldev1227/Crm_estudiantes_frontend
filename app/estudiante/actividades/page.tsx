@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { useQuery } from '@apollo/client';
-import { useAuth } from '../../context/AuthContext';
-import { OBTENER_AREAS_POR_GRADO } from '@/app/graphql/queries/obtenerAreasPorGrado';
-import { formatearFecha } from '@/helpers/formatearFecha';
-import { OBTENER_ACTIVIDADES_ESTUDIANTE } from '@/app/graphql/queries/obtenerActividadesEstudiante';
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+import { useQuery } from "@apollo/client";
+import { useAuth } from "../../context/AuthContext";
+import { OBTENER_AREAS_POR_GRADO } from "@/app/graphql/queries/obtenerAreasPorGrado";
+import { formatearFecha } from "@/helpers/formatearFecha";
+import { OBTENER_ACTIVIDADES_ESTUDIANTE } from "@/app/graphql/queries/obtenerActividadesEstudiante";
 
 // Definir los tipos
 interface Area {

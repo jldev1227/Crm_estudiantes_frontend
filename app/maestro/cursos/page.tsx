@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useEffect } from 'react';
+import React, { useEffect } from "react";
 import { Table, TableHeader, TableColumn, TableBody, TableRow, TableCell } from "@heroui/table";
-import { useMaestro } from '@/app/context/MaestroContext';
-import { Button } from '@heroui/button';
-import { useRouter } from 'next/navigation';
-import { Curso } from '@/types';
+import { useMaestro } from "@/app/context/MaestroContext";
+import { Button } from "@heroui/button";
+import { useRouter } from "next/navigation";
+import { Curso } from "@/types";
 
 export default function Page() {
 

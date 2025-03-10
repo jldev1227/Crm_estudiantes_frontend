@@ -1,6 +1,6 @@
 // graphql.js - Archivo para almacenar todas tus consultas GraphQL del cliente
 
-import { gql } from '@apollo/client';
+import { gql } from "@apollo/client";
 
 // Consulta para iniciar sesión como estudiante
 export const LOGIN_ESTUDIANTE = gql`
