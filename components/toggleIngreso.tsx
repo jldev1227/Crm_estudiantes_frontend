@@ -10,13 +10,12 @@ interface ToggleMaestroEstudianteProps {
    */
   onChange?: (value: boolean) => void;
   id?: string;
-
 }
 
 export default function ToggleMaestroEstudiante({
   defaultChecked = false,
   onChange,
-  id
+  id,
 }: ToggleMaestroEstudianteProps) {
   // El estado interno del toggle
   const [isMaestro, setIsMaestro] = useState(defaultChecked);

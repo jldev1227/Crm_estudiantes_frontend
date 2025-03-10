@@ -275,9 +275,9 @@ export default function ActualizarActividadPage() {
 
           {/* Gestión de imágenes */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <p className="block text-sm font-medium text-gray-700 mb-1">
               Gestión de imágenes
-            </label>
+            </p>
 
             <div className="mb-4 p-3 bg-gray-50 rounded border">
               <div className="flex items-center justify-between">

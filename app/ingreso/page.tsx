@@ -160,7 +160,10 @@ export default function Page() {
           )}
 
           <div className="flex gap-5 items-center justify-center">
-            <label htmlFor="maestro-toggle" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="maestro-toggle"
+              className="block text-sm font-medium text-gray-700"
+            >
               Es maestro?
             </label>
 
