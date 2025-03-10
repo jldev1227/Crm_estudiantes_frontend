@@ -19,8 +19,8 @@ export default function MaestroLayout({
 
   return (
     <MaestroProvider>
-      <ProtectedRoute>
-        <main
+      <ProtectedRoute allowedRoles={['maestro']}>
+      <main
           className={`${isDesktopOrLaptop ? "grid grid-cols-5" : ""} h-screen`}
         >
           {isDesktopOrLaptop ? (
