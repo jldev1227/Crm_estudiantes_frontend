@@ -7,10 +7,14 @@ interface Usuario {
   nombre: string;
   numero_identificacion: string;
   rol: "maestro" | "estudiante";
-  fecha_nacimiento?: string;
+  fecha_nacimiento?: Date | undefined;
   celular_padres?: string;
   token: string;
   grado_id?: string;
+  grado_nombre?: string;
+  tipo_documento?: string;
+  email?: string;
+  celular?: string
 }
 
 // 🔹 2. Estado inicial del AuthContext

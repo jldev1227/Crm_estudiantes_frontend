@@ -54,6 +54,9 @@ export default function Page() {
           nombre: maestro.nombre_completo,
           numero_identificacion: maestro.numero_identificacion,
           rol: "maestro",
+          tipo_documento: maestro.tipo_documento,
+          celular: maestro.celular,
+          email: maestro.email,
           token,
         });
         router.push("/maestro");
@@ -65,6 +68,7 @@ export default function Page() {
           numero_identificacion: estudiante.numero_identificacion,
           rol: "estudiante",
           grado_id: estudiante.grado_id,
+          grado_nombre: estudiante.grado.nombre,
           fecha_nacimiento: estudiante.fecha_nacimiento,
           celular_padres: estudiante.celular_padres,
           token,
