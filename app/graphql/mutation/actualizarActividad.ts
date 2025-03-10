@@ -2,14 +2,8 @@
 import { gql } from "@apollo/client";
 
 export const ACTUALIZAR_ACTIVIDAD = gql`
-  mutation ActualizarActividad(
-    $id: ID!
-    $input: ActividadUpdateInput!
-  ) {
-    actualizarActividad(
-      id: $id
-      input: $input
-    ) {
+  mutation ActualizarActividad($id: ID!, $input: ActividadUpdateInput!) {
+    actualizarActividad(id: $id, input: $input) {
       id
       nombre
       fecha

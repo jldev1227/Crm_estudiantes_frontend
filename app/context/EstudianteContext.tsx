@@ -35,20 +35,26 @@ interface EstudianteContextType {
 }
 
 // Crear el contexto
-const EstudianteContext = createContext<EstudianteContextType | undefined>(undefined);
+const EstudianteContext = createContext<EstudianteContextType | undefined>(
+  undefined,
+);
 
 // Provider Component
-export const EstudianteProvider: React.FC<{children: React.ReactNode}> = ({ children }) => {
+export const EstudianteProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const { usuario } = useAuth();
   const [areas, setAreas] = useState<Area[]>([]);
   const [actividades, setActividades] = useState<Actividad[]>([]);
-  const [actividadesFiltradas, setActividadesFiltradas] = useState<Actividad[]>([]);
-  
+  const [actividadesFiltradas, setActividadesFiltradas] = useState<Actividad[]>(
+    [],
+  );
+
   // Query para obtener áreas por grado
-  const { 
-    loading: cargandoAreas, 
-    error: errorAreas, 
-    data: dataAreas 
+  const {
+    loading: cargandoAreas,
+    error: errorAreas,
+    data: dataAreas,
   } = useQuery(OBTENER_AREAS_POR_GRADO, {
     variables: { gradoId: usuario?.grado_id },
     skip: !usuario?.grado_id,
@@ -56,8 +62,12 @@ export const EstudianteProvider: React.FC<{children: React.ReactNode}> = ({ chil
 
   // Query para obtener actividades (se ejecutará bajo demanda)
   const [
-    obtenerActividadesQuery, 
-    { loading: cargandoActividades, error: errorActividades, data: dataActividades }
+    obtenerActividadesQuery,
+    {
+      loading: cargandoActividades,
+      error: errorActividades,
+      data: dataActividades,
+    },
   ] = useLazyQuery(OBTENER_ACTIVIDADES_POR_AREA);
 
   // Actualizar áreas cuando se carguen los datos
@@ -71,7 +81,7 @@ export const EstudianteProvider: React.FC<{children: React.ReactNode}> = ({ chil
   useEffect(() => {
     if (dataActividades && dataActividades.obtenerActividades) {
       const actividadesOrdenadas = [...dataActividades.obtenerActividades].sort(
-        (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
+        (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime(),
       );
       setActividades(actividadesOrdenadas);
       setActividadesFiltradas(actividadesOrdenadas);
@@ -83,22 +93,24 @@ export const EstudianteProvider: React.FC<{children: React.ReactNode}> = ({ chil
     obtenerActividadesQuery({
       variables: {
         gradoId: usuario?.grado_id,
-        areaId: areaId
-      }
+        areaId: areaId,
+      },
     });
   };
 
   // Función para obtener actividades por fecha
   const obtenerActividadesPorFecha = (fecha: string) => {
     // Convertir la fecha a formato ISO para comparación
-    const fechaISO = new Date(fecha).toISOString().split('T')[0];
-    
+    const fechaISO = new Date(fecha).toISOString().split("T")[0];
+
     // Filtrar actividades por fecha
-    const filtradas = actividades.filter(actividad => {
-      const actividadFecha = new Date(actividad.fecha).toISOString().split('T')[0];
+    const filtradas = actividades.filter((actividad) => {
+      const actividadFecha = new Date(actividad.fecha)
+        .toISOString()
+        .split("T")[0];
       return actividadFecha === fechaISO;
     });
-    
+
     setActividadesFiltradas(filtradas);
   };
 
@@ -108,13 +120,14 @@ export const EstudianteProvider: React.FC<{children: React.ReactNode}> = ({ chil
       setActividadesFiltradas(actividades);
       return;
     }
-    
+
     const textoBusqueda = texto.toLowerCase();
-    const filtradas = actividades.filter(actividad => 
-      actividad.nombre.toLowerCase().includes(textoBusqueda) || 
-      actividad.descripcion.toLowerCase().includes(textoBusqueda)
+    const filtradas = actividades.filter(
+      (actividad) =>
+        actividad.nombre.toLowerCase().includes(textoBusqueda) ||
+        actividad.descripcion.toLowerCase().includes(textoBusqueda),
     );
-    
+
     setActividadesFiltradas(filtradas);
   };
 
@@ -129,7 +142,7 @@ export const EstudianteProvider: React.FC<{children: React.ReactNode}> = ({ chil
     obtenerActividades,
     obtenerActividadesPorFecha,
     filtrarActividades,
-    actividadesFiltradas
+    actividadesFiltradas,
   };
 
   return (
@@ -143,7 +156,9 @@ export const EstudianteProvider: React.FC<{children: React.ReactNode}> = ({ chil
 export const useEstudiante = () => {
   const context = useContext(EstudianteContext);
   if (context === undefined) {
-    throw new Error('useEstudiante debe ser usado dentro de un EstudianteProvider');
+    throw new Error(
+      "useEstudiante debe ser usado dentro de un EstudianteProvider",
+    );
   }
   return context;
 };

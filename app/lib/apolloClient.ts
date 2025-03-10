@@ -1,5 +1,5 @@
-import { ApolloClient, InMemoryCache, HttpLink } from '@apollo/client';
-import { setContext } from '@apollo/client/link/context';
+import { ApolloClient, InMemoryCache, HttpLink } from "@apollo/client";
+import { setContext } from "@apollo/client/link/context";
 
 // Configura la URL del servidor GraphQL
 const httpLink = new HttpLink({
@@ -9,14 +9,15 @@ const httpLink = new HttpLink({
 // Link para autenticar la solicitud con el token almacenado en localStorage
 const authLink = setContext((operation, { headers = {} }) => {
   // Evitar error de "localStorage is not defined" en SSR
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
   // Ajusta la condición para no agregar 'Authorization' si estás en un login
   // Uso de paréntesis para evitar que la comparación sea evaluada de forma incorrecta
   if (
     !token &&
-    (operation.operationName === 'LoginEstudiante' ||
-      operation.operationName === 'LoginMaestro')
+    (operation.operationName === "LoginEstudiante" ||
+      operation.operationName === "LoginMaestro")
   ) {
     return {
       headers: {
@@ -49,15 +50,15 @@ const client = new ApolloClient({
   cache: new InMemoryCache(),
   defaultOptions: {
     watchQuery: {
-      fetchPolicy: 'no-cache',
-      errorPolicy: 'all',
+      fetchPolicy: "no-cache",
+      errorPolicy: "all",
     },
     query: {
-      fetchPolicy: 'no-cache',
-      errorPolicy: 'all',
+      fetchPolicy: "no-cache",
+      errorPolicy: "all",
     },
     mutate: {
-      errorPolicy: 'all',
+      errorPolicy: "all",
     },
   },
 });

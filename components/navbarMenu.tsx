@@ -12,32 +12,32 @@ import { useAuth } from "@/app/context/AuthContext";
 
 export default function SideMenu() {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
-  const { usuario } = useAuth()
+  const { usuario } = useAuth();
 
   const menuItemsEstudiante = [
     {
       label: "Materias",
-      href: '/estudiante/materias',
+      href: "/estudiante/materias",
     },
     {
       label: "Actividades",
-      href: '/estudiante/actividades',
+      href: "/estudiante/actividades",
     },
     {
       label: "Cerrar sesión",
-      href: '/cerrar-sesion',
-    }
+      href: "/cerrar-sesion",
+    },
   ];
 
   const menuItemsMaestro = [
     {
       label: "Cursos",
-      href: '/maestro/cursos',
+      href: "/maestro/cursos",
     },
     {
       label: "Cerrar sesión",
-      href: '/cerrar-sesion',
-    }
+      href: "/cerrar-sesion",
+    },
   ];
 
   return (
@@ -67,37 +67,39 @@ export default function SideMenu() {
         </NavbarItem>
       </NavbarContent>
       <NavbarMenu>
-        {usuario?.rol === 'maestro' ? (
-          menuItemsMaestro.map((item, index) => (
-            <NavbarMenuItem key={`${item}-${index}`}>
-              <Link
-                className="w-full"
-                color={
-                  index === menuItemsMaestro.length - 1 ? "danger" : "foreground"
-                }
-                href={item.href}
-                size="lg"
-              >
-                {item.label}
-              </Link>
-            </NavbarMenuItem>
-          ))
-        ) : (
-          menuItemsEstudiante.map((item, index) => (
-            <NavbarMenuItem key={`${item}-${index}`}>
-              <Link
-                className="w-full"
-                color={
-                  index === menuItemsEstudiante.length - 1 ? "danger" : "foreground"
-                }
-                href={item.href}
-                size="lg"
-              >
-                {item.label}
-              </Link>
-            </NavbarMenuItem>
-          ))
-        )}
+        {usuario?.rol === "maestro"
+          ? menuItemsMaestro.map((item, index) => (
+              <NavbarMenuItem key={`${item}-${index}`}>
+                <Link
+                  className="w-full"
+                  color={
+                    index === menuItemsMaestro.length - 1
+                      ? "danger"
+                      : "foreground"
+                  }
+                  href={item.href}
+                  size="lg"
+                >
+                  {item.label}
+                </Link>
+              </NavbarMenuItem>
+            ))
+          : menuItemsEstudiante.map((item, index) => (
+              <NavbarMenuItem key={`${item}-${index}`}>
+                <Link
+                  className="w-full"
+                  color={
+                    index === menuItemsEstudiante.length - 1
+                      ? "danger"
+                      : "foreground"
+                  }
+                  href={item.href}
+                  size="lg"
+                >
+                  {item.label}
+                </Link>
+              </NavbarMenuItem>
+            ))}
       </NavbarMenu>
     </Navbar>
   );
