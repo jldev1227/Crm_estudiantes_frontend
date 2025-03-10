@@ -6,8 +6,8 @@ import { HeroUIProvider } from "@heroui/system";
 import { useRouter } from "next/navigation";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { ApolloProvider } from "@apollo/client";    // <--- Importa ApolloProvider
-import client from "@/app/lib/apolloCient";            // <--- Importa tu cliente
-
+import client from "@/app/lib/apolloClient";            // <--- Importa tu cliente
+import { AuthProvider } from "./context/AuthContext";
 export interface ProvidersProps {
   children: React.ReactNode;
   themeProps?: ThemeProviderProps;
@@ -28,7 +28,9 @@ export function Providers({ children, themeProps }: ProvidersProps) {
     <ApolloProvider client={client}>
       <HeroUIProvider navigate={router.push}>
         <NextThemesProvider {...themeProps}>
-          {children}
+          <AuthProvider>
+            {children}
+          </AuthProvider>
         </NextThemesProvider>
       </HeroUIProvider>
     </ApolloProvider>

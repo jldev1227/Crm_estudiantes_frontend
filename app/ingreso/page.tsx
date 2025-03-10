@@ -4,51 +4,115 @@ import { Button } from '@heroui/button';
 import { Input } from '@heroui/input';
 import Image from 'next/image'
 import React, { useEffect, useState } from 'react'
-import { LOGIN_ESTUDIANTE } from '../graphql/queries/loginEstudiante';
+import { LOGIN_ESTUDIANTE } from '../graphql/mutation/loginEstudiante';
 import ToggleMaestroEstudiante from '@/components/toggleIngreso';
+import LoaderIngreso from '@/components/loaderIngreso';
+import { LOGIN_MAESTRO } from '../graphql/mutation/loginMaestro';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../context/AuthContext';
 
 export default function page() {
     const [numeroIdentificacion, setNumeroIdentificacion] = useState("");
     const [password, setPassword] = useState("");
     const [errorMessage, setErrorMessage] = useState("");
     const [isMaestro, setIsMaestro] = useState(false);
+    const [loading, setLoading] = useState(false)
+    const router = useRouter();
+    const { login } = useAuth();
+
     const handleRoleChange = (value: boolean) => {
         setIsMaestro(value);
-        console.log("¿Es Maestro?:", value);
     };
+
     // useMutation nos devuelve la función loginEstudiante y el estado (data, loading, error)
-    const [loginEstudiante, { data, loading, error }] = useMutation(LOGIN_ESTUDIANTE);
+    const [loginEstudiante, { data: dataEstudiante, error: errorEstudiante }] = useMutation(LOGIN_ESTUDIANTE);
+    const [loginMaestro, { data: dataMaestro, error: errorMaestro }] = useMutation(LOGIN_MAESTRO);
 
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e : React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-
-        if (!numeroIdentificacion || !password) {
-            setErrorMessage("Faltan campos por llenar");
-            return;
-        }
-
+        setLoading(true);
+        
         try {
-            await loginEstudiante({
-                variables: {
-                    numero_identificacion: numeroIdentificacion,
-                    password,
-                },
+          const mutation = isMaestro ? loginMaestro : loginEstudiante;
+          
+          // Elimina el setTimeout, puede causar problemas
+          const { data } = await mutation({
+            variables: { 
+              numero_identificacion: numeroIdentificacion, 
+              password 
+            },
+          });
+          
+          // Verifica la estructura de la respuesta
+          if (isMaestro && data?.loginMaestro) {
+            const { token, maestro } = data.loginMaestro;
+            login({
+              id: maestro.id,
+              nombre: maestro.nombre_completo,
+              numero_identificacion: maestro.numero_identificacion,
+              rol: "maestro",
+              token
             });
-            // Si necesitas, puedes manejar la respuesta aquí
-            // Por ejemplo, guardar el token en localStorage o en cookies
-            console.log("Respuesta GraphQL:", data);
-        } catch (err) {
-            console.error("Error al hacer login:", err);
+            router.push("/maestro");
+          } 
+          else if (!isMaestro && data?.loginEstudiante) {
+            const { token, estudiante } = data.loginEstudiante;
+            login({
+              id: estudiante.id,
+              nombre: estudiante.nombre_completo,
+              numero_identificacion: estudiante.numero_identificacion,
+              rol: "estudiante",
+              grado_id: estudiante.grado_id,
+              fecha_nacimiento: estudiante.fecha_nacimiento,
+              celular_padres: estudiante.celular_padres,
+              token
+            });
+            router.push("/estudiante");
+          } 
+          else {
+            setErrorMessage("Respuesta del servidor inesperada");
+          }
+        } catch (err : any) {
+          console.error("Error detallado:", err);
+          if (err.networkError) {
+            console.error("Network error details:", err.networkError);
+          }
+          if (err.graphQLErrors) {
+            const errorMsg = err.graphQLErrors.map((e : any) => e.message).join(', ');
+            setErrorMessage(`Error: ${errorMsg}`);
+          } else {
+            setErrorMessage("Error de conexión. Inténtalo de nuevo.");
+          }
+        } finally {
+          setLoading(false);
         }
-    };
+      };
 
     useEffect(() => {
-        if (error) {
-            setErrorMessage(error.message);
+        const token = localStorage.getItem("token");
+        const storedUser = localStorage.getItem("usuario");
+    
+        if (!token || !storedUser) return; // Si no hay token o usuario, no hacer nada
+    
+        try {
+            const usuario = JSON.parse(storedUser); // Parsear usuario si existe
+    
+            if (usuario?.rol) {
+                router.push(usuario.rol === "maestro" ? "/maestro" : "/estudiante");
+            }
+        } catch (error) {
+            console.error("Error al parsear usuario:", error);
+            localStorage.removeItem("usuario"); // Remover usuario si hay error
         }
-    }, [data, error]);
+    }, [router]); // Agregar router como dependencia
+    
 
-    if (loading) return <p>Cargando...</p>;
+    useEffect(() => {
+        if (errorEstudiante) setErrorMessage(errorEstudiante.message);
+        if (errorMaestro) setErrorMessage(errorMaestro.message);
+    }, [errorEstudiante, errorMaestro]);
+
+    if (loading) return <LoaderIngreso>Autenticando</LoaderIngreso>;
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 min-h-screen">
@@ -57,11 +121,11 @@ export default function page() {
                 {/* Imagen de fondo */}
                 <div
                     className="
-      h-full w-full
-      bg-cover bg-no-repeat
-      bg-[50%_37%]
-      bg-[url('/banner_ingreso2.jpeg')]
-    "
+                    h-full w-full
+                    bg-cover bg-no-repeat
+                    bg-[50%_37%]
+                    bg-[url('/banner_ingreso2.jpeg')]
+                    "
                 ></div>
                 {/* Overlay sobre la imagen (opcional) */}
                 <div className="absolute inset-0 bg-black/40"></div>
@@ -74,8 +138,8 @@ export default function page() {
                 <Image
                     className="mx-auto mt-8"
                     src={'/LOGO.png'}
-                    width={350}
-                    height={350}
+                    width={300}
+                    height={300}
                     alt="Logo"
                 />
 
@@ -95,7 +159,7 @@ export default function page() {
                         <label className="block text-sm font-medium text-gray-700">Es maestro?</label>
 
                         <ToggleMaestroEstudiante
-                            defaultChecked={false}   // Inicia en "Estudiante"
+                            defaultChecked={isMaestro}   // Inicia en "Estudiante"
                             onChange={handleRoleChange}
                         />
                     </div>
