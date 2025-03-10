@@ -2,17 +2,16 @@
 import { gql } from "@apollo/client";
 
 export const OBTENER_CURSOS_MAESTRO = gql`
-query ObtenerAsignacionesMaestro {
+  query ObtenerAsignacionesMaestro {
     obtenerAsignacionesMaestro {
-        grado {
-            id
-            nombre
-        }
-        area {
-            id
-            nombre
-        }
+      grado {
+        id
+        nombre
+      }
+      area {
+        id
+        nombre
+      }
     }
-}
-
+  }
 `;

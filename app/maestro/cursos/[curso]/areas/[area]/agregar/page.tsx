@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import React, { useState } from "react";
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
@@ -8,6 +8,7 @@ import { useParams, useRouter } from "next/navigation";
 import DropzoneActividad from "@/components/dropzoneActividad";
 import { CREAR_ACTIVIDAD } from "@/app/graphql/mutation/crearActividad";
 import { formatearFechaColombiaParaInput } from "@/helpers/formatearFechaColombiaParaInput";
+import Image from "next/image";
 
 interface FormData {
   nombre: string;
@@ -21,7 +22,7 @@ export default function Page() {
   const grado_id = params.curso as string;
   const area_id = params.area as string;
 
-  const router = useRouter()
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
@@ -57,7 +58,7 @@ export default function Page() {
   });
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -83,20 +84,20 @@ export default function Page() {
       setError("El nombre de la actividad es obligatorio");
       return;
     }
-  
+
     if (!formData.descripcion.trim()) {
       setError("La descripción es obligatoria");
       return;
     }
-  
+
     if (uploadedUrls.length === 0) {
       setError("Debes subir al menos una foto");
       return;
     }
-  
+
     setLoading(true);
     setError("");
-  
+
     try {
       await crearActividad({
         variables: {
@@ -107,7 +108,7 @@ export default function Page() {
             fotos: formData.fotos,
             grado_id,
             area_id,
-          }
+          },
         },
       });
     } catch (err) {
@@ -211,7 +212,7 @@ export default function Page() {
                     className="border rounded-lg shadow-sm hover:shadow-md transition-shadow"
                   >
                     <div className="relative aspect-square">
-                      <img
+                      <Image
                         src={url}
                         alt={`Imagen ${index + 1}`}
                         className="w-full h-full object-cover"
@@ -281,11 +282,7 @@ export default function Page() {
         >
           Cancelar
         </Button>
-        <Button
-          color="primary"
-          onPress={handleSubmit}
-          isLoading={loading}
-        >
+        <Button color="primary" onPress={handleSubmit} isLoading={loading}>
           {loading ? "Creando..." : "Crear actividad"}
         </Button>
       </div>
