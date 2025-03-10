@@ -21,6 +21,9 @@ export const LOGIN_ESTUDIANTE = gql`
         nombre_completo
         celular_padres
         grado_id
+        grado {
+          nombre
+        }
       }
     }
   }

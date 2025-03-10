@@ -8,14 +8,15 @@ export const LOGIN_MAESTRO = gql`
       password: $password
     ) {
       token
-      maestro {
-        id
-        nombre_completo
-        celular
-        email
-        tipo_documento
-        numero_identificacion
-      }
+        maestro {
+            id
+            tipo_documento
+            numero_identificacion
+            nombre_completo
+            celular
+            email
+            password
+        }
     }
   }
 `;
