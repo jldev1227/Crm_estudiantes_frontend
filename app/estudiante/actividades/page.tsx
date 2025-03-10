@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@apollo/client";
@@ -23,6 +22,77 @@ interface Actividad {
   area: Area;
 }
 
+// Componente Modal simple para mostrar imágenes
+const ImagenModal = ({ isOpen, onClose, imagen, onPrev, onNext, contador } :{
+  isOpen: boolean;
+  onClose: () => void;
+  imagen: string;
+  onPrev: () => void;
+  onNext: () => void;
+  contador: string;
+}) => {
+  if (!isOpen) return null;
+  
+  return (
+    <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
+         onClick={onClose}>
+      <div className="max-w-4xl max-h-[85vh] relative" onClick={e => e.stopPropagation()}>
+        {/* Botón de cierre */}
+        <button 
+          className="absolute top-2 right-2 z-10 text-white bg-black/50 rounded-full p-2 hover:bg-black/70"
+          onClick={onClose}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+        
+        {/* Contador */}
+        <div className="absolute top-2 left-2 text-white bg-black/50 px-3 py-1 rounded-md">
+          {contador}
+        </div>
+        
+        {/* Imagen */}
+        <img 
+          src={imagen} 
+          alt="Imagen ampliada" 
+          className="max-h-[80vh] max-w-full object-contain rounded-lg"
+        />
+        
+        {/* Controles */}
+        <div className="absolute inset-y-0 left-0 flex items-center">
+          <button 
+            className="bg-black/30 text-white p-2 rounded-full hover:bg-black/50 ml-2"
+            onClick={(e) => { e.stopPropagation(); onPrev(); }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        </div>
+        
+        <div className="absolute inset-y-0 right-0 flex items-center">
+          <button 
+            className="bg-black/30 text-white p-2 rounded-full hover:bg-black/50 mr-2"
+            onClick={(e) => { e.stopPropagation(); onNext(); }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+function normalizarTexto(texto: string): string {
+  return texto
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
 export default function ActividadesPage() {
   const searchParams = useSearchParams();
   const initialAreaId = searchParams.get("area");
@@ -31,6 +101,59 @@ export default function ActividadesPage() {
   const [busqueda, setBusqueda] = useState("");
   const [fechaFiltro, setFechaFiltro] = useState("");
   const { usuario } = useAuth();
+
+  // Estado para el modal
+  const [modalVisible, setModalVisible] = useState(false);
+  const [imagenActual, setImagenActual] = useState("");
+  const [fotosGaleria, setFotosGaleria] = useState<string[]>([]);
+  const [indiceImagen, setIndiceImagen] = useState(0);
+
+  // Funciones para el modal
+  const mostrarImagen = (fotos: string[], indice: number) => {
+    const fotosConKey = fotos.map(foto => `${foto}?${process.env.NEXT_PUBLIC_AZURE_KEY}`);
+    setFotosGaleria(fotosConKey);
+    setIndiceImagen(indice);
+    setImagenActual(fotosConKey[indice]);
+    setModalVisible(true);
+  };
+
+  const ocultarImagen = () => {
+    setModalVisible(false);
+  };
+
+  const imagenAnterior = () => {
+    const nuevoIndice = indiceImagen === 0 ? fotosGaleria.length - 1 : indiceImagen - 1;
+    setIndiceImagen(nuevoIndice);
+    setImagenActual(fotosGaleria[nuevoIndice]);
+  };
+
+  const imagenSiguiente = () => {
+    const nuevoIndice = indiceImagen === fotosGaleria.length - 1 ? 0 : indiceImagen + 1;
+    setIndiceImagen(nuevoIndice);
+    setImagenActual(fotosGaleria[nuevoIndice]);
+  };
+
+  // Manejar eventos de teclado para navegación
+  useEffect(() => {
+    const manejarTeclas = (e : KeyboardEvent) => {
+      if (!modalVisible) return;
+      
+      switch (e.key) {
+        case 'ArrowLeft':
+          imagenAnterior();
+          break;
+        case 'ArrowRight':
+          imagenSiguiente();
+          break;
+        case 'Escape':
+          ocultarImagen();
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', manejarTeclas);
+    return () => window.removeEventListener('keydown', manejarTeclas);
+  }, [modalVisible, indiceImagen, fotosGaleria]);
 
   // Obtener áreas disponibles
   const { data: areasData, loading: areasLoading } = useQuery(
@@ -46,7 +169,6 @@ export default function ActividadesPage() {
     data: actividadesData,
     loading: actividadesLoading,
     error: actividadesError,
-    refetch,
   } = useQuery(OBTENER_ACTIVIDADES_ESTUDIANTE, {
     variables: {
       areaId: areaId || null,
@@ -60,27 +182,28 @@ export default function ActividadesPage() {
     Actividad[] | []
   >([]);
 
-  // Actualizar actividades cuando cambian los datos
+  // Aplicar filtros cuando cambian los datos o los criterios de filtrado
   useEffect(() => {
-    if (actividadesData?.obtenerActividadesEstudiante) {
-      setActividadesFiltradas(actividadesData.obtenerActividadesEstudiante);
+    if (!actividadesData?.obtenerActividadesEstudiante) return;
+
+    let filtradas = [...actividadesData.obtenerActividadesEstudiante];
+
+    // Filtrar por área
+    if (areaId) {
+      filtradas = filtradas.filter((actividad) => actividad.area.id === areaId);
     }
-  }, [actividadesData]);
-
-  // Aplicar filtros cuando cambia la búsqueda o la fecha
-  useEffect(() => {
-    if (!actividadesData?.obtenerActividadesPorArea) return;
-
-    let filtradas = [...actividadesData.obtenerActividadesPorArea];
 
     // Filtrar por texto de búsqueda
     if (busqueda.trim()) {
-      const textoBusqueda = busqueda.toLowerCase();
-      filtradas = filtradas.filter(
-        (actividad) =>
-          actividad.nombre.toLowerCase().includes(textoBusqueda) ||
-          actividad.descripcion.toLowerCase().includes(textoBusqueda),
-      );
+      const textoBusquedaNormalizado = normalizarTexto(busqueda.trim());
+      
+      filtradas = filtradas.filter((actividad) => {
+        const nombreNormalizado = normalizarTexto(actividad.nombre);
+        const descripcionNormalizada = normalizarTexto(actividad.descripcion);
+        
+        return nombreNormalizado.includes(textoBusquedaNormalizado) || 
+               descripcionNormalizada.includes(textoBusquedaNormalizado);
+      });
     }
 
     // Filtrar por fecha
@@ -95,19 +218,12 @@ export default function ActividadesPage() {
       });
     }
 
-    if (areaId) {
-      filtradas = filtradas.filter((actividad) => actividad.area.id === areaId);
-    }
-
     setActividadesFiltradas(filtradas);
-  }, [busqueda, fechaFiltro, actividadesData]);
+  }, [busqueda, fechaFiltro, areaId, actividadesData]);
 
   // Manejar cambio de área
   const handleAreaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setAreaId(e.target.value);
-    // Resetear filtros al cambiar de área
-    setBusqueda("");
-    setFechaFiltro("");
   };
 
   // Mostrar spinner durante la carga
@@ -234,19 +350,16 @@ export default function ActividadesPage() {
                 {actividad.fotos && actividad.fotos.length > 0 && (
                   <div className="mt-4">
                     <p className="font-medium text-gray-700 mb-2">Fotos:</p>
-                    <div>
-                      {actividad.fotos && actividad.fotos.length > 0 && (
-                        <div className="flex flex-wrap gap-2 p-4">
-                          {actividad.fotos.map((foto, index) => (
-                            <img
-                              key={index}
-                              src={`${foto}?${process.env.NEXT_PUBLIC_AZURE_KEY}`}
-                              alt={`Foto ${index + 1}`}
-                              className="w-16 h-16 md:w-24 md:h-24 object-cover rounded"
-                            />
-                          ))}
-                        </div>
-                      )}
+                    <div className="flex flex-wrap gap-2 p-4">
+                      {actividad.fotos.map((foto, index) => (
+                        <img
+                          key={index}
+                          src={`${foto}?${process.env.NEXT_PUBLIC_AZURE_KEY}`}
+                          alt={`Foto ${index + 1}`}
+                          className="w-16 h-16 md:w-24 md:h-24 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={() => mostrarImagen(actividad.fotos, index)}
+                        />
+                      ))}
                     </div>
                   </div>
                 )}
@@ -255,6 +368,16 @@ export default function ActividadesPage() {
           ))}
         </div>
       )}
+
+      {/* Modal de imagen */}
+      <ImagenModal 
+        isOpen={modalVisible}
+        onClose={ocultarImagen}
+        imagen={imagenActual}
+        onPrev={imagenAnterior}
+        onNext={imagenSiguiente}
+        contador={`${indiceImagen + 1} / ${fotosGaleria.length}`}
+      />
     </div>
   );
 }

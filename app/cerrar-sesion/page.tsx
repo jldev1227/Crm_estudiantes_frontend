@@ -1,49 +1,32 @@
 "use client";
-
-import { useEffect, useRef } from "react";
-import { useAuth } from "@/app/context/AuthContext";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/app/context/AuthContext";
 
 export default function LogoutPage() {
   const { logout } = useAuth();
   const router = useRouter();
-  const hasLoggedOutRef = useRef(false);
-  const countdownTextRef = useRef<HTMLParagraphElement>(null);
+  const [countdown, setCountdown] = useState(3);
 
   useEffect(() => {
-    // Prevenir múltiples logouts
-    if (hasLoggedOutRef.current) return;
-
-    // Marcar que ya se hizo logout (usando ref para evitar re-renders)
-    hasLoggedOutRef.current = true;
-
-    // Ejecutar logout inmediatamente
+    // Perform logout immediately
     logout();
 
-    // Configurar texto de cuenta regresiva
-    let count = 3;
-    if (countdownTextRef.current) {
-      countdownTextRef.current.textContent = `Redirigiendo en ${count} segundos...`;
-    }
-
-    // Iniciar cuenta regresiva
+    // Set up countdown
     const timer = setInterval(() => {
-      count -= 1;
-      if (countdownTextRef.current) {
-        countdownTextRef.current.textContent = `Redirigiendo en ${count} segundos...`;
-      }
-
-      if (count <= 0) {
-        clearInterval(timer);
-        // Usar setTimeout para asegurar que la navegación ocurra después del renderizado
-        setTimeout(() => {
+      setCountdown((prevCount) => {
+        if (prevCount <= 1) {
+          clearInterval(timer);
           router.push("/ingreso");
-        }, 0);
-      }
+          return 0;
+        }
+        return prevCount - 1;
+      });
     }, 1000);
 
+    // Cleanup interval on component unmount
     return () => clearInterval(timer);
-  }, []); // ejecutar solo una vez
+  }, []); // Run only once on mount
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
@@ -70,8 +53,8 @@ export default function LogoutPage() {
         </div>
 
         <p className="text-gray-600">Has cerrado sesión correctamente.</p>
-        <p className="text-gray-500 text-sm mt-2" ref={countdownTextRef}>
-          Redirigiendo en 3 segundos...
+        <p className="text-gray-500 text-sm mt-2">
+          Redirigiendo en {countdown} segundos...
         </p>
       </div>
     </div>
