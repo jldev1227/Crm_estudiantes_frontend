@@ -107,6 +107,17 @@ export default function SideMenu() {
           <GimnasioLogo />
         </NavbarBrand>
 
+        <NavbarItem
+        >
+          <Button
+            as={Link}
+            href={`/${usuario?.rol}`}
+            variant="light"
+          >
+            Inicio
+          </Button>
+        </NavbarItem>
+
         {menuItems.map((item, index) => (
           <NavbarItem
             key={`desktop-${item.label}-${index}`}
