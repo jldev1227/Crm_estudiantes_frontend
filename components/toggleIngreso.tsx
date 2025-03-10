@@ -9,11 +9,14 @@ interface ToggleMaestroEstudianteProps {
    * y envía el nuevo estado (true = Maestro, false = Estudiante)
    */
   onChange?: (value: boolean) => void;
+  id?: string;
+
 }
 
 export default function ToggleMaestroEstudiante({
   defaultChecked = false,
   onChange,
+  id
 }: ToggleMaestroEstudianteProps) {
   // El estado interno del toggle
   const [isMaestro, setIsMaestro] = useState(defaultChecked);
@@ -40,6 +43,7 @@ export default function ToggleMaestroEstudiante({
           className="sr-only peer"
           checked={isMaestro}
           onChange={handleToggle}
+          id={id} // Add this line
         />
 
         {/* Fondo del switch */}

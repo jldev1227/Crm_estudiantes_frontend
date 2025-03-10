@@ -160,12 +160,13 @@ export default function Page() {
           )}
 
           <div className="flex gap-5 items-center justify-center">
-            <label className="block text-sm font-medium text-gray-700">
+            <label htmlFor="maestro-toggle" className="block text-sm font-medium text-gray-700">
               Es maestro?
             </label>
 
             <ToggleMaestroEstudiante
-              defaultChecked={isMaestro} // Inicia en "Estudiante"
+              id="maestro-toggle" // Add this ID to associate with the label
+              defaultChecked={isMaestro}
               onChange={handleRoleChange}
             />
           </div>

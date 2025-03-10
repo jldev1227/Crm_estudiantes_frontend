@@ -90,9 +90,7 @@ export default function Page() {
             <div
               key={index}
               className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 cursor-pointer overflow-hidden border border-gray-200"
-              onClick={() =>
-                route.push(`/estudiante/actividades?area=${area.id}`)
-              }
+              onClick={() => route.push(`/estudiante/actividades?area=${area.id}`)}
             >
               <div className="h-32 bg-gradient-to-r from-blue-400 to-blue-600 flex items-center justify-center">
                 <div className="text-white text-5xl font-bold">
