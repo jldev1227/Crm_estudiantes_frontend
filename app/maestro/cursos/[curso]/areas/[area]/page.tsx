@@ -10,7 +10,6 @@ import { OBTENER_CURSO } from "@/app/graphql/queries/obtenerCurso";
 import { ELIMINAR_ACTIVIDAD } from "@/app/graphql/mutation/eliminarActividad";
 import { Divider } from "@heroui/divider";
 import { OBTENER_ACTIVIDADES_POR_AREA } from "@/app/graphql/obtenerActividadesPorArea";
-import Image from "next/image";
 
 // Define el tipo de los datos que obtendrás del servidor
 type CursoData = {
@@ -152,7 +151,7 @@ export default function CursoPage() {
                     {actividad.fotos && actividad.fotos.length > 0 && (
                       <div className="flex flex-wrap gap-2 p-4">
                         {actividad.fotos.map((foto, index) => (
-                          <Image
+                          <img
                             key={index}
                             src={`${foto}?${process.env.NEXT_PUBLIC_AZURE_KEY}`}
                             alt={`Foto ${index + 1}`}

@@ -7,7 +7,6 @@ import { useAuth } from "../../context/AuthContext";
 import { OBTENER_AREAS_POR_GRADO } from "@/app/graphql/queries/obtenerAreasPorGrado";
 import { formatearFecha } from "@/helpers/formatearFecha";
 import { OBTENER_ACTIVIDADES_ESTUDIANTE } from "@/app/graphql/queries/obtenerActividadesEstudiante";
-import Image from "next/image";
 
 // Definir los tipos
 interface Area {
@@ -239,7 +238,7 @@ export default function ActividadesPage() {
                       {actividad.fotos && actividad.fotos.length > 0 && (
                         <div className="flex flex-wrap gap-2 p-4">
                           {actividad.fotos.map((foto, index) => (
-                            <Image
+                            <img
                               key={index}
                               src={`${foto}?${process.env.NEXT_PUBLIC_AZURE_KEY}`}
                               alt={`Foto ${index + 1}`}
