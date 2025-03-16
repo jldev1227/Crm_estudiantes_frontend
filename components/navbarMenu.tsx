@@ -60,6 +60,10 @@ export default function SideMenu() {
     {
       label: "Actividades",
       href: "/estudiante/actividades",
+    },
+    {
+      label: "Tareas",
+      href: "/estudiante/tareas",
     }
   ];
 

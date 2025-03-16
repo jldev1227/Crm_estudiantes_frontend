@@ -20,8 +20,9 @@ interface Usuario {
 // 🔹 2. Estado inicial del AuthContext
 const initialState = {
   usuario: null as Usuario | null,
-  login: (usuario: Usuario) => {},
-  logout: () => {},
+  login: (usuario: Usuario) => { },
+  logout: () => { },
+  actualizarUsuario: (datosActualizados: Partial<Usuario>) => { },
 };
 
 // 🔹 3. Crear el contexto
@@ -38,6 +39,10 @@ const authReducer = (state: any, action: any) => {
       localStorage.removeItem("token");
       localStorage.removeItem("usuario");
       return { usuario: null };
+    case "ACTUALIZAR_USUARIO":
+      const usuarioActualizado = { ...state.usuario, ...action.payload };
+      localStorage.setItem("usuario", JSON.stringify(usuarioActualizado));
+      return { usuario: usuarioActualizado };
     default:
       return state;
   }
@@ -61,6 +66,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         usuario: state.usuario,
         login: (user) => dispatch({ type: "LOGIN", payload: user }),
         logout: () => dispatch({ type: "LOGOUT" }),
+        actualizarUsuario: (datosActualizados) =>
+          dispatch({ type: "ACTUALIZAR_USUARIO", payload: datosActualizados }),
       }}
     >
       {children}

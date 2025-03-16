@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
 import LoaderIngreso from "./loaderIngreso";
+import { Toaster } from "react-hot-toast";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -60,5 +61,11 @@ export default function ProtectedRoute({
   }
 
   // Renderizar contenido protegido
-  return <>{children}</>;
+  return (
+    <>
+      <Toaster position="top-right"/>
+      {children}
+    </>
+  )
+  
 }

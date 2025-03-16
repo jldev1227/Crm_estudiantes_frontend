@@ -5,7 +5,7 @@ import { Card, CardBody } from "@heroui/card";
 import { Spinner } from "@heroui/spinner";
 
 interface DropzoneActividadProps {
-  onFileUpload: (urls: string[]) => void;
+  onFileUpload: (urls: string[], fileTypes: string[], fileNames: string[]) => void;
   maxFiles?: number;
 }
 
@@ -22,14 +22,14 @@ const DropzoneActividad: React.FC<DropzoneActividadProps> = ({
     async (acceptedFiles: File[]) => {
       // Validar tamaño y tipo de archivo
       const validFiles = acceptedFiles.filter((file) => {
-        const isImage = file.type.startsWith("image/");
+        const isValidType = file.type.startsWith("image/") || file.type === "application/pdf";
         const isUnderSizeLimit = file.size <= 5 * 1024 * 1024; // 5MB
-        return isImage && isUnderSizeLimit;
+        return isValidType && isUnderSizeLimit;
       });
 
       if (validFiles.length !== acceptedFiles.length) {
         setUploadError(
-          "Algunos archivos fueron rechazados. Solo se permiten imágenes de hasta 5MB.",
+          "Algunos archivos fueron rechazados. Solo se permiten imágenes y PDFs de hasta 5MB.",
         );
       }
 
@@ -37,31 +37,36 @@ const DropzoneActividad: React.FC<DropzoneActividadProps> = ({
       const newFiles = [...files, ...validFiles].slice(0, maxFiles);
       setFiles(newFiles);
 
-      // Simular la subida de archivos (en producción, esto se conectaría a tu API)
       try {
         setUploading(true);
         setUploadError("");
 
-        // En un caso real, aquí subirías los archivos a tu servidor o a un servicio como Cloudinary
-        // y recibirías URLs. Para este ejemplo, simulamos URLs generadas.
-
-        // Simulación: convertir los archivos a URLs de datos (data URLs)
-        const urls = await Promise.all(
+        // Simular la subida de archivos y obtener URLs
+        const urlsAndData = await Promise.all(
           newFiles.map(
             (file) =>
-              new Promise<string>((resolve) => {
+              new Promise<{url: string, type: string, name: string}>((resolve) => {
                 const reader = new FileReader();
                 reader.onloadend = () => {
                   // En producción, aquí recibirías la URL del servidor después de subir el archivo
-                  resolve(reader.result as string);
+                  resolve({
+                    url: reader.result as string,
+                    type: file.type,
+                    name: file.name
+                  });
                 };
                 reader.readAsDataURL(file);
               }),
           ),
         );
 
-        // Notificar al componente padre sobre las URLs generadas
-        onFileUpload(urls);
+        // Separar URLs, tipos y nombres de archivo para pasar al componente padre
+        const urls = urlsAndData.map(item => item.url);
+        const fileTypes = urlsAndData.map(item => item.type);
+        const fileNames = urlsAndData.map(item => item.name);
+
+        // Notificar al componente padre sobre las URLs generadas, tipos y nombres de archivo
+        onFileUpload(urls, fileTypes, fileNames);
         setUploading(false);
       } catch (error) {
         console.error("Error al subir los archivos:", error);
@@ -80,39 +85,11 @@ const DropzoneActividad: React.FC<DropzoneActividadProps> = ({
       onDrop,
       accept: {
         "image/*": [".jpg", ".jpeg", ".png", ".gif"],
+        "application/pdf": [".pdf"]
       },
       maxFiles,
       maxSize: 5 * 1024 * 1024, // 5MB
     });
-
-  // Eliminar un archivo
-  const removeFile = (index: number) => {
-    const newFiles = [...files];
-    newFiles.splice(index, 1);
-    setFiles(newFiles);
-
-    // Actualizar las URLs (en producción, también deberías eliminar el archivo del servidor)
-    if (files.length > 0) {
-      // Actualizar las URLs al eliminar un archivo
-      // Esto es una simulación, en producción necesitarías recalcular las URLs reales
-      Promise.all(
-        newFiles.map(
-          (file) =>
-            new Promise<string>((resolve) => {
-              const reader = new FileReader();
-              reader.onloadend = () => {
-                resolve(reader.result as string);
-              };
-              reader.readAsDataURL(file);
-            }),
-        ),
-      ).then((urls) => {
-        onFileUpload(urls);
-      });
-    } else {
-      onFileUpload([]);
-    }
-  };
 
   return (
     <div className="space-y-4">
@@ -150,11 +127,11 @@ const DropzoneActividad: React.FC<DropzoneActividadProps> = ({
                   </svg>
                   <p className="text-gray-600">
                     {isDragActive
-                      ? "Suelta las imágenes aquí..."
-                      : "Arrastra y suelta imágenes aquí, o haz clic para seleccionar"}
+                      ? "Suelta las imágenes o PDFs aquí..."
+                      : "Arrastra y suelta imágenes o PDFs aquí, o haz clic para seleccionar"}
                   </p>
                   <p className="text-xs text-gray-500">
-                    Sube hasta {maxFiles} imágenes (máximo 5MB cada una)
+                    Sube hasta {maxFiles} archivos (imágenes o PDFs, máximo 5MB cada uno)
                   </p>
                 </>
               )}

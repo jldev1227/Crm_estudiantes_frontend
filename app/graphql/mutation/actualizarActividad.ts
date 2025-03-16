@@ -9,6 +9,8 @@ export const ACTUALIZAR_ACTIVIDAD = gql`
       fecha
       descripcion
       fotos
+      hora
+      pdfs
       grado {
         id
         nombre
