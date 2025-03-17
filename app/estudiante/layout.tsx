@@ -8,6 +8,8 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import { useMediaQuery } from "react-responsive";
 import SideMenu from "@/components/navbarMenu";
 import { EstudianteProvider } from "../context/EstudianteContext";
+import { Button } from '@heroui/button'
+import { useRouter } from "next/navigation";
 
 export default function MaestroLayout({
   children,
@@ -16,6 +18,25 @@ export default function MaestroLayout({
 }) {
   const { usuario } = useAuth();
   const isDesktopOrLaptop = useMediaQuery({ minWidth: 1024 });
+  const router = useRouter();
+
+  const handleLinkClick = () => {
+    // Si hay un modal abierto, ciérralo
+    if (typeof window !== 'undefined' && window.closeAnyOpenModal) {
+      window.closeAnyOpenModal();
+    }
+  };
+
+  // Modificado para no esperar un evento específico
+  const handleLogoutClick = () => {
+    // Primero cerrar el menú y los modales
+    handleLinkClick();
+
+    // Usar setTimeout para asegurar que la navegación ocurra después de actualizar el estado
+    setTimeout(() => {
+      router.push("/cerrar-sesion");
+    }, 0);
+  };
 
   return (
     <EstudianteProvider>
@@ -111,6 +132,29 @@ export default function MaestroLayout({
                       </svg>
                       <p>Perfil</p>
                     </Link>
+                    <Button
+                      color="danger"
+                      variant="faded"
+                      onPress={handleLogoutClick}
+                      fullWidth
+                      className="mt-5"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-6 w-6 text-red-600"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                        />
+                      </svg>
+                      <p>Cerrar sesión</p>
+                    </Button>
                   </ul>
                 </div>
               </div>
