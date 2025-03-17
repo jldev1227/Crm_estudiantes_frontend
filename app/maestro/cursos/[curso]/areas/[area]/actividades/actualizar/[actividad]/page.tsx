@@ -11,6 +11,7 @@ import { ACTUALIZAR_ACTIVIDAD } from "@/app/graphql/mutation/actualizarActividad
 import { OBTENER_ACTIVIDAD } from "@/app/graphql/queries/obtenerActividad";
 import NextPDFPreview from "@/components/pdfPreview";
 import { formatearFecha } from "@/helpers/formatearFecha";
+import toast from "react-hot-toast";
 
 interface ArchivoActividad {
   url: string;
@@ -204,6 +205,12 @@ export default function ActualizarActividadPage() {
   const [actualizarActividad] = useMutation(ACTUALIZAR_ACTIVIDAD, {
     refetchQueries: ["ObtenerActividades"],
     onCompleted: () => {
+      toast.success(`¡Tarea "${formData.nombre}" actualizada correctamente!`, {
+        duration: 4000,
+        position: 'top-center',
+        icon: '✅'
+      });
+
       router.back();
     },
     onError: (error) => {

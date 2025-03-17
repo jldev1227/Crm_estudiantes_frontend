@@ -519,10 +519,10 @@ export default function CursoPage() {
                           <h3 className="font-bold text-lg">
                             {actividad.nombre}
                           </h3>
-                          <p className="max-sm:flex max-sm:flex-col sm:space-x-3 text-sm text-gray-600">
+                          <div className="flex max-sm:flex-col sm:gap-3 text-sm text-gray-600">
                             <p className="font-medium">Fecha de asignación: <span>{formatearFecha(actividad.fecha)}</span></p>
                             <p className="font-medium">Hora: <span>{convertirA12Horas(actividad.hora)}</span></p>
-                          </p>
+                          </div>
                         </div>
                         <p className="text-gray-700 break-words">{actividad.descripcion}</p>
                       </div>
