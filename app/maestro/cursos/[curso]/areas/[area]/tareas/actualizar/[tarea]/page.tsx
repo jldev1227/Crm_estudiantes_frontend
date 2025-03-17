@@ -37,7 +37,7 @@ interface FormData {
 const isValidISODate = (dateString: string): boolean => {
   const regex = /^\d{4}-\d{2}-\d{2}$/;
   if (!regex.test(dateString)) return false;
-  
+
   const date = new Date(dateString);
   return date instanceof Date && !isNaN(date.getTime());
 };
@@ -45,25 +45,25 @@ const isValidISODate = (dateString: string): boolean => {
 // Función auxiliar para determinar el tipo de archivo por la extensión o URL
 const detectarTipoArchivo = (url: string): string => {
   if (!url) return "application/octet-stream";
-  
+
   // Para data URIs - extraer el tipo directamente
   if (url.startsWith('data:')) {
     const match = url.match(/^data:([^;]+);/);
     if (match && match[1]) {
       return match[1];
     }
-    
+
     // Si es data URI de imagen pero no se puede extraer el tipo exacto
     if (url.startsWith('data:image/')) {
       return 'image/jpeg';
     }
   }
-  
+
   // Para URLs normales - inferir por extensión o path
   if (url.toLowerCase().endsWith('.pdf') || url.includes('/PDFs/')) {
     return "application/pdf";
   } else if (
-    url.toLowerCase().endsWith('.jpg') || 
+    url.toLowerCase().endsWith('.jpg') ||
     url.toLowerCase().endsWith('.jpeg')
   ) {
     return "image/jpeg";
@@ -77,7 +77,7 @@ const detectarTipoArchivo = (url: string): string => {
   ) {
     return "image/jpeg"; // Asumimos JPEG por defecto para paths de imagen
   }
-  
+
   // Por defecto, lo tratamos como archivo genérico
   return "application/octet-stream";
 };
@@ -94,13 +94,13 @@ const extraerNombreArchivo = (url: string): string => {
     }
     return `archivo_${new Date().getTime().toString().slice(-6)}`;
   }
-  
+
   // Para URLs normales, extraer el nombre del archivo de la ruta
   try {
     const urlObj = new URL(url);
     const pathSegments = urlObj.pathname.split('/');
     const fileName = pathSegments[pathSegments.length - 1];
-    
+
     // Si tiene un nombre de archivo válido
     if (fileName && fileName.length > 0 && fileName !== '/') {
       return decodeURIComponent(fileName);
@@ -113,7 +113,7 @@ const extraerNombreArchivo = (url: string): string => {
       return lastSegment;
     }
   }
-  
+
   // Si todo lo anterior falla
   return `archivo_${new Date().getTime().toString().slice(-6)}`;
 };
@@ -160,7 +160,7 @@ export default function ActualizarTareaPage() {
       if (data?.obtenerTarea) {
         const tarea = data.obtenerTarea;
         let fechaEntregaObj: Date;
-        
+
         // Determinar cómo procesar la fecha según el formato recibido
         if (typeof tarea.fechaEntrega === 'string') {
           try {
@@ -192,14 +192,14 @@ export default function ActualizarTareaPage() {
 
         // Convertir URLs a objetos de archivo con tipo
         const archivosExistentes: ArchivoTarea[] = [];
-        
+
         // Procesar fotos (pueden ser URLs o data URIs)
         if (Array.isArray(tarea.fotos)) {
           tarea.fotos.forEach((url: string) => {
             archivosExistentes.push(convertirUrlAArchivo(url));
           });
         }
-        
+
         // Procesar PDFs
         if (Array.isArray(tarea.pdfs)) {
           tarea.pdfs.forEach((url: string) => {
@@ -280,13 +280,13 @@ export default function ActualizarTareaPage() {
         tipo: fileTypes[index],
         nombre: fileNames[index]
       }));
-      
+
       setUploadedUrls(prev => [...prev, ...nuevosArchivos]);
-      
+
       // Separar archivos nuevos por tipo (imagen o PDF)
       const nuevasFotos: ArchivoTarea[] = [];
       const nuevosPdfs: ArchivoTarea[] = [];
-      
+
       nuevosArchivos.forEach(archivo => {
         if (archivo.tipo === 'application/pdf') {
           nuevosPdfs.push(archivo);
@@ -294,13 +294,13 @@ export default function ActualizarTareaPage() {
           nuevasFotos.push(archivo);
         }
       });
-      
+
       setFormData(prev => ({
         ...prev,
         fotosNuevas: [...(prev.fotosNuevas || []), ...nuevasFotos],
         pdfsNuevos: [...(prev.pdfsNuevos || []), ...nuevosPdfs]
       }));
-      
+
       // Mostrar toast de archivos subidos
       toast.success(`${nuevosArchivos.length} archivo(s) añadido(s)`, {
         duration: 2000,
@@ -313,7 +313,7 @@ export default function ActualizarTareaPage() {
   const removeFile = useCallback((index: number) => {
     // Obtener el archivo que se va a eliminar
     const archivoAEliminar = uploadedUrls[index];
-    
+
     // Eliminar de la lista de archivos mostrados
     setUploadedUrls(prev => {
       const newUrls = [...prev];
@@ -326,13 +326,13 @@ export default function ActualizarTareaPage() {
       setFormData(prev => {
         let nuevasFotosAConservar = [...(prev.fotosAConservar || [])];
         let nuevosPdfsAConservar = [...(prev.pdfsAConservar || [])];
-        
+
         if (archivoAEliminar.tipo === 'application/pdf') {
           nuevosPdfsAConservar = nuevosPdfsAConservar.filter(url => url !== archivoAEliminar.url);
         } else {
           nuevasFotosAConservar = nuevasFotosAConservar.filter(url => url !== archivoAEliminar.url);
         }
-        
+
         return {
           ...prev,
           fotosAConservar: nuevasFotosAConservar,
@@ -346,13 +346,13 @@ export default function ActualizarTareaPage() {
       setFormData(prev => {
         let nuevasFotosNuevas = [...(prev.fotosNuevas || [])];
         let nuevosPdfsNuevos = [...(prev.pdfsNuevos || [])];
-        
+
         if (archivoAEliminar.tipo === 'application/pdf') {
           nuevosPdfsNuevos = nuevosPdfsNuevos.filter(a => a.url !== archivoAEliminar.url);
         } else {
           nuevasFotosNuevas = nuevasFotosNuevas.filter(a => a.url !== archivoAEliminar.url);
         }
-        
+
         return {
           ...prev,
           fotosNuevas: nuevasFotosNuevas,
@@ -378,18 +378,18 @@ export default function ActualizarTareaPage() {
     if (confirmar) {
       setReemplazarFotos(true);
       setReemplazarPdfs(true);
-      
+
       // Limpiar todos los archivos
       setUploadedUrls([]);
-      
-      setFormData(prev => ({ 
-        ...prev, 
+
+      setFormData(prev => ({
+        ...prev,
         fotosAConservar: [],
         pdfsAConservar: [],
         reemplazarFotos: true,
         reemplazarPdfs: true
       }));
-      
+
       // Mostrar toast de archivos eliminados
       toast('Todos los archivos han sido eliminados', {
         icon: '⚠️',
@@ -434,7 +434,7 @@ export default function ActualizarTareaPage() {
     // Asegurar que la fecha tenga formato YYYY-MM-DD
     const fechaActual = new Date();
     let fechaFormateada = formData.fechaEntrega;
-    
+
     // Si la fecha no es válida o está en formato incorrecto, usar la fecha actual
     if (!fechaFormateada || !isValidISODate(fechaFormateada)) {
       const year = fechaActual.getFullYear();
@@ -450,7 +450,7 @@ export default function ActualizarTareaPage() {
     try {
       // Mostrar toast de carga
       toast.loading("Actualizando tarea...", { id: "actualizar-tarea" });
-      
+
       await actualizarTarea({
         variables: {
           id: tarea_id,
@@ -470,7 +470,7 @@ export default function ActualizarTareaPage() {
           },
         },
       });
-      
+
       // Actualizar toast de carga a éxito
       toast.success(`¡Tarea "${formData.nombre}" actualizada correctamente!`, {
         id: "actualizar-tarea",
@@ -481,7 +481,7 @@ export default function ActualizarTareaPage() {
       setLoading(false);
       if (err instanceof Error) {
         setError(`Error al actualizar: ${err.message}`);
-        
+
         // Actualizar toast de carga a error
         toast.error(`Error al actualizar: ${err.message}`, {
           id: "actualizar-tarea",
@@ -582,13 +582,13 @@ export default function ActualizarTareaPage() {
                 placeholder="Seleccionar estado"
                 required
               >
-                <SelectItem key="activa" value="activa">
-                  Activa
+                <SelectItem key="activa">
+                  activa
                 </SelectItem>
-                <SelectItem key="vencida" value="vencida">
+                <SelectItem key="vencida">
                   Vencida
                 </SelectItem>
-                <SelectItem key="cancelada" value="cancelada">
+                <SelectItem key="cancelada">
                   Cancelada
                 </SelectItem>
               </Select>
@@ -615,24 +615,24 @@ export default function ActualizarTareaPage() {
 
             {/* Carga de archivos */}
             <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              {uploadedUrls.length > 0 ? "Añadir más archivos" : "Subir archivos"}
-              <span className="text-xs text-gray-500 ml-2">
-                ({uploadedUrls.length}/10 archivos)
-              </span>
-            </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                {uploadedUrls.length > 0 ? "Añadir más archivos" : "Subir archivos"}
+                <span className="text-xs text-gray-500 ml-2">
+                  ({uploadedUrls.length}/10 archivos)
+                </span>
+              </label>
 
-            {isMaxImagesReached ? (
-              <p className="text-sm text-amber-600 mb-2">
-                Has alcanzado el límite máximo de 10 archivos
-              </p>
-            ) : (
-              <DropzoneActividad
-                onFileUpload={handleFileUpload}
-                maxFiles={maxRemainingImages}
-              />
-            )}
-          </div>
+              {isMaxImagesReached ? (
+                <p className="text-sm text-amber-600 mb-2">
+                  Has alcanzado el límite máximo de 10 archivos
+                </p>
+              ) : (
+                <DropzoneActividad
+                  onFileUpload={handleFileUpload}
+                  maxFiles={maxRemainingImages}
+                />
+              )}
+            </div>
 
             {/* Botón para reemplazar todos los archivos */}
             <div className="mt-4">
