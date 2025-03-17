@@ -7,8 +7,10 @@ export const OBTENER_ACTIVIDAD = gql`
       id
       nombre
       fecha
+      hora
       descripcion
       fotos
+      pdfs
       grado {
         id
         nombre

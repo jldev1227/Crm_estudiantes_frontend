@@ -9,8 +9,12 @@ import { useParams } from "next/navigation";
 import { OBTENER_CURSO } from "@/app/graphql/queries/obtenerCurso";
 import { ELIMINAR_ACTIVIDAD } from "@/app/graphql/mutation/eliminarActividad";
 import { Divider } from "@heroui/divider";
-import { OBTENER_ACTIVIDADES_POR_AREA } from "@/app/graphql/obtenerActividadesPorArea";
+import { OBTENER_ACTIVIDADES_POR_AREA } from "@/app/graphql/queries/obtenerActividadesPorArea";
 import { useState, useEffect } from "react";
+import PDFThumbnail from "@/components/PDFThumbnail";
+import { ELIMINAR_TAREA } from "@/app/graphql/mutation/eliminarTarea";
+import { OBTENER_TAREAS_POR_GRADO_Y_AREA } from "@/app/graphql/queries/obtenerTareasPorArea";
+import { toast } from 'react-hot-toast';
 
 // Define el tipo de los datos que obtendrás del servidor
 type CursoData = {
@@ -32,6 +36,18 @@ type ActividadData = {
   fecha: string;
   descripcion: string;
   fotos: string[];
+  pdfs: string[];
+};
+
+type TareaData = {
+  id: string;
+  nombre: string;
+  fechaEntrega: string;
+  fecha: string;
+  descripcion: string;
+  estado: 'activa' | 'vencida' | 'cancelada';
+  fotos: string[];
+  pdfs: string[];
 };
 
 // Componente Modal simple para mostrar imágenes
@@ -99,6 +115,17 @@ const ImagenModal = ({ isOpen, onClose, imagen, onPrev, onNext, contador }: {
 };
 
 export default function CursoPage() {
+
+  const abrirPDF = (pdfUrl: any) => {
+    // Si la URL ya tiene la clave de Azure, usarla directamente
+    if (pdfUrl.includes(process.env.NEXT_PUBLIC_AZURE_KEY)) {
+      window.open(pdfUrl, '_blank');
+    } else {
+      // Añadir la clave de Azure a la URL si es necesario
+      window.open(`${pdfUrl}?${process.env.NEXT_PUBLIC_AZURE_KEY}`, '_blank');
+    }
+  };
+
   const params = useParams();
   const id = params.curso as string;
   const area_id = params.area as string;
@@ -172,13 +199,30 @@ export default function CursoPage() {
     variables: { grado_id: id, area_id },
   });
 
-  const [eliminarActividad, { loading: loadingDelete }] = useMutation(
+  const {
+    loading: loadingTareas,
+    error: errorTareas,
+    data: tareasData,
+  } = useQuery(OBTENER_TAREAS_POR_GRADO_Y_AREA, {
+    variables: { grado_id: id, area_id },
+  });
+
+  const [eliminarActividad, { loading: loadingDeleteActividad }] = useMutation(
     ELIMINAR_ACTIVIDAD,
     {
       refetchQueries: ["ObtenerActividadesPorArea"],
       onError: (error) => {
         console.error("Error al eliminar actividad:", error);
-        // Opcionalmente, maneja errores con una notificación
+      },
+    },
+  );
+
+  const [eliminarTarea, { loading: loadingDeleteTarea }] = useMutation(
+    ELIMINAR_TAREA,
+    {
+      refetchQueries: ["ObtenerTareasPorGradoYArea"],
+      onError: (error) => {
+        console.error("Error al eliminar tarea:", error);
       },
     },
   );
@@ -190,25 +234,82 @@ export default function CursoPage() {
       )
     ) {
       try {
+        // Mostrar toast de carga
+        toast.loading("Eliminando actividad...", { id: "eliminar-actividad" });
+        
         await eliminarActividad({
           variables: { id },
         });
-        // Opcionalmente, muestra una notificación de éxito
+        
+        // Mostrar toast de éxito
+        toast.success("Actividad eliminada exitosamente", { 
+          id: "eliminar-actividad",
+          duration: 3000
+        });
       } catch (error) {
+        // Mostrar toast de error
+        toast.error("Error al eliminar la actividad", { 
+          id: "eliminar-actividad",
+          duration: 3000
+        });
+        // El error ya es manejado por onError en la configuración del useMutation
+      }
+    }
+  };
+  
+  const handleEliminarTarea = async (id: string | number) => {
+    if (
+      confirm(
+        "¿Estás seguro de que deseas eliminar esta tarea? Esta acción no se puede deshacer.",
+      )
+    ) {
+      try {
+        // Mostrar toast de carga
+        toast.loading("Eliminando tarea...", { id: "eliminar-tarea" });
+        
+        await eliminarTarea({
+          variables: { id },
+        });
+        
+        // Mostrar toast de éxito
+        toast.success("Tarea eliminada exitosamente", { 
+          id: "eliminar-tarea",
+          duration: 3000
+        });
+      } catch (error) {
+        // Mostrar toast de error
+        toast.error("Error al eliminar la tarea", { 
+          id: "eliminar-tarea",
+          duration: 3000
+        });
         // El error ya es manejado por onError en la configuración del useMutation
       }
     }
   };
 
-  if (loadingCurso || loadingActividades) return <div>Cargando...</div>;
+  // Función para determinar si una tarea está vencida
+  const estaTareaVencida = (fechaEntrega: string): boolean => {
+    const hoy = new Date();
+    const fechaLimite = new Date(fechaEntrega);
+    return hoy > fechaLimite;
+  };
+
+  // Función para obtener la clase de color basada en el estado o fecha de vencimiento
+  const getEstadoTareaClass = (tarea: TareaData): string => {
+    if (tarea.estado === 'cancelada') return 'text-red-500';
+    if (tarea.estado === 'vencida' || estaTareaVencida(tarea.fechaEntrega)) return 'text-orange-500';
+    return 'text-green-500';
+  };
+
+  if (loadingCurso || loadingActividades || loadingTareas) return <div>Cargando...</div>;
 
   // Manejar errores específicamente
   if (errorCurso)
     return <div>Error al cargar el curso: {errorCurso.message}</div>;
   if (errorActividades)
-    return (
-      <div>Error al cargar las actividades: {errorActividades.message}</div>
-    );
+    return <div>Error al cargar las actividades: {errorActividades.message}</div>;
+  if (errorTareas)
+    return <div>Error al cargar las tareas: {errorTareas.message}</div>;
 
   // Verificar que los datos existan
   if (!cursoData?.obtenerCurso)
@@ -219,6 +320,10 @@ export default function CursoPage() {
   // Asegurarse de que actividades sea siempre un array, incluso si es undefined
   const actividades: ActividadData[] =
     actividadesData?.obtenerActividadesPorArea || [];
+  
+  // Asegurarse de que tareas sea siempre un array, incluso si es undefined
+  const tareas: TareaData[] =
+    tareasData?.obtenerTareasPorGradoYArea || [];
 
   return (
     <div className="">
@@ -227,6 +332,7 @@ export default function CursoPage() {
           Curso - {curso.nombre} {curso.area ? `/ ${curso.area.nombre}` : ""}
         </h1>
         <div className="space-y-10">
+          {/* Sección de estudiantes */}
           <div className="space-y-4">
             <h2 className="text-gray-600 text-xl">Estudiantes</h2>
             {/* Verificar que estudiantes exista antes de pasarlo al componente */}
@@ -238,6 +344,107 @@ export default function CursoPage() {
               </p>
             )}
           </div>
+
+          {/* Sección de Tareas */}
+          <div className="space-y-5">
+            <div className="sm:flex justify-between items-center max-sm:space-y-3">
+              <h2 className="text-gray-600 text-xl">Tareas asignadas</h2>
+              <Button
+                className="max-sm:w-full"
+                as={Link}
+                color="primary"
+                href={`/maestro/cursos/${id}/areas/${area_id}/tareas/agregar`}
+                variant="solid"
+              >
+                Crear tarea
+              </Button>
+            </div>
+            <div className="space-y-4">
+              {tareas.length > 0 ? (
+                tareas.map((tarea) => (
+                  <div key={tarea.id} className="border rounded-lg">
+                    <div className="space-y-2 p-4">
+                      <div className="flex justify-between">
+                        <h3 className="font-bold text-lg">
+                          {tarea.nombre}
+                        </h3>
+                        <span className={`font-semibold ${getEstadoTareaClass(tarea)}`}>
+                          {tarea.estado === 'activa' 
+                            ? estaTareaVencida(tarea.fechaEntrega) 
+                              ? 'Vencida' 
+                              : 'Activa'
+                            : tarea.estado === 'vencida' 
+                              ? 'Vencida' 
+                              : 'Cancelada'}
+                        </span>
+                      </div>
+                      <div className="flex flex-col md:flex-row md:gap-4">
+                        <p className="text-sm text-gray-600">
+                          <span className="font-medium">Fecha de asignación:</span> {formatearFecha(tarea.fecha)}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          <span className="font-medium">Fecha de entrega:</span> {formatearFecha(tarea.fechaEntrega)}
+                        </p>
+                      </div>
+                      <p className="break-words">{tarea.descripcion}</p>
+                    </div>
+
+                    {/* Grid unificado para fotos y PDFs */}
+                    {(tarea.fotos?.length > 0 || tarea.pdfs?.length > 0) && (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 p-4">
+                        {/* Renderizar fotos */}
+                        {tarea.fotos?.map((foto, index) => (
+                          <div key={`foto-${index}`} className="aspect-square">
+                            <img
+                              src={`${foto}?${process.env.NEXT_PUBLIC_AZURE_KEY}`}
+                              alt={`Foto ${index + 1}`}
+                              className="h-full w-full bg-gray-50 p-2 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
+                              onClick={() => mostrarImagen(tarea.fotos, index)}
+                            />
+                          </div>
+                        ))}
+
+                        {/* Renderizar PDFs */}
+                        {tarea.pdfs?.map((pdfUrl, index) => (
+                          <div key={`pdf-${index}`} className="aspect-square">
+                            <PDFThumbnail
+                              url={pdfUrl}
+                              index={index}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <Divider />
+                    <div className="flex gap-2 justify-end p-2">
+                      <Button
+                        color="primary"
+                        size="md"
+                        variant="light"
+                        as={Link}
+                        href={`/maestro/cursos/${id}/areas/${area_id}/tareas/actualizar/${tarea.id}`}
+                      >
+                        Actualizar
+                      </Button>
+                      <Button
+                        color="danger"
+                        size="md"
+                        variant="light"
+                        onPress={() => handleEliminarTarea(tarea.id)}
+                      >
+                        Eliminar
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-yellow-500">No hay tareas asignadas aún</p>
+              )}
+            </div>
+          </div>
+
+          {/* Sección de Actividades */}
           <div className="space-y-5">
             <div className="sm:flex justify-between items-center max-sm:space-y-3">
               <h2 className="text-gray-600 text-xl">Actividades recientes</h2>
@@ -245,7 +452,7 @@ export default function CursoPage() {
                 className="max-sm:w-full"
                 as={Link}
                 color="primary"
-                href={`/maestro/cursos/${id}/areas/${area_id}/agregar`} // Asegúrate de que la ruta sea correcta
+                href={`/maestro/cursos/${id}/areas/${area_id}/actividades/agregar`}
                 variant="solid"
               >
                 Crear actividad
@@ -266,33 +473,48 @@ export default function CursoPage() {
                       </div>
                       <p className="break-words">{actividad.descripcion}</p>
                     </div>
-                    {actividad.fotos && actividad.fotos.length > 0 && (
-                      <div className="flex flex-wrap gap-2 p-4">
-                        {actividad.fotos.map((foto, index) => (
-                          <img
-                            key={index}
-                            src={`${foto}?${process.env.NEXT_PUBLIC_AZURE_KEY}`}
-                            alt={`Foto ${index + 1}`}
-                            className="w-16 h-16 md:w-24 md:h-24 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
-                            onClick={() => mostrarImagen(actividad.fotos, index)}
-                          />
+
+                    {/* Grid unificado para fotos y PDFs */}
+                    {(actividad.fotos?.length > 0 || actividad.pdfs?.length > 0) && (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 p-4">
+                        {/* Renderizar fotos */}
+                        {actividad.fotos?.map((foto, index) => (
+                          <div key={`foto-${index}`} className="aspect-square">
+                            <img
+                              src={`${foto}?${process.env.NEXT_PUBLIC_AZURE_KEY}`}
+                              alt={`Foto ${index + 1}`}
+                              className="h-full w-full bg-gray-50 p-2 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
+                              onClick={() => mostrarImagen(actividad.fotos, index)}
+                            />
+                          </div>
+                        ))}
+
+                        {/* Renderizar PDFs */}
+                        {actividad.pdfs?.map((pdfUrl, index) => (
+                          <div key={`pdf-${index}`} className="aspect-square">
+                            <PDFThumbnail
+                              url={pdfUrl}
+                              index={index}
+                            />
+                          </div>
                         ))}
                       </div>
                     )}
+
                     <Divider />
                     <div className="flex gap-2 justify-end p-2">
                       <Button
                         color="primary"
-                        size="sm"
+                        size="md"
                         variant="light"
                         as={Link}
-                        href={`/maestro/cursos/${id}/areas/${area_id}/actualizar/${actividad.id}`}
+                        href={`/maestro/cursos/${id}/areas/${area_id}/actividades/actualizar/${actividad.id}`}
                       >
                         Actualizar
                       </Button>
                       <Button
                         color="danger"
-                        size="sm"
+                        size="md"
                         variant="light"
                         onPress={() => handleEliminarActividad(actividad.id)}
                       >
@@ -302,7 +524,7 @@ export default function CursoPage() {
                   </div>
                 ))
               ) : (
-                <p className="text-red-500">No hay actividades creadas aún</p>
+                <p className="text-yellow-500">No hay actividades creadas aún</p>
               )}
             </div>
           </div>

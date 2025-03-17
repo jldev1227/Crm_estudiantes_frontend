@@ -37,7 +37,7 @@ export default function MaestroLayout({
                 </div>
                 <div className="p-5 space-y-2">
                   <h1 className="text-xl font-bold">Bienvenido!</h1>
-                  <h2 className="text-sm">{usuario?.nombre}</h2>
+                  <h2 className="text-sm">{usuario?.nombre_completo}</h2>
                 </div>
                 <Divider />
                 <div>

@@ -3,6 +3,9 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
 import LoaderIngreso from "./loaderIngreso";
+import { Toaster } from "react-hot-toast";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -30,10 +33,10 @@ export default function ProtectedRoute({
     // Verificar roles si se especifican
     if (allowedRoles.length > 0 && usuario) {
       const hasAllowedRole = allowedRoles.includes(usuario.rol);
-      
+
       if (!hasAllowedRole) {
         // Redirigir según el rol del usuario
-        switch(usuario.rol) {
+        switch (usuario.rol) {
           case 'maestro':
             router.push("/maestro");
             break;
@@ -60,5 +63,23 @@ export default function ProtectedRoute({
   }
 
   // Renderizar contenido protegido
-  return <>{children}</>;
+  return (
+    <>
+      <Toaster position="top-right" />
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
+      {children}
+    </>
+  )
+
 }

@@ -1,17 +1,19 @@
 import { gql } from "@apollo/client";
 
-export const CREAR_ACTIVIDAD = gql`
-  mutation CrearActividad($input: ActividadInput!) {
-    crearActividad(input: $input) {
+export const CREAR_TAREA = gql`
+  mutation CrearTarea($input: TareaInput!) {
+    crearTarea(input: $input) {
       id
       nombre
+      fechaEntrega
       fecha
       descripcion
+      estado
       fotos
-      hora
       pdfs
-      createdAt
-      updatedAt
+      grado_id
+      area_id
+      creador_id
       grado {
         id
         nombre
@@ -24,6 +26,8 @@ export const CREAR_ACTIVIDAD = gql`
         id
         nombre_completo
       }
+      createdAt
+      updatedAt
     }
   }
 `;
