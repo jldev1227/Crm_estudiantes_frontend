@@ -15,7 +15,7 @@ import { Link } from "@heroui/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
-// Logo del Gimnasio Vancouver (reemplaza esto con tu logo real)
+// Logo del Gimnasio Vancouver
 const GimnasioLogo = () => {
   return (
     <div className="flex items-center">
@@ -85,10 +85,15 @@ export default function SideMenu() {
     }
   };
 
+  // Modificado para no esperar un evento específico
   const handleLogoutClick = () => {
-    handleLinkClick(); // Cerrar menú y modales
-    // Usar Next.js router para navegar programáticamente
-    router.push("/cerrar-sesion");
+    // Primero cerrar el menú y los modales
+    handleLinkClick();
+    
+    // Usar setTimeout para asegurar que la navegación ocurra después de actualizar el estado
+    setTimeout(() => {
+      router.push("/cerrar-sesion");
+    }, 0);
   };
 
   return (

@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { useAuth } from "./AuthContext";
 import { useQuery, useLazyQuery } from "@apollo/client";
 import { OBTENER_AREAS_POR_GRADO } from "../graphql/queries/obtenerAreasPorGrado";
-import { OBTENER_ACTIVIDADES_POR_AREA } from "../graphql/obtenerActividadesPorArea";
+import { OBTENER_ACTIVIDADES_POR_AREA } from "../graphql/queries/obtenerActividadesPorArea";
 
 // Definir los tipos
 interface Area {

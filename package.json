@@ -10,7 +10,7 @@
     "lint": "eslint . --ext .ts,.tsx -c .eslintrc.json --fix"
   },
   "dependencies": {
-    "@apollo/client": "^3.13.1",
+    "@apollo/client": "^3.13.4",
     "@heroui/badge": "^2.2.10",
     "@heroui/button": "2.2.13",
     "@heroui/card": "^2.2.14",
@@ -45,6 +45,7 @@
     "react-dropzone": "^14.3.8",
     "react-hot-toast": "^2.5.2",
     "react-responsive": "^10.0.1",
+    "react-toastify": "^11.0.5",
     "yet-another-react-lightbox": "^3.21.7"
   },
   "devDependencies": {

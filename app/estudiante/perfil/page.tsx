@@ -7,24 +7,16 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 export default function PerfilEstudiantePage() {
     const { usuario } = useAuth();
 
-    // Función para formatear fecha de nacimiento
-    const formatFechaNacimiento = (fecha?: Date | string | null) => {
-        try {
-            if (!fecha) return 'No disponible';
 
-            // Convertir a objeto Date si es un string
-            const fechaDate = fecha instanceof Date
-                ? fecha
-                : new Date(fecha);
-
-            return fechaDate.toLocaleDateString('es-ES', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-            });
-        } catch (error) {
-            return 'Formato de fecha inválido';
+    const formatearFecha = (fecha: string | Date | undefined): string => {
+        if (!fecha) return 'No';
+        
+        if (typeof fecha === 'string') {
+            return fecha;
         }
+        
+        // Si es objeto Date, convertir a YYYY-MM-DD
+        return fecha.toISOString().split('T')[0];
     };
 
     return (
@@ -67,7 +59,7 @@ export default function PerfilEstudiantePage() {
                                 <div>
                                     <h3 className="font-semibold text-gray-700">Fecha de Nacimiento</h3>
                                     <p className="text-gray-600">
-                                        {formatFechaNacimiento(usuario?.fecha_nacimiento)}
+                                        {formatearFecha(usuario?.fecha_nacimiento)}
                                     </p>
                                 </div>
                             </div>

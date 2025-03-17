@@ -9,6 +9,7 @@ import DropzoneActividad from "@/components/dropzoneActividad";
 import { formatearFechaColombiaParaInput } from "@/helpers/formatearFechaColombiaParaInput";
 import NextPDFPreview from "@/components/pdfPreview";
 import { CREAR_TAREA } from "@/app/graphql/mutation/crearTarea";
+import { toast } from 'react-hot-toast';
 
 interface FormData {
   titulo: string;
@@ -42,7 +43,14 @@ export default function CrearTareaPage() {
   // Mutación para crear tarea
   const [crearTarea] = useMutation(CREAR_TAREA, {
     refetchQueries: ["ObtenerTareas"], // Refresca la lista de tareas después de crear una nueva
-    onCompleted: () => {
+    onCompleted: (data) => {
+      // Mostrar toast de confirmación
+      toast.success(`¡Tarea "${formData.titulo}" creada con éxito!`, {
+        duration: 4000,
+        position: 'top-center',
+        icon: '✅',
+      });
+      
       // Resetear el formulario y redirigir
       setFormData({
         titulo: "",
@@ -58,6 +66,12 @@ export default function CrearTareaPage() {
       console.error("Error al crear la tarea:", error);
       setError(error.message);
       setLoading(false);
+      
+      // Mostrar toast de error
+      toast.error(`Error: ${error.message}`, {
+        duration: 5000,
+        position: 'top-center',
+      });
     },
   });
 
@@ -108,21 +122,25 @@ export default function CrearTareaPage() {
     // Validación básica
     if (!formData.titulo.trim()) {
       setError("El título de la tarea es obligatorio");
+      toast.error("El título de la tarea es obligatorio");
       return;
     }
   
     if (!formData.descripcion.trim()) {
       setError("La descripción es obligatoria");
+      toast.error("La descripción es obligatoria");
       return;
     }
     
     if (!formData.fechaEntrega) {
       setError("La fecha de entrega es obligatoria");
+      toast.error("La fecha de entrega es obligatoria");
       return;
     }
   
     if (uploadedFiles.length === 0) {
       setError("Debes subir al menos un archivo");
+      toast.error("Debes subir al menos un archivo");
       return;
     }
   
@@ -152,29 +170,25 @@ export default function CrearTareaPage() {
         }
       };
   
-      console.log("Enviando datos de tarea:", variables);
-  
+      // Mostrar toast de carga
+      toast.loading("Creando tarea...", { id: "crear-tarea" });
+      
       const { data } = await crearTarea({ variables });
       
-      console.log("Tarea creada:", data.crearTarea);
-      
-      // Mostrar confirmación
-      alert("¡Tarea creada con éxito!");
-      
-      // Resetear formulario
-      setFormData({
-        titulo: "",
-        descripcion: "",
-        fechaEntrega: formatearFechaColombiaParaInput(new Date()),
-        archivos: [],
+      // Actualizar toast de carga a éxito
+      toast.success(`¡Tarea "${formData.titulo}" creada con éxito!`, { 
+        id: "crear-tarea",
+        duration: 4000
       });
-      setUploadedFiles([]);
-      
-      // Volver a la página anterior
-      router.back();
     } catch (err : any) {
       console.error("Error al crear la tarea:", err);
       setError(err.message || "Ocurrió un error al crear la tarea");
+      
+      // Actualizar toast de carga a error
+      toast.error(`Error: ${err.message || "Ocurrió un error al crear la tarea"}`, {
+        id: "crear-tarea",
+        duration: 5000
+      });
     } finally {
       setLoading(false);
     }

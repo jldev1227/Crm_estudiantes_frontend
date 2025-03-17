@@ -11,6 +11,7 @@ import { formatearFechaColombiaParaInput } from "@/helpers/formatearFechaColombi
 import NextPDFPreview from "@/components/pdfPreview";
 import { ACTUALIZAR_TAREA } from "@/app/graphql/mutation/actualizarTarea";
 import { OBTENER_TAREA } from "@/app/graphql/queries/obtenerTareaPorId";
+import { toast } from 'react-hot-toast';
 
 interface ArchivoTarea {
   url: string;
@@ -160,14 +161,11 @@ export default function ActualizarTareaPage() {
         const tarea = data.obtenerTarea;
         let fechaEntregaObj: Date;
         
-        console.log("Datos de tarea recibidos:", tarea);
-
         // Determinar cómo procesar la fecha según el formato recibido
         if (typeof tarea.fechaEntrega === 'string') {
           try {
             // Intentar convertir la fecha del formato recibido
             fechaEntregaObj = new Date(tarea.fechaEntrega);
-            console.log("Fecha creada desde string:", fechaEntregaObj);
           } catch (e) {
             console.error("Error al parsear fecha string:", e);
             fechaEntregaObj = new Date(); // Usar fecha actual como fallback
@@ -176,7 +174,6 @@ export default function ActualizarTareaPage() {
           try {
             // Si es un timestamp (número)
             fechaEntregaObj = new Date(tarea.fechaEntrega);
-            console.log("Fecha creada desde timestamp:", fechaEntregaObj);
           } catch (e) {
             console.error("Error al parsear fecha number:", e);
             fechaEntregaObj = new Date(); // Usar fecha actual como fallback
@@ -192,10 +189,6 @@ export default function ActualizarTareaPage() {
         const month = String(fechaEntregaObj.getMonth() + 1).padStart(2, '0');
         const day = String(fechaEntregaObj.getDate()).padStart(2, '0');
         const fechaFormateada = `${year}-${month}-${day}`;
-
-        console.log("Fecha original:", tarea.fechaEntrega);
-        console.log("Fecha procesada:", fechaEntregaObj);
-        console.log("Fecha formateada manualmente:", fechaFormateada);
 
         // Convertir URLs a objetos de archivo con tipo
         const archivosExistentes: ArchivoTarea[] = [];
@@ -240,18 +233,33 @@ export default function ActualizarTareaPage() {
     onError: (error) => {
       setError("Error al cargar la tarea: " + error.message);
       console.error("Error detallado:", error);
+      // Mostrar toast de error
+      toast.error(`Error al cargar la tarea: ${error.message}`, {
+        duration: 4000
+      });
     },
   });
 
   const [actualizarTarea] = useMutation(ACTUALIZAR_TAREA, {
     refetchQueries: ["ObtenerTareasPorGradoYArea"],
-    onCompleted: () => {
+    onCompleted: (data) => {
+      // Mostrar toast de éxito
+      toast.success(`¡Tarea "${formData.nombre}" actualizada correctamente!`, {
+        duration: 4000,
+        position: 'top-center',
+        icon: '✅'
+      });
       router.back();
     },
     onError: (error) => {
       console.error("Error al actualizar la tarea:", error);
       setError(error.message);
       setLoading(false);
+      // Mostrar toast de error
+      toast.error(`Error al actualizar: ${error.message}`, {
+        duration: 5000,
+        position: 'top-center'
+      });
     },
   });
 
@@ -292,6 +300,12 @@ export default function ActualizarTareaPage() {
         fotosNuevas: [...(prev.fotosNuevas || []), ...nuevasFotos],
         pdfsNuevos: [...(prev.pdfsNuevos || []), ...nuevosPdfs]
       }));
+      
+      // Mostrar toast de archivos subidos
+      toast.success(`${nuevosArchivos.length} archivo(s) añadido(s)`, {
+        duration: 2000,
+        icon: '📂'
+      });
     },
     [],
   );
@@ -347,6 +361,12 @@ export default function ActualizarTareaPage() {
       });
     }
 
+    // Mostrar toast de archivo eliminado
+    toast.success(`Archivo eliminado`, {
+      duration: 2000,
+      icon: '🗑️'
+    });
+
     // Limpiar advertencia si se elimina un archivo
     setError("");
   }, [uploadedUrls]);
@@ -369,6 +389,16 @@ export default function ActualizarTareaPage() {
         reemplazarFotos: true,
         reemplazarPdfs: true
       }));
+      
+      // Mostrar toast de archivos eliminados
+      toast('Todos los archivos han sido eliminados', {
+        icon: '⚠️',
+        duration: 3000,
+        style: {
+          background: '#FEF3C7',
+          color: '#92400E'
+        }
+      });
     }
   }, []);
 
@@ -376,21 +406,25 @@ export default function ActualizarTareaPage() {
     // Validación básica
     if (!formData.nombre.trim()) {
       setError("El nombre de la tarea es obligatorio");
+      toast.error("El nombre de la tarea es obligatorio");
       return;
     }
 
     if (!formData.descripcion.trim()) {
       setError("La descripción es obligatoria");
+      toast.error("La descripción es obligatoria");
       return;
     }
 
     if (!formData.fechaEntrega) {
       setError("La fecha de entrega es obligatoria");
+      toast.error("La fecha de entrega es obligatoria");
       return;
     }
 
     if (!formData.estado) {
       setError("El estado de la tarea es obligatorio");
+      toast.error("El estado de la tarea es obligatorio");
       return;
     }
 
@@ -407,17 +441,16 @@ export default function ActualizarTareaPage() {
       const month = String(fechaActual.getMonth() + 1).padStart(2, '0');
       const day = String(fechaActual.getDate()).padStart(2, '0');
       fechaFormateada = `${year}-${month}-${day}`;
-      console.log("Fecha inválida detectada, usando fecha actual:", fechaFormateada);
     }
-
-    console.log("Fecha a enviar:", fechaFormateada);
-    console.log("Estado a enviar:", formData.estado);
 
     // Preparar los datos para la mutación según el esquema GraphQL
     const fotosNuevasURLs = formData.fotosNuevas ? formData.fotosNuevas.map(archivo => archivo.url) : [];
     const pdfsNuevosURLs = formData.pdfsNuevos ? formData.pdfsNuevos.map(archivo => archivo.url) : [];
 
     try {
+      // Mostrar toast de carga
+      toast.loading("Actualizando tarea...", { id: "actualizar-tarea" });
+      
       await actualizarTarea({
         variables: {
           id: tarea_id,
@@ -437,11 +470,23 @@ export default function ActualizarTareaPage() {
           },
         },
       });
+      
+      // Actualizar toast de carga a éxito
+      toast.success(`¡Tarea "${formData.nombre}" actualizada correctamente!`, {
+        id: "actualizar-tarea",
+        duration: 4000
+      });
     } catch (err) {
       console.error("Error en el submit:", err);
       setLoading(false);
       if (err instanceof Error) {
         setError(`Error al actualizar: ${err.message}`);
+        
+        // Actualizar toast de carga a error
+        toast.error(`Error al actualizar: ${err.message}`, {
+          id: "actualizar-tarea",
+          duration: 5000
+        });
       }
     }
   }, [
@@ -462,7 +507,9 @@ export default function ActualizarTareaPage() {
     [uploadedUrls.length],
   );
 
-  if (loadingTarea) return <div>Cargando datos de la tarea...</div>;
+  if (loadingTarea) {
+    return <div>Cargando datos de la tarea...</div>;
+  }
 
   return (
     <div className="space-y-5">
@@ -568,14 +615,24 @@ export default function ActualizarTareaPage() {
 
             {/* Carga de archivos */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Archivos de la tarea
-              </label>
-              <DropzoneActividad onFileUpload={handleFileUpload} />
-              <p className="text-xs text-gray-500 mt-1">
-                Puedes subir imágenes y PDFs. Ambos tipos aparecerán en la tarea.
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              {uploadedUrls.length > 0 ? "Añadir más archivos" : "Subir archivos"}
+              <span className="text-xs text-gray-500 ml-2">
+                ({uploadedUrls.length}/10 archivos)
+              </span>
+            </label>
+
+            {isMaxImagesReached ? (
+              <p className="text-sm text-amber-600 mb-2">
+                Has alcanzado el límite máximo de 10 archivos
               </p>
-            </div>
+            ) : (
+              <DropzoneActividad
+                onFileUpload={handleFileUpload}
+                maxFiles={maxRemainingImages}
+              />
+            )}
+          </div>
 
             {/* Botón para reemplazar todos los archivos */}
             <div className="mt-4">

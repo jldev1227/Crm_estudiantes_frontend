@@ -9,11 +9,12 @@ import { useParams } from "next/navigation";
 import { OBTENER_CURSO } from "@/app/graphql/queries/obtenerCurso";
 import { ELIMINAR_ACTIVIDAD } from "@/app/graphql/mutation/eliminarActividad";
 import { Divider } from "@heroui/divider";
-import { OBTENER_ACTIVIDADES_POR_AREA } from "@/app/graphql/obtenerActividadesPorArea";
+import { OBTENER_ACTIVIDADES_POR_AREA } from "@/app/graphql/queries/obtenerActividadesPorArea";
 import { useState, useEffect } from "react";
 import PDFThumbnail from "@/components/PDFThumbnail";
 import { ELIMINAR_TAREA } from "@/app/graphql/mutation/eliminarTarea";
 import { OBTENER_TAREAS_POR_GRADO_Y_AREA } from "@/app/graphql/queries/obtenerTareasPorArea";
+import { toast } from 'react-hot-toast';
 
 // Define el tipo de los datos que obtendrás del servidor
 type CursoData = {
@@ -233,15 +234,29 @@ export default function CursoPage() {
       )
     ) {
       try {
+        // Mostrar toast de carga
+        toast.loading("Eliminando actividad...", { id: "eliminar-actividad" });
+        
         await eliminarActividad({
           variables: { id },
         });
+        
+        // Mostrar toast de éxito
+        toast.success("Actividad eliminada exitosamente", { 
+          id: "eliminar-actividad",
+          duration: 3000
+        });
       } catch (error) {
+        // Mostrar toast de error
+        toast.error("Error al eliminar la actividad", { 
+          id: "eliminar-actividad",
+          duration: 3000
+        });
         // El error ya es manejado por onError en la configuración del useMutation
       }
     }
   };
-
+  
   const handleEliminarTarea = async (id: string | number) => {
     if (
       confirm(
@@ -249,10 +264,24 @@ export default function CursoPage() {
       )
     ) {
       try {
+        // Mostrar toast de carga
+        toast.loading("Eliminando tarea...", { id: "eliminar-tarea" });
+        
         await eliminarTarea({
           variables: { id },
         });
+        
+        // Mostrar toast de éxito
+        toast.success("Tarea eliminada exitosamente", { 
+          id: "eliminar-tarea",
+          duration: 3000
+        });
       } catch (error) {
+        // Mostrar toast de error
+        toast.error("Error al eliminar la tarea", { 
+          id: "eliminar-tarea",
+          duration: 3000
+        });
         // El error ya es manejado por onError en la configuración del useMutation
       }
     }
@@ -479,7 +508,7 @@ export default function CursoPage() {
                         size="md"
                         variant="light"
                         as={Link}
-                        href={`/maestro/cursos/${id}/areas/${area_id}/actualizar/${actividad.id}`}
+                        href={`/maestro/cursos/${id}/areas/${area_id}/actividades/actualizar/${actividad.id}`}
                       >
                         Actualizar
                       </Button>

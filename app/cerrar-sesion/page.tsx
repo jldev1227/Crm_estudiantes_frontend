@@ -9,24 +9,44 @@ export default function LogoutPage() {
   const [countdown, setCountdown] = useState(3);
 
   useEffect(() => {
-    // Perform logout immediately
+    // Realizar logout inmediatamente
     logout();
 
-    // Set up countdown
+    // Variable para rastrear si el componente está montado
+    let isMounted = true;
+    
+    // Configurar la cuenta regresiva
     const timer = setInterval(() => {
-      setCountdown((prevCount) => {
-        if (prevCount <= 1) {
-          clearInterval(timer);
-          router.push("/ingreso");
-          return 0;
-        }
-        return prevCount - 1;
-      });
+      if (isMounted) {
+        setCountdown((prevCount) => {
+          const newCount = prevCount - 1;
+          
+          // Si la cuenta llegó a 0, limpiamos el intervalo
+          // Pero NO hacemos la redirección aquí
+          if (newCount <= 0 && isMounted) {
+            clearInterval(timer);
+          }
+          
+          return newCount;
+        });
+      }
     }, 1000);
 
-    // Cleanup interval on component unmount
-    return () => clearInterval(timer);
-  }, []); // Run only once on mount
+    // Configurar un timeout independiente para la redirección
+    const redirectTimeout = setTimeout(() => {
+      if (isMounted) {
+        // Usar un setTimeout para la redirección para evitar conflictos durante el renderizado
+        router.push("/ingreso");
+      }
+    }, 3000); // 3 segundos (coincide con el contador)
+
+    // Limpieza al desmontar el componente
+    return () => {
+      isMounted = false;
+      clearInterval(timer);
+      clearTimeout(redirectTimeout);
+    };
+  }, []); // Ejecutar solo una vez al montar
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100">
@@ -54,7 +74,7 @@ export default function LogoutPage() {
 
         <p className="text-gray-600">Has cerrado sesión correctamente.</p>
         <p className="text-gray-500 text-sm mt-2">
-          Redirigiendo en {countdown} segundos...
+          Redirigiendo en {countdown > 0 ? countdown : 0} segundos...
         </p>
       </div>
     </div>

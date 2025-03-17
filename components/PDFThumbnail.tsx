@@ -25,7 +25,7 @@ const PDFThumbnail: React.FC<PDFThumbnailProps> = ({ url, index }) => {
   const documentName = extractName(url);
 
   return (
-    <div className="h-full w-full border rounded bg-white shadow-sm hover:shadow-md transition-shadow flex flex-col">
+    <a target='_blank' href={`${url}?${process.env.NEXT_PUBLIC_AZURE_KEY}`} className="h-full w-full border rounded bg-white shadow-sm hover:shadow-md transition-shadow flex flex-col">
       {/* Área de previsualización */}
       <div className="flex-grow flex flex-col items-center justify-center p-3 bg-gray-50">
         <svg
@@ -45,18 +45,7 @@ const PDFThumbnail: React.FC<PDFThumbnailProps> = ({ url, index }) => {
           {documentName}
         </p>
       </div>
-      
-      {/* Botón */}
-      <div className="p-2 bg-gray-100">
-        <a
-          href={secureUrl}
-          target="_blank"
-          className="block w-full text-center text-xs px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-        >
-          Ver PDF
-        </a>
-      </div>
-    </div>
+    </a>
   );
 };
 

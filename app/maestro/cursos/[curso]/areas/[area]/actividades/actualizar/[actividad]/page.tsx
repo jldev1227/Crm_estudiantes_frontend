@@ -166,14 +166,11 @@ export default function ActualizarActividadPage() {
         const actividad = data.obtenerActividad;
         let fechaObj: Date;
 
-        console.log("Datos de actividad recibidos:", actividad);
-
         // Determinar cómo procesar la fecha según el formato recibido
         if (typeof actividad.fecha === 'string') {
           try {
             // Intentar convertir la fecha del formato recibido
             fechaObj = new Date(actividad.fecha);
-            console.log("Fecha creada desde string:", fechaObj);
           } catch (e) {
             console.error("Error al parsear fecha string:", e);
             fechaObj = new Date(); // Usar fecha actual como fallback
@@ -182,7 +179,6 @@ export default function ActualizarActividadPage() {
           try {
             // Si es un timestamp (número)
             fechaObj = new Date(actividad.fecha);
-            console.log("Fecha creada desde timestamp:", fechaObj);
           } catch (e) {
             console.error("Error al parsear fecha number:", e);
             fechaObj = new Date(); // Usar fecha actual como fallback
@@ -198,10 +194,6 @@ export default function ActualizarActividadPage() {
         const month = String(fechaObj.getMonth() + 1).padStart(2, '0');
         const day = String(fechaObj.getDate()).padStart(2, '0');
         const fechaFormateada = `${year}-${month}-${day}`;
-
-        console.log("Fecha original:", actividad.fecha);
-        console.log("Fecha procesada:", fechaObj);
-        console.log("Fecha formateada manualmente:", fechaFormateada);
 
         // Convertir URLs a objetos de archivo con tipo
         const archivosExistentes: ArchivoActividad[] = [];
@@ -503,8 +495,6 @@ export default function ActualizarActividadPage() {
 
   // Componente mejorado para renderizar diferentes tipos de archivos incluyendo octet-stream
   const renderizarArchivo = (archivo, index, onRemove) => {
-    console.log("Renderizando archivo:", archivo);
-
     // Determinar si es SVG basado en múltiples condiciones
     const esSVG =
       archivo.tipo === 'image/svg+xml' ||
@@ -719,31 +709,6 @@ export default function ActualizarActividadPage() {
 
           {/* Gestión de imágenes */}
           <div>
-            <p className="block text-sm font-medium text-gray-700 mb-1">
-              Gestión de archivos
-            </p>
-
-            <div className="mb-4 p-3 bg-gray-50 rounded border">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <input
-                    id="reemplazarFotos"
-                    name="reemplazarFotos"
-                    type="checkbox"
-                    checked={reemplazarFotos}
-                    onChange={toggleReemplazarFotos}
-                    className="h-4 w-4 text-blue-600 border-gray-300 rounded"
-                  />
-                  <label
-                    htmlFor="reemplazarFotos"
-                    className="ml-2 block text-sm text-gray-700"
-                  >
-                    Eliminar todos los archivos existentes
-                  </label>
-                </div>
-              </div>
-            </div>
-
             <label className="block text-sm font-medium text-gray-700 mb-1">
               {uploadedUrls.length > 0 ? "Añadir más archivos" : "Subir archivos"}
               <span className="text-xs text-gray-500 ml-2">

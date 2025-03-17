@@ -6,6 +6,7 @@ import { useAuth } from "../../context/AuthContext";
 import { OBTENER_AREAS_POR_GRADO } from "@/app/graphql/queries/obtenerAreasPorGrado";
 import { formatearFecha } from "@/helpers/formatearFecha";
 import { OBTENER_ACTIVIDADES_ESTUDIANTE } from "@/app/graphql/queries/obtenerActividadesEstudiante";
+import PDFThumbnail from "@/components/PDFThumbnail";
 
 // Definir los tipos
 interface Area {
@@ -19,11 +20,12 @@ interface Actividad {
   fecha: string;
   descripcion: string;
   fotos: string[];
+  pdfs: string[];
   area: Area;
 }
 
 // Componente Modal simple para mostrar imágenes
-const ImagenModal = ({ isOpen, onClose, imagen, onPrev, onNext, contador } :{
+const ImagenModal = ({ isOpen, onClose, imagen, onPrev, onNext, contador }: {
   isOpen: boolean;
   onClose: () => void;
   imagen: string;
@@ -32,13 +34,13 @@ const ImagenModal = ({ isOpen, onClose, imagen, onPrev, onNext, contador } :{
   contador: string;
 }) => {
   if (!isOpen) return null;
-  
+
   return (
     <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
-         onClick={onClose}>
+      onClick={onClose}>
       <div className="max-w-4xl max-h-[85vh] relative" onClick={e => e.stopPropagation()}>
         {/* Botón de cierre */}
-        <button 
+        <button
           className="absolute top-2 right-2 z-10 text-white bg-black/50 rounded-full p-2 hover:bg-black/70"
           onClick={onClose}
         >
@@ -46,22 +48,22 @@ const ImagenModal = ({ isOpen, onClose, imagen, onPrev, onNext, contador } :{
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
-        
+
         {/* Contador */}
         <div className="absolute top-2 left-2 text-white bg-black/50 px-3 py-1 rounded-md">
           {contador}
         </div>
-        
+
         {/* Imagen */}
-        <img 
-          src={imagen} 
-          alt="Imagen ampliada" 
+        <img
+          src={imagen}
+          alt="Imagen ampliada"
           className="max-h-[80vh] max-w-full object-contain rounded-lg"
         />
-        
+
         {/* Controles */}
         <div className="absolute inset-y-0 left-0 flex items-center">
-          <button 
+          <button
             className="bg-black/30 text-white p-2 rounded-full hover:bg-black/50 ml-2"
             onClick={(e) => { e.stopPropagation(); onPrev(); }}
           >
@@ -70,9 +72,9 @@ const ImagenModal = ({ isOpen, onClose, imagen, onPrev, onNext, contador } :{
             </svg>
           </button>
         </div>
-        
+
         <div className="absolute inset-y-0 right-0 flex items-center">
-          <button 
+          <button
             className="bg-black/30 text-white p-2 rounded-full hover:bg-black/50 mr-2"
             onClick={(e) => { e.stopPropagation(); onNext(); }}
           >
@@ -135,9 +137,9 @@ export default function ActividadesPage() {
 
   // Manejar eventos de teclado para navegación
   useEffect(() => {
-    const manejarTeclas = (e : KeyboardEvent) => {
+    const manejarTeclas = (e: KeyboardEvent) => {
       if (!modalVisible) return;
-      
+
       switch (e.key) {
         case 'ArrowLeft':
           imagenAnterior();
@@ -196,13 +198,13 @@ export default function ActividadesPage() {
     // Filtrar por texto de búsqueda
     if (busqueda.trim()) {
       const textoBusquedaNormalizado = normalizarTexto(busqueda.trim());
-      
+
       filtradas = filtradas.filter((actividad) => {
         const nombreNormalizado = normalizarTexto(actividad.nombre);
         const descripcionNormalizada = normalizarTexto(actividad.descripcion);
-        
-        return nombreNormalizado.includes(textoBusquedaNormalizado) || 
-               descripcionNormalizada.includes(textoBusquedaNormalizado);
+
+        return nombreNormalizado.includes(textoBusquedaNormalizado) ||
+          descripcionNormalizada.includes(textoBusquedaNormalizado);
       });
     }
 
@@ -250,7 +252,7 @@ export default function ActividadesPage() {
   return (
     <div className="container mx-auto px-4">
       <h1 className="text-2xl md:text-3xl font-bold mb-6 text-primary">
-        Actividades
+        Actividades diarias
       </h1>
 
       {/* Filtros */}
@@ -346,20 +348,76 @@ export default function ActividadesPage() {
                   </p>
                 </div>
 
-                {/* Galería de fotos */}
-                {actividad.fotos && actividad.fotos.length > 0 && (
+                {/* Galería con scroll horizontal y flechas de navegación */}
+                {(actividad.fotos?.length > 0 || actividad.pdfs?.length > 0) && (
                   <div className="mt-4">
-                    <p className="font-medium text-gray-700 mb-2">Fotos:</p>
-                    <div className="flex flex-wrap gap-2 p-4">
-                      {actividad.fotos.map((foto, index) => (
-                        <img
-                          key={index}
-                          src={`${foto}?${process.env.NEXT_PUBLIC_AZURE_KEY}`}
-                          alt={`Foto ${index + 1}`}
-                          className="w-16 h-16 md:w-24 md:h-24 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
-                          onClick={() => mostrarImagen(actividad.fotos, index)}
-                        />
-                      ))}
+                    <p className="font-medium text-gray-700 mb-2">
+                      {actividad.fotos?.length > 0 && actividad.pdfs?.length > 0
+                        ? "Archivos adjuntos:"
+                        : actividad.fotos?.length > 0
+                          ? "Fotos:"
+                          : "Documentos:"}
+                    </p>
+                    <div className="relative group">
+                      {/* Flecha izquierda */}
+                      <button
+                        className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-1 shadow-md z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          const container = e.currentTarget.nextElementSibling as HTMLElement;
+                          if (container) {
+                            container.scrollBy({ left: -200, behavior: 'smooth' });
+                          }
+                        }}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                      </button>
+
+                      {/* Contenedor con scroll horizontal */}
+                      <div
+                        className="flex overflow-x-auto px-2 pb-4 gap-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 snap-x overflow-y-hidden"
+                        style={{ scrollbarWidth: 'thin', msOverflowStyle: 'none', scrollSnapType: 'x mandatory' }}
+                      >
+                        {/* Renderizar fotos */}
+                        {actividad.fotos?.map((foto, index) => (
+                          <div key={`foto-${index}`} className="flex-none w-24 h-24 md:w-32 md:h-32 snap-start">
+                            <img
+                              src={`${foto}?${process.env.NEXT_PUBLIC_AZURE_KEY}`}
+                              alt={`Foto ${index + 1}`}
+                              className="h-full w-full bg-gray-50 p-2 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
+                              onClick={() => mostrarImagen(actividad.fotos, index)}
+                            />
+                          </div>
+                        ))}
+
+                        {/* Renderizar PDFs */}
+                        {actividad.pdfs?.map((pdfUrl, index) => (
+                          <div key={`pdf-${index}`} className="flex-none w-24 h-24 md:w-32 md:h-32 snap-start">
+                            <PDFThumbnail
+                              url={pdfUrl}
+                              index={index}
+                            />
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Flecha derecha */}
+                      <button
+                        className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-1 shadow-md z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          const container = e.currentTarget.previousElementSibling as HTMLElement;
+                          if (container) {
+                            container.scrollBy({ left: 200, behavior: 'smooth' });
+                          }
+                        }}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
                     </div>
                   </div>
                 )}
@@ -370,7 +428,7 @@ export default function ActividadesPage() {
       )}
 
       {/* Modal de imagen */}
-      <ImagenModal 
+      <ImagenModal
         isOpen={modalVisible}
         onClose={ocultarImagen}
         imagen={imagenActual}
