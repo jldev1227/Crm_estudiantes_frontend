@@ -1,7 +1,12 @@
 "use client";
-import React, { useState } from "react";
 
-const NextPDFPreview = ({ pdfUrl, fileName, onRemove }) => {
+interface PDFPREVIEWPROPS {
+    pdfUrl: string;
+    fileName: string;
+    onRemove: ()=> void
+}
+
+const NextPDFPreview = ({ pdfUrl, fileName, onRemove } : PDFPREVIEWPROPS) => {
     return (
         <div
             className="relative aspect-square overflow-hidden rounded-t-lg bg-gray-100 cursor-pointer"
