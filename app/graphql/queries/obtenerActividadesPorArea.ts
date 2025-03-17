@@ -10,6 +10,7 @@ export const OBTENER_ACTIVIDADES_POR_AREA = gql`
       descripcion
       fotos
       pdfs
+      hora
       createdAt
       updatedAt
       area {

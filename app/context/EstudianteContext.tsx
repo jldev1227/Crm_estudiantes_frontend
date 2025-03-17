@@ -10,6 +10,10 @@ import { OBTENER_ACTIVIDADES_POR_AREA } from "../graphql/queries/obtenerActivida
 interface Area {
   id: string;
   nombre: string;
+  maestro: {
+    id: string,
+    nombre_completo: string
+  }
 }
 
 interface Actividad {

@@ -15,6 +15,7 @@ import PDFThumbnail from "@/components/PDFThumbnail";
 import { ELIMINAR_TAREA } from "@/app/graphql/mutation/eliminarTarea";
 import { OBTENER_TAREAS_POR_GRADO_Y_AREA } from "@/app/graphql/queries/obtenerTareasPorArea";
 import { toast } from 'react-hot-toast';
+import { convertirA12Horas } from "@/helpers/convertirA12Horas";
 
 // Define el tipo de los datos que obtendrás del servidor
 type CursoData = {
@@ -35,6 +36,7 @@ type ActividadData = {
   nombre: string;
   fecha: string;
   descripcion: string;
+  hora: string;
   fotos: string[];
   pdfs: string[];
 };
@@ -236,19 +238,19 @@ export default function CursoPage() {
       try {
         // Mostrar toast de carga
         toast.loading("Eliminando actividad...", { id: "eliminar-actividad" });
-        
+
         await eliminarActividad({
           variables: { id },
         });
-        
+
         // Mostrar toast de éxito
-        toast.success("Actividad eliminada exitosamente", { 
+        toast.success("Actividad eliminada exitosamente", {
           id: "eliminar-actividad",
           duration: 3000
         });
       } catch (error) {
         // Mostrar toast de error
-        toast.error("Error al eliminar la actividad", { 
+        toast.error("Error al eliminar la actividad", {
           id: "eliminar-actividad",
           duration: 3000
         });
@@ -256,7 +258,7 @@ export default function CursoPage() {
       }
     }
   };
-  
+
   const handleEliminarTarea = async (id: string | number) => {
     if (
       confirm(
@@ -266,19 +268,19 @@ export default function CursoPage() {
       try {
         // Mostrar toast de carga
         toast.loading("Eliminando tarea...", { id: "eliminar-tarea" });
-        
+
         await eliminarTarea({
           variables: { id },
         });
-        
+
         // Mostrar toast de éxito
-        toast.success("Tarea eliminada exitosamente", { 
+        toast.success("Tarea eliminada exitosamente", {
           id: "eliminar-tarea",
           duration: 3000
         });
       } catch (error) {
         // Mostrar toast de error
-        toast.error("Error al eliminar la tarea", { 
+        toast.error("Error al eliminar la tarea", {
           id: "eliminar-tarea",
           duration: 3000
         });
@@ -320,7 +322,7 @@ export default function CursoPage() {
   // Asegurarse de que actividades sea siempre un array, incluso si es undefined
   const actividades: ActividadData[] =
     actividadesData?.obtenerActividadesPorArea || [];
-  
+
   // Asegurarse de que tareas sea siempre un array, incluso si es undefined
   const tareas: TareaData[] =
     tareasData?.obtenerTareasPorGradoYArea || [];
@@ -363,78 +365,127 @@ export default function CursoPage() {
               {tareas.length > 0 ? (
                 tareas.map((tarea) => (
                   <div key={tarea.id} className="border rounded-lg">
-                    <div className="space-y-2 p-4">
-                      <div className="flex justify-between">
-                        <h3 className="font-bold text-lg">
-                          {tarea.nombre}
-                        </h3>
-                        <span className={`font-semibold ${getEstadoTareaClass(tarea)}`}>
-                          {tarea.estado === 'activa' 
-                            ? estaTareaVencida(tarea.fechaEntrega) 
-                              ? 'Vencida' 
-                              : 'Activa'
-                            : tarea.estado === 'vencida' 
-                              ? 'Vencida' 
-                              : 'Cancelada'}
-                        </span>
+                    <div className="p-5">
+                      <div className="space-y-2">
+                        <div className="flex justify-between">
+                          <h3 className="font-bold text-lg">
+                            {tarea.nombre}
+                          </h3>
+                          <span className={`font-semibold ${getEstadoTareaClass(tarea)}`}>
+                            {tarea.estado === 'activa'
+                              ? estaTareaVencida(tarea.fechaEntrega)
+                                ? 'Vencida'
+                                : 'Activa'
+                              : tarea.estado === 'vencida'
+                                ? 'Vencida'
+                                : 'Cancelada'}
+                          </span>
+                        </div>
+                        <div className="flex flex-col md:flex-row md:gap-4">
+                          <p className="text-sm text-gray-600">
+                            <span className="font-medium">Fecha de asignación:</span> {formatearFecha(tarea.fecha)}
+                          </p>
+                          <p className="text-sm text-gray-600">
+                            <span className="font-medium">Fecha de entrega:</span> {formatearFecha(tarea.fechaEntrega)}
+                          </p>
+                        </div>
+                        <p className="break-words">{tarea.descripcion}</p>
                       </div>
-                      <div className="flex flex-col md:flex-row md:gap-4">
-                        <p className="text-sm text-gray-600">
-                          <span className="font-medium">Fecha de asignación:</span> {formatearFecha(tarea.fecha)}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          <span className="font-medium">Fecha de entrega:</span> {formatearFecha(tarea.fechaEntrega)}
-                        </p>
-                      </div>
-                      <p className="break-words">{tarea.descripcion}</p>
-                    </div>
 
-                    {/* Grid unificado para fotos y PDFs */}
-                    {(tarea.fotos?.length > 0 || tarea.pdfs?.length > 0) && (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 p-4">
-                        {/* Renderizar fotos */}
-                        {tarea.fotos?.map((foto, index) => (
-                          <div key={`foto-${index}`} className="aspect-square">
-                            <img
-                              src={`${foto}?${process.env.NEXT_PUBLIC_AZURE_KEY}`}
-                              alt={`Foto ${index + 1}`}
-                              className="h-full w-full bg-gray-50 p-2 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
-                              onClick={() => mostrarImagen(tarea.fotos, index)}
-                            />
+                      {/* Galería con scroll horizontal y flechas de navegación */}
+                      {(tarea.fotos?.length > 0 || tarea.pdfs?.length > 0) && (
+                        <div className="mt-4">
+                          <p className="font-medium text-gray-700 mb-2">
+                            {tarea.fotos?.length > 0 && tarea.pdfs?.length > 0
+                              ? "Archivos adjuntos:"
+                              : tarea.fotos?.length > 0
+                                ? "Fotos:"
+                                : "Documentos:"}
+                          </p>
+                          <div className="relative group">
+                            {/* Flecha izquierda */}
+                            <button
+                              className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-1 shadow-md z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                const container = e.currentTarget.nextElementSibling as HTMLElement;
+                                if (container) {
+                                  container.scrollBy({ left: -200, behavior: 'smooth' });
+                                }
+                              }}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                              </svg>
+                            </button>
+
+                            {/* Contenedor con scroll horizontal */}
+                            <div
+                              className="flex overflow-x-auto px-2 pb-4 gap-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 snap-x overflow-y-hidden"
+                              style={{ scrollbarWidth: 'thin', msOverflowStyle: 'none', scrollSnapType: 'x mandatory' }}
+                            >
+                              {/* Renderizar fotos */}
+                              {tarea.fotos?.map((foto, index) => (
+                                <div key={`foto-${index}`} className="flex-none w-36 h-36 md:w-48 md:h-48 snap-start">
+                                  <img
+                                    src={`${foto}?${process.env.NEXT_PUBLIC_AZURE_KEY}`}
+                                    alt={`Foto ${index + 1}`}
+                                    className="h-full w-full bg-gray-50 p-2 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
+                                    onClick={() => mostrarImagen(tarea.fotos, index)}
+                                  />
+                                </div>
+                              ))}
+
+                              {/* Renderizar PDFs */}
+                              {tarea.pdfs?.map((pdfUrl, index) => (
+                                <div key={`pdf-${index}`} className="flex-none w-36 h-36 md:w-48 md:h-48 snap-start">
+                                  <PDFThumbnail
+                                    url={pdfUrl}
+                                    index={index}
+                                  />
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Flecha derecha */}
+                            <button
+                              className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-1 shadow-md z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                const container = e.currentTarget.previousElementSibling as HTMLElement;
+                                if (container) {
+                                  container.scrollBy({ left: 200, behavior: 'smooth' });
+                                }
+                              }}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                              </svg>
+                            </button>
                           </div>
-                        ))}
+                        </div>
+                      )}
 
-                        {/* Renderizar PDFs */}
-                        {tarea.pdfs?.map((pdfUrl, index) => (
-                          <div key={`pdf-${index}`} className="aspect-square">
-                            <PDFThumbnail
-                              url={pdfUrl}
-                              index={index}
-                            />
-                          </div>
-                        ))}
+                      <Divider />
+                      <div className="flex gap-2 justify-end p-2">
+                        <Button
+                          color="primary"
+                          size="md"
+                          variant="light"
+                          as={Link}
+                          href={`/maestro/cursos/${id}/areas/${area_id}/tareas/actualizar/${tarea.id}`}
+                        >
+                          Actualizar
+                        </Button>
+                        <Button
+                          color="danger"
+                          size="md"
+                          variant="light"
+                          onPress={() => handleEliminarTarea(tarea.id)}
+                        >
+                          Eliminar
+                        </Button>
                       </div>
-                    )}
-
-                    <Divider />
-                    <div className="flex gap-2 justify-end p-2">
-                      <Button
-                        color="primary"
-                        size="md"
-                        variant="light"
-                        as={Link}
-                        href={`/maestro/cursos/${id}/areas/${area_id}/tareas/actualizar/${tarea.id}`}
-                      >
-                        Actualizar
-                      </Button>
-                      <Button
-                        color="danger"
-                        size="md"
-                        variant="light"
-                        onPress={() => handleEliminarTarea(tarea.id)}
-                      >
-                        Eliminar
-                      </Button>
                     </div>
                   </div>
                 ))
@@ -462,64 +513,113 @@ export default function CursoPage() {
               {actividades.length > 0 ? (
                 actividades.map((actividad) => (
                   <div key={actividad.id} className="border rounded-lg">
-                    <div className="space-y-2 p-4">
-                      <div>
-                        <h3 className="font-bold text-lg">
-                          {actividad.nombre}
-                        </h3>
-                        <p className="text-sm text-gray-600">
-                          {formatearFecha(actividad.fecha)}
-                        </p>
+                    <div className="p-5">
+                      <div className="space-y-2">
+                        <div className="space-y-3">
+                          <h3 className="font-bold text-lg">
+                            {actividad.nombre}
+                          </h3>
+                          <p className="max-sm:flex max-sm:flex-col sm:space-x-3 text-sm text-gray-600">
+                            <p className="font-medium">Fecha de asignación: <span>{formatearFecha(actividad.fecha)}</span></p>
+                            <p className="font-medium">Hora: <span>{convertirA12Horas(actividad.hora)}</span></p>
+                          </p>
+                        </div>
+                        <p className="text-gray-700 break-words">{actividad.descripcion}</p>
                       </div>
-                      <p className="break-words">{actividad.descripcion}</p>
-                    </div>
 
-                    {/* Grid unificado para fotos y PDFs */}
-                    {(actividad.fotos?.length > 0 || actividad.pdfs?.length > 0) && (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 p-4">
-                        {/* Renderizar fotos */}
-                        {actividad.fotos?.map((foto, index) => (
-                          <div key={`foto-${index}`} className="aspect-square">
-                            <img
-                              src={`${foto}?${process.env.NEXT_PUBLIC_AZURE_KEY}`}
-                              alt={`Foto ${index + 1}`}
-                              className="h-full w-full bg-gray-50 p-2 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
-                              onClick={() => mostrarImagen(actividad.fotos, index)}
-                            />
-                          </div>
-                        ))}
+                      {/* Galería con scroll horizontal y flechas de navegación */}
+                      {(actividad.fotos?.length > 0 || actividad.pdfs?.length > 0) && (
+                        <div className="mt-4">
+                          <p className="font-medium text-gray-700 mb-2">
+                            {actividad.fotos?.length > 0 && actividad.pdfs?.length > 0
+                              ? "Archivos adjuntos:"
+                              : actividad.fotos?.length > 0
+                                ? "Fotos:"
+                                : "Documentos:"}
+                          </p>
+                          <div className="relative group">
+                            {/* Flecha izquierda */}
+                            <button
+                              className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-1 shadow-md z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                const container = e.currentTarget.nextElementSibling as HTMLElement;
+                                if (container) {
+                                  container.scrollBy({ left: -200, behavior: 'smooth' });
+                                }
+                              }}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                              </svg>
+                            </button>
 
-                        {/* Renderizar PDFs */}
-                        {actividad.pdfs?.map((pdfUrl, index) => (
-                          <div key={`pdf-${index}`} className="aspect-square">
-                            <PDFThumbnail
-                              url={pdfUrl}
-                              index={index}
-                            />
+                            {/* Contenedor con scroll horizontal */}
+                            <div
+                              className="flex overflow-x-auto px-2 pb-4 gap-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 snap-x overflow-y-hidden"
+                              style={{ scrollbarWidth: 'thin', msOverflowStyle: 'none', scrollSnapType: 'x mandatory' }}
+                            >
+                              {/* Renderizar fotos */}
+                              {actividad.fotos?.map((foto, index) => (
+                                <div key={`foto-${index}`} className="flex-none w-36 h-36 md:w-48 md:h-48 snap-start">
+                                  <img
+                                    src={`${foto}?${process.env.NEXT_PUBLIC_AZURE_KEY}`}
+                                    alt={`Foto ${index + 1}`}
+                                    className="h-full w-full bg-gray-50 p-2 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
+                                    onClick={() => mostrarImagen(actividad.fotos, index)}
+                                  />
+                                </div>
+                              ))}
+
+                              {/* Renderizar PDFs */}
+                              {actividad.pdfs?.map((pdfUrl, index) => (
+                                <div key={`pdf-${index}`} className="flex-none w-36 h-36 md:w-48 md:h-48 snap-start">
+                                  <PDFThumbnail
+                                    url={pdfUrl}
+                                    index={index}
+                                  />
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Flecha derecha */}
+                            <button
+                              className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-1 shadow-md z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                const container = e.currentTarget.previousElementSibling as HTMLElement;
+                                if (container) {
+                                  container.scrollBy({ left: 200, behavior: 'smooth' });
+                                }
+                              }}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                              </svg>
+                            </button>
                           </div>
-                        ))}
+                        </div>
+                      )}
+                      <Divider />
+                      <div className="flex gap-2 justify-end p-2">
+                        <Button
+                          color="primary"
+                          size="md"
+                          variant="light"
+                          as={Link}
+                          href={`/maestro/cursos/${id}/areas/${area_id}/actividades/actualizar/${actividad.id}`}
+                        >
+                          Actualizar
+                        </Button>
+                        <Button
+                          color="danger"
+                          size="md"
+                          variant="light"
+                          onPress={() => handleEliminarActividad(actividad.id)}
+                        >
+                          Eliminar
+                        </Button>
                       </div>
-                    )}
-
-                    <Divider />
-                    <div className="flex gap-2 justify-end p-2">
-                      <Button
-                        color="primary"
-                        size="md"
-                        variant="light"
-                        as={Link}
-                        href={`/maestro/cursos/${id}/areas/${area_id}/actividades/actualizar/${actividad.id}`}
-                      >
-                        Actualizar
-                      </Button>
-                      <Button
-                        color="danger"
-                        size="md"
-                        variant="light"
-                        onPress={() => handleEliminarActividad(actividad.id)}
-                      >
-                        Eliminar
-                      </Button>
                     </div>
                   </div>
                 ))

@@ -1,7 +1,7 @@
 "use client";
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { BookOpen, CheckSquare, ChevronRight } from 'lucide-react';
+import { BookOpen, CheckSquare, ChevronRight, Clock } from 'lucide-react';
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 export default function EstudiantePage() {
@@ -13,6 +13,10 @@ export default function EstudiantePage() {
 
   const navigateToActividades = () => {
     router.push("/estudiante/actividades");
+  };
+
+  const navigateToTareasPendientes = () => {
+    router.push("/estudiante/tareas");
   };
 
   return (
@@ -36,7 +40,7 @@ export default function EstudiantePage() {
             <div className="bg-white bg-opacity-20 rounded-full p-4">
               <BookOpen size={48} className="text-white" />
             </div>
-            <div className="flex-grow">
+            <div className="flex-grow text-center">
               <h2 className="text-2xl font-bold mb-2">Materias Asignadas</h2>
               <p className="text-white text-opacity-80">
                 Explora tus materias y contenidos
@@ -53,10 +57,27 @@ export default function EstudiantePage() {
             <div className="bg-primary-500 bg-opacity-20 rounded-full p-4">
               <CheckSquare size={48} className="text-primary-500" />
             </div>
-            <div className="flex-grow">
-              <h2 className="text-2xl font-bold mb-2 text-gray-800">Mis Actividades</h2>
+            <div className="flex-grow text-center">
+              <h2 className="text-2xl font-bold mb-2 text-gray-800">Actividades</h2>
               <p className="text-gray-600">
-                Consulta y realiza tus tareas
+                Consulta y realiza tus actvidiades diarias
+              </p>
+            </div>
+            <ChevronRight size={32} className="text-gray-500" />
+          </div>
+
+          {/* Card de Tareas Pendientes */}
+          <div 
+            onClick={navigateToTareasPendientes}
+            className="bg-amber-50 rounded-2xl p-6 shadow-lg flex flex-col sm:flex-row items-center sm:space-x-6 gap-5 cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-xl"
+          >
+            <div className="bg-amber-500 bg-opacity-20 rounded-full p-4">
+              <Clock size={48} className="text-amber-600" />
+            </div>
+            <div className="flex-grow text-center">
+              <h2 className="text-2xl font-bold mb-2 text-gray-800">Tareas Pendientes</h2>
+              <p className="text-gray-600">
+                Revisa y organiza tus entregas próximas
               </p>
             </div>
             <ChevronRight size={32} className="text-gray-500" />
@@ -71,6 +92,10 @@ export default function EstudiantePage() {
           <div className="flex items-center space-x-2 text-gray-600">
             <CheckSquare size={20} />
             <span>Seguimiento de Tareas</span>
+          </div>
+          <div className="flex items-center space-x-2 text-gray-600">
+            <Clock size={20} />
+            <span>Recordatorios</span>
           </div>
         </div>
       </div>

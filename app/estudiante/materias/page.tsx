@@ -19,10 +19,6 @@ export default function Page() {
   const { areas } = useEstudiante();
   const isDesktop = useMediaQuery({ minWidth: 1024 });
 
-  useEffect(() => {
-    // obtenerCursosMaestro()
-  }, []);
-
   return (
     <div className="space-y-6">
       <div className="space-y-4">
@@ -42,16 +38,47 @@ export default function Page() {
           <Table aria-label="Tabla de materias asignadas">
             <TableHeader>
               <TableColumn>MATERIA</TableColumn>
-              <TableColumn>CONSULTAR</TableColumn>
+              <TableColumn>PROFESOR</TableColumn>
+              <TableColumn>TAREAS</TableColumn>
+              <TableColumn>ACTIVIDADES</TableColumn>
             </TableHeader>
             <TableBody>
               {areas?.map((area, index) => (
                 <TableRow key={index}>
                   <TableCell>{area.nombre}</TableCell>
+                  <TableCell>{area.maestro?.nombre_completo}</TableCell>
                   <TableCell>
                     <Button
                       color="primary"
-                      isIconOnly
+                      onPress={() =>
+                        route.push(`/estudiante/tareas?area=${area.id}`)
+                      }
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={1.5}
+                        stroke="currentColor"
+                        className="size-6"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                        />
+                      </svg>
+                      <p>Ver Tareas</p>
+                    </Button>
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      color="primary"
                       onPress={() =>
                         route.push(`/estudiante/actividades?area=${area.id}`)
                       }
@@ -75,6 +102,7 @@ export default function Page() {
                           d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
                         />
                       </svg>
+                      <p>Ver Actividades</p>
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -88,7 +116,6 @@ export default function Page() {
             <div
               key={index}
               className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 cursor-pointer overflow-hidden border border-gray-200"
-              onClick={() => route.push(`/estudiante/actividades?area=${area.id}`)}
             >
               <div className="h-32 bg-gradient-to-r from-blue-400 to-blue-600 flex items-center justify-center">
                 <div className="text-white text-5xl font-bold">
@@ -99,7 +126,36 @@ export default function Page() {
                 <h2 className="text-xl font-semibold text-gray-800">
                   {area.nombre}
                 </h2>
-                <div className="mt-4 flex justify-end">
+                <h3 className="text-gray-500">{area.maestro.nombre_completo}</h3>
+                <div className="mt-4 flex justify-between">
+                  <Button
+                    onPress={() =>
+                      route.push(`/estudiante/tareas?area=${area.id}`)
+                    }
+                    color="warning"
+                    className="flex items-center gap-2"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                      className="size-5"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                      />
+                    </svg>
+                    Ver Tareas
+                  </Button>
                   <Button
                     onPress={() =>
                       route.push(`/estudiante/actividades?area=${area.id}`)

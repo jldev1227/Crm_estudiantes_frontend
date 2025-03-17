@@ -12,6 +12,7 @@ import NextPDFPreview from "@/components/pdfPreview";
 import { ACTUALIZAR_TAREA } from "@/app/graphql/mutation/actualizarTarea";
 import { OBTENER_TAREA } from "@/app/graphql/queries/obtenerTareaPorId";
 import { toast } from 'react-hot-toast';
+import { formatearFecha } from "@/helpers/formatearFecha";
 
 interface ArchivoTarea {
   url: string;
@@ -40,6 +41,16 @@ const isValidISODate = (dateString: string): boolean => {
 
   const date = new Date(dateString);
   return date instanceof Date && !isNaN(date.getTime());
+};
+
+const esUrlExterna = (url: string): boolean => {
+  return url.startsWith('https://') || url.startsWith('http://');
+};
+
+
+const esArchivoDescargable = (archivo: ArchivoTarea): boolean => {
+  // Es descargable si es una URL externa y no es una imagen ni un PDF
+  return esUrlExterna(archivo.url)
 };
 
 // Función auxiliar para determinar el tipo de archivo por la extensión o URL
@@ -137,7 +148,7 @@ export default function ActualizarTareaPage() {
     nombre: "",
     fechaEntrega: formatearFechaColombiaParaInput(new Date()),
     descripcion: "",
-    estado: "activa",
+    estado: "",
     fotos: [],
     fotosNuevas: [],
     pdfsNuevos: [],
@@ -150,8 +161,6 @@ export default function ActualizarTareaPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [uploadedUrls, setUploadedUrls] = useState<ArchivoTarea[]>([]);
-  const [reemplazarFotos, setReemplazarFotos] = useState(false);
-  const [reemplazarPdfs, setReemplazarPdfs] = useState(false);
 
   // GraphQL Queries y Mutations
   const { data, loading: loadingTarea } = useQuery(OBTENER_TAREA, {
@@ -159,37 +168,10 @@ export default function ActualizarTareaPage() {
     onCompleted: (data) => {
       if (data?.obtenerTarea) {
         const tarea = data.obtenerTarea;
-        let fechaEntregaObj: Date;
 
-        // Determinar cómo procesar la fecha según el formato recibido
-        if (typeof tarea.fechaEntrega === 'string') {
-          try {
-            // Intentar convertir la fecha del formato recibido
-            fechaEntregaObj = new Date(tarea.fechaEntrega);
-          } catch (e) {
-            console.error("Error al parsear fecha string:", e);
-            fechaEntregaObj = new Date(); // Usar fecha actual como fallback
-          }
-        } else if (typeof tarea.fechaEntrega === 'number') {
-          try {
-            // Si es un timestamp (número)
-            fechaEntregaObj = new Date(tarea.fechaEntrega);
-          } catch (e) {
-            console.error("Error al parsear fecha number:", e);
-            fechaEntregaObj = new Date(); // Usar fecha actual como fallback
-          }
-        } else {
-          // Fallback a fecha actual
-          console.error("Formato de fecha no reconocido:", tarea.fechaEntrega);
-          fechaEntregaObj = new Date();
-        }
-
-        // Formatear fecha para el input (YYYY-MM-DD)
-        const year = fechaEntregaObj.getFullYear();
-        const month = String(fechaEntregaObj.getMonth() + 1).padStart(2, '0');
-        const day = String(fechaEntregaObj.getDate()).padStart(2, '0');
-        const fechaFormateada = `${year}-${month}-${day}`;
-
+        const fechaOriginal = formatearFecha(tarea.fechaEntrega); // Ejemplo: "17/03/2025"
+        const partes = fechaOriginal.split('/');
+        const fechaFormateada = `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
         // Convertir URLs a objetos de archivo con tipo
         const archivosExistentes: ArchivoTarea[] = [];
 
@@ -376,9 +358,6 @@ export default function ActualizarTareaPage() {
       "¿Estás seguro de que deseas eliminar todas las fotos e imágenes existentes?",
     );
     if (confirmar) {
-      setReemplazarFotos(true);
-      setReemplazarPdfs(true);
-
       // Limpiar todos los archivos
       setUploadedUrls([]);
 
@@ -431,32 +410,18 @@ export default function ActualizarTareaPage() {
     setLoading(true);
     setError("");
 
-    // Asegurar que la fecha tenga formato YYYY-MM-DD
-    const fechaActual = new Date();
-    let fechaFormateada = formData.fechaEntrega;
-
-    // Si la fecha no es válida o está en formato incorrecto, usar la fecha actual
-    if (!fechaFormateada || !isValidISODate(fechaFormateada)) {
-      const year = fechaActual.getFullYear();
-      const month = String(fechaActual.getMonth() + 1).padStart(2, '0');
-      const day = String(fechaActual.getDate()).padStart(2, '0');
-      fechaFormateada = `${year}-${month}-${day}`;
-    }
-
     // Preparar los datos para la mutación según el esquema GraphQL
     const fotosNuevasURLs = formData.fotosNuevas ? formData.fotosNuevas.map(archivo => archivo.url) : [];
     const pdfsNuevosURLs = formData.pdfsNuevos ? formData.pdfsNuevos.map(archivo => archivo.url) : [];
 
     try {
       // Mostrar toast de carga
-      toast.loading("Actualizando tarea...", { id: "actualizar-tarea" });
-
       await actualizarTarea({
         variables: {
           id: tarea_id,
           input: {
             nombre: formData.nombre,
-            fechaEntrega: fechaFormateada,
+            fechaEntrega: formData.fechaEntrega,
             descripcion: formData.descripcion,
             estado: formData.estado,
             fotosNuevas: fotosNuevasURLs,
@@ -469,12 +434,6 @@ export default function ActualizarTareaPage() {
             area_id
           },
         },
-      });
-
-      // Actualizar toast de carga a éxito
-      toast.success(`¡Tarea "${formData.nombre}" actualizada correctamente!`, {
-        id: "actualizar-tarea",
-        duration: 4000
       });
     } catch (err) {
       console.error("Error en el submit:", err);
@@ -510,6 +469,121 @@ export default function ActualizarTareaPage() {
   if (loadingTarea) {
     return <div>Cargando datos de la tarea...</div>;
   }
+
+  const renderizarArchivo = (archivo: { tipo: string, url: string, nombre: string }, index: number, onRemove: any) => {
+    // Determinar si es SVG basado en múltiples condiciones
+    const esSVG =
+      archivo.tipo === 'image/svg+xml' ||
+      archivo.url.toLowerCase().includes('svg') ||
+      archivo.nombre.toLowerCase().includes('svg');
+
+    // Determinar si es una imagen basado en el tipo o la URL
+    const esImagen =
+      archivo.tipo.startsWith('image/') ||
+      ['jpg', 'jpeg', 'png', 'gif'].some(ext =>
+        archivo.url.toLowerCase().includes(ext) ||
+        archivo.nombre.toLowerCase().includes(ext)
+      );
+
+    // Para archivos desconocidos, intentar renderizar como imagen si tiene patrones de imagen
+    const intentarComoImagen = archivo.tipo === 'application/octet-stream' && (
+      archivo.url.includes('/fotos/') ||
+      archivo.url.includes('/images/') ||
+      ['jpg', 'jpeg', 'png', 'gif'].some(ext =>
+        archivo.url.toLowerCase().includes(ext) ||
+        archivo.nombre.toLowerCase().includes(ext)
+      )
+    );
+
+    const urlCompleta = archivo.url.startsWith("https://")
+      ? `${archivo.url}?${process.env.NEXT_PUBLIC_AZURE_KEY}`
+      : archivo.url;
+
+    // Renderizado según el tipo detectado
+    if (archivo.tipo === 'application/pdf') {
+      return (
+        <NextPDFPreview
+          pdfUrl={archivo.url}
+          fileName={archivo.nombre}
+          onRemove={() => onRemove(index)}
+        />
+      );
+    } else if (esSVG || esImagen || intentarComoImagen) {
+      return (
+        <div className="relative aspect-square">
+          <img
+            src={urlCompleta}
+            alt={`Archivo ${index + 1}: ${archivo.nombre}`}
+            className={`w-full h-full ${esSVG ? 'object-contain p-2' : 'object-cover'} rounded-t-lg`}
+            onError={(e: any) => {
+              console.error(`Error al cargar imagen: ${archivo.url}`);
+              e.target.src = '/placeholder-image.png'; // Imagen de reemplazo si falla
+              e.target.className = 'w-full h-full object-contain p-2 rounded-t-lg opacity-50';
+            }}
+          />
+          <button
+            onClick={() => onRemove(index)}
+            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5 shadow-md hover:bg-red-600 transition-colors"
+            aria-label="Eliminar archivo"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+      );
+    } else {
+      // Archivo genérico
+      return (
+        <div className="relative aspect-square bg-gray-100 flex items-center justify-center rounded-t-lg">
+          <svg
+            className="w-16 h-16 text-gray-400"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              fillRule="evenodd"
+              d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
+              clipRule="evenodd"
+            />
+          </svg>
+          <button
+            onClick={() => onRemove(index)}
+            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5 shadow-md hover:bg-red-600 transition-colors"
+            aria-label="Eliminar archivo"
+          >
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+      );
+    }
+  };
+
 
   return (
     <div className="space-y-5">
@@ -577,13 +651,21 @@ export default function ActualizarTareaPage() {
               <Select
                 id="estado"
                 name="estado"
-                value={formData.estado}
-                onChange={handleChange}
+                defaultSelectedKeys={[formData.estado]}
+                selectedKeys={[formData.estado]}
+                onSelectionChange={(keys) => {
+                  // Convertir explícitamente a string para resolver el error de TypeScript
+                  const selectedValue = String(Array.from(keys)[0] || "activa");
+                  setFormData({
+                    ...formData,
+                    estado: selectedValue
+                  });
+                }}
                 placeholder="Seleccionar estado"
                 required
               >
                 <SelectItem key="activa">
-                  activa
+                  Activa
                 </SelectItem>
                 <SelectItem key="vencida">
                   Vencida
@@ -656,88 +738,61 @@ export default function ActualizarTareaPage() {
 
             {uploadedUrls.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pr-2">
-                {uploadedUrls.map((file, index) => (
+                {uploadedUrls.map((archivo, index) => (
                   <div
                     key={index}
                     className="border rounded-lg shadow-sm hover:shadow-md transition-shadow"
                   >
-                    {file.tipo === 'application/pdf' ? (
-                      <NextPDFPreview
-                        pdfUrl={file.url}
-                        fileName={file.nombre}
-                        onRemove={() => removeFile(index)}
-                      />
-                    ) : file.tipo.startsWith('image/') ? (
-                      <div className="relative aspect-square">
-                        <img
-                          src={file.url}
-                          alt={`Imagen ${index + 1}: ${file.nombre}`}
-                          className="w-full h-full object-cover rounded-t-lg"
-                        />
-                        <button
-                          onClick={() => removeFile(index)}
-                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5 shadow-md hover:bg-red-600 transition-colors"
-                          aria-label="Eliminar archivo"
-                        >
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M6 18L18 6M6 6l12 12"
-                            />
-                          </svg>
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="relative aspect-square bg-gray-100 flex items-center justify-center rounded-t-lg">
-                        <svg
-                          className="w-16 h-16 text-gray-400"
-                          fill="currentColor"
-                          viewBox="0 0 20 20"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                        <button
-                          onClick={() => removeFile(index)}
-                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5 shadow-md hover:bg-red-600 transition-colors"
-                          aria-label="Eliminar archivo"
-                        >
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M6 18L18 6M6 6l12 12"
-                            />
-                          </svg>
-                        </button>
-                      </div>
-                    )}
+                    {renderizarArchivo(archivo, index, removeFile)}
+
                     <div className="p-2 bg-gray-50 rounded-b-lg">
-                      <p className="text-xs text-gray-500 truncate" title={file.nombre}>
-                        {file.nombre.length > 18 ? `${file.nombre.substring(0, 15)}...` : file.nombre}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {file.tipo.startsWith('image/') ? 'Imagen' : 'PDF'}
-                      </p>
+                      {esArchivoDescargable(archivo) ? (
+                        <a
+                          href={`${archivo.url}?${process.env.NEXT_PUBLIC_AZURE_KEY}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block"
+                          title="Descargar archivo"
+                        >
+                          <p className="text-xs text-blue-500 truncate hover:underline">
+                            {archivo.nombre}
+                          </p>
+                          <p className="text-xs text-gray-400 flex items-center">
+                            <svg
+                              className="w-3 h-3 mr-1"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                              />
+                            </svg>
+                            Descargar archivo
+                          </p>
+                        </a>
+                      ) : (
+                        <>
+                          <p className="text-xs text-gray-500 truncate" title={archivo.nombre}>
+                            {archivo.nombre.length > 18 ? `${archivo.nombre.substring(0, 15)}...` : archivo.nombre}
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            {archivo.tipo === 'image/svg+xml'
+                              ? 'SVG'
+                              : archivo.tipo.startsWith('image/')
+                                ? 'Imagen'
+                                : archivo.tipo === 'application/pdf'
+                                  ? 'PDF'
+                                  : archivo.url.includes('svg') || archivo.nombre.includes('svg')
+                                    ? 'SVG'
+                                    : 'Archivo'}
+                          </p>
+                        </>
+                      )}
                     </div>
                   </div>
                 ))}

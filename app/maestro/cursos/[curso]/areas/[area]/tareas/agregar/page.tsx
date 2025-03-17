@@ -170,16 +170,8 @@ export default function CrearTareaPage() {
         }
       };
   
-      // Mostrar toast de carga
-      toast.loading("Creando tarea...", { id: "crear-tarea" });
       
-      const { data } = await crearTarea({ variables });
-      
-      // Actualizar toast de carga a éxito
-      toast.success(`¡Tarea "${formData.titulo}" creada con éxito!`, { 
-        id: "crear-tarea",
-        duration: 4000
-      });
+      await crearTarea({ variables });
     } catch (err : any) {
       console.error("Error al crear la tarea:", err);
       setError(err.message || "Ocurrió un error al crear la tarea");
