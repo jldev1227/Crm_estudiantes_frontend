@@ -29,7 +29,7 @@ export default function PerfilEstudiantePage() {
                              <User size={64} className="text-white" />
                            </div>
                            <div className="w-full">
-                             <h1 className="text-xl sm:text-3xl font-bold">{usuario?.nombre || 'Perfil Maestro'}</h1>
+                             <h1 className="text-xl sm:text-3xl font-bold">{usuario?.nombre_completo || 'Perfil Estudiante'}</h1>
                              <p className="text-white text-opacity-80">Información Personal</p>
                            </div>
                          </div>
