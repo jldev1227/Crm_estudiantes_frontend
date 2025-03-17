@@ -51,7 +51,7 @@ export default function Page() {
         const { token, maestro } = data.loginMaestro;
         login({
           id: maestro.id,
-          nombre: maestro.nombre_completo,
+          nombre_completo: maestro.nombre_completo,
           numero_identificacion: maestro.numero_identificacion,
           rol: "maestro",
           tipo_documento: maestro.tipo_documento,
@@ -64,7 +64,7 @@ export default function Page() {
         const { token, estudiante } = data.loginEstudiante;
         login({
           id: estudiante.id,
-          nombre: estudiante.nombre_completo,
+          nombre_completo: estudiante.nombre_completo,
           numero_identificacion: estudiante.numero_identificacion,
           rol: "estudiante",
           grado_id: estudiante.grado_id,
