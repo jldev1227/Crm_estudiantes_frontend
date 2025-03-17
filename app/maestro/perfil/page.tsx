@@ -67,7 +67,7 @@ export default function PerfilMaestroPage() {
     }
   });
 
-  // Manejar cambios en los inputs
+  // Updated handleChange and related functions with improved type handling
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormValues({
@@ -76,26 +76,27 @@ export default function PerfilMaestroPage() {
     });
   };
 
-  // Iniciar edición de un campo
+  // Improved type-safe function for getting field values
+  const getFieldValue = (usuario: Usuario | null, field: keyof Usuario): string => {
+    if (!usuario || !(field in usuario)) return '';
+
+    const value = usuario[field];
+    return value !== undefined ? String(value) : '';
+  };
+
+  // Modify startEditing and cancelEditing to use the new getFieldValue function
   const startEditing = (field: EditableField): void => {
     setEditMode({ ...editMode, [field]: true });
-    // Usar casting explícito para resolver el problema de tipado
-    const fieldValue = (usuario && field in usuario)
-      ? String(usuario[field] || '')
-      : '';
+    const fieldValue = getFieldValue(usuario, field);
     setFormValues({ ...formValues, [field]: fieldValue });
   };
 
-  // Cancelar edición
   const cancelEditing = (field: EditableField): void => {
     setEditMode({ ...editMode, [field]: false });
-    // Usar casting explícito para resolver el problema de tipado
-    const fieldValue = (usuario && field in usuario)
-      ? String(usuario[field] || '')
-      : '';
+    const fieldValue = getFieldValue(usuario, field);
     setFormValues({ ...formValues, [field]: fieldValue });
   };
-
+  
   // Guardar cambios
   const saveChanges = async (field: EditableField): Promise<void> => {
     try {

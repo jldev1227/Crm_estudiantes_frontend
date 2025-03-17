@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 // 🔹 1. Definir el tipo de usuario
 interface Usuario {
   id: string;
-  nombre: string;
+  nombre_completo: string;
   numero_identificacion: string;
   rol: "maestro" | "estudiante";
   fecha_nacimiento?: Date | string;
