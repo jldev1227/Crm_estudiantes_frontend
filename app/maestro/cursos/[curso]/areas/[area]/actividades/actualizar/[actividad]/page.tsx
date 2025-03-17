@@ -494,7 +494,7 @@ export default function ActualizarActividadPage() {
   };
 
   // Componente mejorado para renderizar diferentes tipos de archivos incluyendo octet-stream
-  const renderizarArchivo = (archivo, index, onRemove) => {
+  const renderizarArchivo = (archivo : { tipo: string, url: string, nombre: string}, index : number, onRemove : any) => {
     // Determinar si es SVG basado en múltiples condiciones
     const esSVG =
       archivo.tipo === 'image/svg+xml' ||
@@ -539,7 +539,7 @@ export default function ActualizarActividadPage() {
             src={urlCompleta}
             alt={`Archivo ${index + 1}: ${archivo.nombre}`}
             className={`w-full h-full ${esSVG ? 'object-contain p-2' : 'object-cover'} rounded-t-lg`}
-            onError={(e) => {
+            onError={(e : any) => {
               console.error(`Error al cargar imagen: ${archivo.url}`);
               e.target.src = '/placeholder-image.png'; // Imagen de reemplazo si falla
               e.target.className = 'w-full h-full object-contain p-2 rounded-t-lg opacity-50';

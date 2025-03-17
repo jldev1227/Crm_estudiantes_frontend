@@ -1,23 +1,45 @@
 "use client";
-import React, { useState } from 'react';
+import React, { Key, useState } from 'react';
 import { User, Mail, Phone, Briefcase, HashIcon, Edit2, X, Check } from 'lucide-react';
 import { useAuth } from "@/app/context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useMutation } from '@apollo/client';
-import { toast } from 'react-hot-toast'; // Asegúrate de tener instalado react-hot-toast
+import { toast } from 'react-hot-toast';
 import { ACTUALIZAR_CONTACTO_MAESTRO } from '@/app/graphql/mutation/actualizarContactoMaestro';
+
+interface Usuario {
+  id: string;
+  nombre_completo?: string;
+  celular?: string;
+  direccion?: string;
+  email?: string;
+  [key: string]: any; // Para permitir acceso dinámico a propiedades
+}
+
+// Tipo para los campos editables
+type EditableField = keyof Omit<Usuario, 'id'>;
+
+// Tipo para el estado de modo edición
+interface EditMode {
+  [field: string]: boolean;
+}
+
+// Tipo para los valores del formulario
+interface FormValues {
+  [field: string]: string;
+}
 
 export default function PerfilMaestroPage() {
   const { usuario, actualizarUsuario } = useAuth();
-  
+
   // Estados para controlar la edición
-  const [editMode, setEditMode] = useState({
+  const [editMode, setEditMode] = useState<EditMode>({
     email: false,
     celular: false
   });
-  
+
   // Estados para los valores temporales de edición
-  const [formValues, setFormValues] = useState({
+  const [formValues, setFormValues] = useState<FormValues>({
     email: usuario?.email || '',
     celular: usuario?.celular || ''
   });
@@ -27,7 +49,7 @@ export default function PerfilMaestroPage() {
     onCompleted: (data) => {
       if (data.actualizarContactoMaestro.success) {
         toast.success(data.actualizarContactoMaestro.mensaje);
-        
+
         // Actualizar el contexto de autenticación con los nuevos datos
         if (data.actualizarContactoMaestro.maestro) {
           actualizarUsuario({
@@ -44,30 +66,38 @@ export default function PerfilMaestroPage() {
       toast.error("Error al actualizar datos. Intenta de nuevo.");
     }
   });
-  
+
   // Manejar cambios en los inputs
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormValues({
       ...formValues,
       [name]: value
     });
   };
-  
+
   // Iniciar edición de un campo
-  const startEditing = (field) => {
+  const startEditing = (field: EditableField): void => {
     setEditMode({ ...editMode, [field]: true });
-    setFormValues({ ...formValues, [field]: usuario?.[field] || '' });
+    // Usar casting explícito para resolver el problema de tipado
+    const fieldValue = (usuario && field in usuario)
+      ? String(usuario[field] || '')
+      : '';
+    setFormValues({ ...formValues, [field]: fieldValue });
   };
-  
+
   // Cancelar edición
-  const cancelEditing = (field) => {
+  const cancelEditing = (field: EditableField): void => {
     setEditMode({ ...editMode, [field]: false });
-    setFormValues({ ...formValues, [field]: usuario?.[field] || '' });
+    // Usar casting explícito para resolver el problema de tipado
+    const fieldValue = (usuario && field in usuario)
+      ? String(usuario[field] || '')
+      : '';
+    setFormValues({ ...formValues, [field]: fieldValue });
   };
-  
+
   // Guardar cambios
-  const saveChanges = async (field) => {
+  const saveChanges = async (field: EditableField): Promise<void> => {
     try {
       if (!usuario?.id) {
         toast.error("ID de usuario no disponible");
@@ -83,10 +113,17 @@ export default function PerfilMaestroPage() {
           }
         }
       });
-      
-      // Desactivar modo edición (independientemente del resultado)
+
+      // Actualizar el usuario localmente después de una actualización exitosa
+      // Usar actualizarUsuario del contexto en lugar de setUsuario que no existe
+      actualizarUsuario({
+        ...usuario,
+        [field]: formValues[field]
+      });
+
+      // Desactivar modo edición
       setEditMode({ ...editMode, [field]: false });
-      
+
     } catch (error) {
       console.error("Error al actualizar datos:", error);
       toast.error("Error al actualizar datos. Inténtalo de nuevo.");
@@ -135,7 +172,7 @@ export default function PerfilMaestroPage() {
                   <div className="flex justify-between items-center">
                     <h3 className="font-semibold text-gray-700">Correo Electrónico</h3>
                     {!editMode.email ? (
-                      <button 
+                      <button
                         onClick={() => startEditing('email')}
                         className="text-blue-500 hover:text-blue-700 flex items-center text-sm"
                         disabled={loading}
@@ -144,14 +181,14 @@ export default function PerfilMaestroPage() {
                       </button>
                     ) : (
                       <div className="flex space-x-2">
-                        <button 
+                        <button
                           onClick={() => saveChanges('email')}
                           className="text-green-500 hover:text-green-700"
                           disabled={loading}
                         >
                           <Check size={18} />
                         </button>
-                        <button 
+                        <button
                           onClick={() => cancelEditing('email')}
                           className="text-red-500 hover:text-red-700"
                           disabled={loading}
@@ -161,7 +198,7 @@ export default function PerfilMaestroPage() {
                       </div>
                     )}
                   </div>
-                  
+
                   {!editMode.email ? (
                     <p className="text-gray-600 break-all">{usuario?.email || 'No disponible'}</p>
                   ) : (
@@ -185,7 +222,7 @@ export default function PerfilMaestroPage() {
                   <div className="flex justify-between items-center">
                     <h3 className="font-semibold text-gray-700">Teléfono</h3>
                     {!editMode.celular ? (
-                      <button 
+                      <button
                         onClick={() => startEditing('celular')}
                         className="text-blue-500 hover:text-blue-700 flex items-center text-sm"
                         disabled={loading}
@@ -194,14 +231,14 @@ export default function PerfilMaestroPage() {
                       </button>
                     ) : (
                       <div className="flex space-x-2">
-                        <button 
+                        <button
                           onClick={() => saveChanges('celular')}
                           className="text-green-500 hover:text-green-700"
                           disabled={loading}
                         >
                           <Check size={18} />
                         </button>
-                        <button 
+                        <button
                           onClick={() => cancelEditing('celular')}
                           className="text-red-500 hover:text-red-700"
                           disabled={loading}
@@ -211,7 +248,7 @@ export default function PerfilMaestroPage() {
                       </div>
                     )}
                   </div>
-                  
+
                   {!editMode.celular ? (
                     <p className="text-gray-600">{usuario?.celular || 'No disponible'}</p>
                   ) : (
