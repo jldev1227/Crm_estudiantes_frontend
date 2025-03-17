@@ -41,7 +41,7 @@ const PDFThumbnail: React.FC<PDFThumbnailProps> = ({ url, index }) => {
           />
         </svg>
         
-        <p className="text-xs text-center font-medium text-gray-700 line-clamp-2">
+        <p className="text-xs text-center font-medium text-gray-700 line-clamp-1">
           {documentName}
         </p>
       </div>

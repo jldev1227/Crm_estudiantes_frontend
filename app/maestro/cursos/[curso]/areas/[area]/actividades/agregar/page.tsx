@@ -11,6 +11,7 @@ import { formatearFechaColombiaParaInput } from "@/helpers/formatearFechaColombi
 import PDFPreview from "@/components/pdfPreview";
 import ReactPDFPreview from "@/components/pdfPreview";
 import NextPDFPreview from "@/components/pdfPreview";
+import toast from "react-hot-toast";
 
 interface FormData {
   nombre: string;
@@ -48,6 +49,12 @@ export default function Page() {
     refetchQueries: ["ObtenerActividades"], // Refresca la lista de actividades después de crear una nueva
     onCompleted: () => {
       // Resetear el formulario y cerrar el modal al completar
+      toast.success(`Actividad "${formData.nombre}" creada con éxito!`, {
+        duration: 4000,
+        position: 'top-center',
+        icon: '✅',
+      });
+
       setFormData({
         nombre: "",
         fecha: formatearFechaColombiaParaInput(new Date()),
@@ -115,33 +122,33 @@ export default function Page() {
       setError("El nombre de la actividad es obligatorio");
       return;
     }
-  
+
     if (!formData.descripcion.trim()) {
       setError("La descripción es obligatoria");
       return;
     }
-  
+
     if (uploadedFiles.length === 0) {
       setError("Debes subir al menos un archivo");
       return;
     }
-  
+
     setLoading(true);
     setError("");
-  
+
     try {
       // Separar imágenes y PDFs
       const imageFiles = formData.archivos
         .filter(archivo => archivo.tipo.startsWith('image/'))
         .map(archivo => archivo.url);
-      
+
       const pdfFiles = formData.archivos
         .filter(archivo => archivo.tipo === 'application/pdf')
         .map(archivo => archivo.url);
-      
+
       // Si tenemos PDFs, añadir información sobre ellos en la descripción
       let descripcionActualizada = formData.descripcion;
-      
+
       // Variables para la mutación
       const variables = {
         input: {
@@ -155,7 +162,7 @@ export default function Page() {
           area_id,
         }
       };
-  
+
       await crearActividad({ variables });
     } catch (err) {
       // El error ya se maneja en onError del useMutation

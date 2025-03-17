@@ -66,6 +66,7 @@ export default function Page() {
           id: estudiante.id,
           nombre_completo: estudiante.nombre_completo,
           numero_identificacion: estudiante.numero_identificacion,
+          tipo_documento: estudiante.tipo_documento,
           rol: "estudiante",
           grado_id: estudiante.grado_id,
           grado_nombre: estudiante.grado.nombre,

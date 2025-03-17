@@ -10,6 +10,8 @@ import { formatearFechaColombiaParaInput } from "@/helpers/formatearFechaColombi
 import { ACTUALIZAR_ACTIVIDAD } from "@/app/graphql/mutation/actualizarActividad";
 import { OBTENER_ACTIVIDAD } from "@/app/graphql/queries/obtenerActividad";
 import NextPDFPreview from "@/components/pdfPreview";
+import { formatearFecha } from "@/helpers/formatearFecha";
+import toast from "react-hot-toast";
 
 interface ArchivoActividad {
   url: string;
@@ -28,15 +30,6 @@ interface FormData {
   reemplazarFotos?: boolean;
   reemplazarPdfs?: boolean;
 }
-
-// Función para verificar si una cadena es una fecha válida en formato ISO
-const isValidISODate = (dateString: string): boolean => {
-  const regex = /^\d{4}-\d{2}-\d{2}$/;
-  if (!regex.test(dateString)) return false;
-
-  const date = new Date(dateString);
-  return date instanceof Date && !isNaN(date.getTime());
-};
 
 // Función auxiliar para determinar el tipo de archivo por la extensión o URL
 const detectarTipoArchivo = (url: string): string => {
@@ -155,8 +148,6 @@ export default function ActualizarActividadPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [uploadedUrls, setUploadedUrls] = useState<ArchivoActividad[]>([]);
-  const [reemplazarFotos, setReemplazarFotos] = useState(false);
-  const [reemplazarPdfs, setReemplazarPdfs] = useState(false);
 
   // GraphQL Queries y Mutations
   const { data, loading: loadingActividad } = useQuery(OBTENER_ACTIVIDAD, {
@@ -164,36 +155,12 @@ export default function ActualizarActividadPage() {
     onCompleted: (data) => {
       if (data?.obtenerActividad) {
         const actividad = data.obtenerActividad;
-        let fechaObj: Date;
-
-        // Determinar cómo procesar la fecha según el formato recibido
-        if (typeof actividad.fecha === 'string') {
-          try {
-            // Intentar convertir la fecha del formato recibido
-            fechaObj = new Date(actividad.fecha);
-          } catch (e) {
-            console.error("Error al parsear fecha string:", e);
-            fechaObj = new Date(); // Usar fecha actual como fallback
-          }
-        } else if (typeof actividad.fecha === 'number') {
-          try {
-            // Si es un timestamp (número)
-            fechaObj = new Date(actividad.fecha);
-          } catch (e) {
-            console.error("Error al parsear fecha number:", e);
-            fechaObj = new Date(); // Usar fecha actual como fallback
-          }
-        } else {
-          // Fallback a fecha actual
-          console.error("Formato de fecha no reconocido:", actividad.fecha);
-          fechaObj = new Date();
-        }
 
         // Formatear fecha para el input (YYYY-MM-DD)
-        const year = fechaObj.getFullYear();
-        const month = String(fechaObj.getMonth() + 1).padStart(2, '0');
-        const day = String(fechaObj.getDate()).padStart(2, '0');
-        const fechaFormateada = `${year}-${month}-${day}`;
+        const fechaOriginal = formatearFecha(actividad.fecha); // Ejemplo: "17/03/2025"
+        (fechaOriginal)
+        const partes = fechaOriginal.split('/');
+        const fechaFormateada = `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
 
         // Convertir URLs a objetos de archivo con tipo
         const archivosExistentes: ArchivoActividad[] = [];
@@ -238,6 +205,12 @@ export default function ActualizarActividadPage() {
   const [actualizarActividad] = useMutation(ACTUALIZAR_ACTIVIDAD, {
     refetchQueries: ["ObtenerActividades"],
     onCompleted: () => {
+      toast.success(`¡Tarea "${formData.nombre}" actualizada correctamente!`, {
+        duration: 4000,
+        position: 'top-center',
+        icon: '✅'
+      });
+
       router.back();
     },
     onError: (error) => {
@@ -328,9 +301,6 @@ export default function ActualizarActividadPage() {
       "¿Estás seguro de que deseas eliminar todas las fotos e imágenes existentes?",
     );
     if (confirmar) {
-      setReemplazarFotos(true);
-      setReemplazarPdfs(true);
-
       // Limpiar todos los archivos
       setUploadedUrls([]);
 
@@ -494,7 +464,7 @@ export default function ActualizarActividadPage() {
   };
 
   // Componente mejorado para renderizar diferentes tipos de archivos incluyendo octet-stream
-  const renderizarArchivo = (archivo : { tipo: string, url: string, nombre: string}, index : number, onRemove : any) => {
+  const renderizarArchivo = (archivo: { tipo: string, url: string, nombre: string }, index: number, onRemove: any) => {
     // Determinar si es SVG basado en múltiples condiciones
     const esSVG =
       archivo.tipo === 'image/svg+xml' ||
@@ -539,7 +509,7 @@ export default function ActualizarActividadPage() {
             src={urlCompleta}
             alt={`Archivo ${index + 1}: ${archivo.nombre}`}
             className={`w-full h-full ${esSVG ? 'object-contain p-2' : 'object-cover'} rounded-t-lg`}
-            onError={(e : any) => {
+            onError={(e: any) => {
               console.error(`Error al cargar imagen: ${archivo.url}`);
               e.target.src = '/placeholder-image.png'; // Imagen de reemplazo si falla
               e.target.className = 'w-full h-full object-contain p-2 rounded-t-lg opacity-50';
@@ -726,6 +696,19 @@ export default function ActualizarActividadPage() {
                 maxFiles={maxRemainingImages}
               />
             )}
+          </div>
+
+          {/* Botón para reemplazar todos los archivos */}
+          <div className="mt-4">
+            <Button
+              color="danger"
+              variant="light"
+              onPress={toggleReemplazarFotos}
+              isDisabled={uploadedUrls.length === 0}
+              className="w-full"
+            >
+              Eliminar todos los archivos
+            </Button>
           </div>
         </div>
 
