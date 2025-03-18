@@ -2,7 +2,8 @@
 import { createContext, useReducer, useContext, useEffect } from "react";
 import { useQuery } from "@apollo/client";
 import { OBTENER_TAREAS_ESTUDIANTE } from "@/app/graphql/queries/obtenerTareasEstudiante";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
+import { Toaster } from "react-hot-toast";
 
 // 🔹 1. Definir el tipo de usuario
 interface Usuario {
@@ -261,6 +262,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Agrupar tareas por días restantes
       const tareasPorDia: Record<string, Tarea[]> = {};
 
+
       tareasProntoVencer.forEach(tarea => {
         try {
           const fechaEntregaDate = getDateFromInputFixed(tarea.fechaEntrega);
@@ -284,9 +286,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       });
 
+      console.log(tareasPorDia)
+
       // Mostrar notificación por cada grupo de días
       Object.keys(tareasPorDia).forEach(dias => {
         const tareas = tareasPorDia[dias];
+
         toast.warning(
           <div>
             <strong>
@@ -304,22 +309,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         );
       });
     }
+
+    console.log(tareasPendientes, tareas, tareasProntoVencer)
   }, [tareasData, isEstudiante]);
 
-return (
-  <AuthContext.Provider
-    value={{
-      usuario: state.usuario,
-      login: (user) => dispatch({ type: "LOGIN", payload: user }),
-      logout: () => dispatch({ type: "LOGOUT" }),
-      actualizarUsuario: (datosActualizados) =>
-        dispatch({ type: "ACTUALIZAR_USUARIO", payload: datosActualizados }),
-    }}
-  >
-    {children}
-  </AuthContext.Provider>
-);
-}
 
+  return (
+    <>
+      <AuthContext.Provider
+        value={{
+          usuario: state.usuario,
+          login: (user) => dispatch({ type: "LOGIN", payload: user }),
+          logout: () => dispatch({ type: "LOGOUT" }),
+          actualizarUsuario: (datosActualizados) =>
+            dispatch({ type: "ACTUALIZAR_USUARIO", payload: datosActualizados }),
+        }}
+      >
+        {children}
+      </AuthContext.Provider>
+      <Toaster position="top-right" />
+
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
+    </>
+  );
+}
 // 🔹 6. Hook para usar el contexto en cualquier parte de la app
 export const useAuth = () => useContext(AuthContext);
