@@ -232,7 +232,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     if (tareasHoy.length > 0) {
-      toast.info(
+      toast.error(
         <div>
           <strong>¡Tienes {tareasHoy.length} {tareasHoy.length === 1 ? 'tarea' : 'tareas'} para entregar HOY!</strong>
           <ul className="mt-2 list-disc pl-4">
@@ -286,13 +286,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       });
 
-      console.log(tareasPorDia)
-
       // Mostrar notificación por cada grupo de días
       Object.keys(tareasPorDia).forEach(dias => {
         const tareas = tareasPorDia[dias];
 
-        toast.warning(
+        toast.info(
           <div>
             <strong>
               Tienes {tareas.length} {tareas.length === 1 ? 'tarea' : 'tareas'} para entregar en {dias} {dias === '1' ? 'día' : 'días'}
@@ -309,8 +307,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         );
       });
     }
-
-    console.log(tareasPendientes, tareas, tareasProntoVencer)
   }, [tareasData, isEstudiante]);
 
 

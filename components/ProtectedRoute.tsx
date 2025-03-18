@@ -95,7 +95,7 @@ export default function ProtectedRoute({
     } finally {
       setIsLoading(false);
     }
-  }, [router, logout, verifyToken]);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;

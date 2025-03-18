@@ -222,9 +222,6 @@ export default function TareasPage() {
         const tareaFechaObj = new Date(timestamp);
         tareaFechaObj.setHours(0, 0, 0, 0);
         
-        console.log("tareaFechaObj convertida:", tareaFechaObj);
-        console.log("fechaObj:", fechaObj);
-        
         // Compara año, mes y día para evitar problemas con zonas horarias
         return tareaFechaObj.getFullYear() === fechaObj.getFullYear() &&
                tareaFechaObj.getMonth() === fechaObj.getMonth() &&
