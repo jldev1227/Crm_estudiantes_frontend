@@ -80,7 +80,7 @@ export default function Page() {
                     <Button
                       color="primary"
                       onPress={() =>
-                        route.push(`/estudiante/actividades?area=${area.id}`)
+                        route.push(`/estudiante/materias/actividades?area=${area.id}`)
                       }
                     >
                       <svg
@@ -158,7 +158,7 @@ export default function Page() {
                   </Button>
                   <Button
                     onPress={() =>
-                      route.push(`/estudiante/actividades?area=${area.id}`)
+                      route.push(`/estudiante/materias/actividades?area=${area.id}`)
                     }
                     color="primary"
                     className="flex items-center gap-2"

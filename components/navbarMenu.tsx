@@ -58,7 +58,7 @@ export default function SideMenu() {
       href: "/estudiante/materias",
     },
     {
-      label: "Actividades",
+      label: "Actividades diarias",
       href: "/estudiante/actividades",
     },
     {

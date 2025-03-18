@@ -2,12 +2,12 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@apollo/client";
-import { useAuth } from "../../context/AuthContext";
+import { useAuth } from "../../../context/AuthContext";
 import { OBTENER_AREAS_POR_GRADO } from "@/app/graphql/queries/obtenerAreasPorGrado";
 import { formatearFecha } from "@/helpers/formatearFecha";
 import { OBTENER_ACTIVIDADES_ESTUDIANTE } from "@/app/graphql/queries/obtenerActividadesEstudiante";
 import PDFThumbnail from "@/components/PDFThumbnail";
-import { convertirA12Horas } from "@/helpers/convertirA12Horas";
+import { OBTENER_ACTIVIDADES_ESTUDIANTE_GENERAL } from "@/app/graphql/queries/obtenerActividadesEstudiante copy";
 import { formatearFechaCompleta } from "@/helpers/formatearFechaCompleta";
 
 // Definir los tipos
@@ -20,7 +20,6 @@ interface Actividad {
   id: string;
   nombre: string;
   fecha: string;
-  hora: string;
   descripcion: string;
   fotos: string[];
   pdfs: string[];
@@ -99,8 +98,12 @@ function normalizarTexto(texto: string): string {
 }
 
 export default function ActividadesPage() {
-  const [areaId, setAreaId] = useState("");
+  const searchParams = useSearchParams();
+  const initialAreaId = searchParams.get("area");
+
+  const [areaId, setAreaId] = useState(initialAreaId || "");
   const [busqueda, setBusqueda] = useState("");
+  const [fechaFiltro, setFechaFiltro] = useState("");
   const { usuario } = useAuth();
 
   // Estado para el modal
@@ -170,7 +173,7 @@ export default function ActividadesPage() {
     data: actividadesData,
     loading: actividadesLoading,
     error: actividadesError,
-  } = useQuery(OBTENER_ACTIVIDADES_ESTUDIANTE, {
+  } = useQuery(OBTENER_ACTIVIDADES_ESTUDIANTE_GENERAL, {
     variables: {
       areaId: areaId || null,
       gradoId: usuario?.grado_id,
@@ -185,9 +188,9 @@ export default function ActividadesPage() {
 
   // Aplicar filtros cuando cambian los datos o los criterios de filtrado
   useEffect(() => {
-    if (!actividadesData?.obtenerActividadesEstudiante) return;
+    if (!actividadesData?.obtenerActividadesEstudianteGeneral) return;
 
-    let filtradas = [...actividadesData.obtenerActividadesEstudiante];
+    let filtradas = [...actividadesData.obtenerActividadesEstudianteGeneral];
 
     // Filtrar por área
     if (areaId) {
@@ -207,8 +210,26 @@ export default function ActividadesPage() {
       });
     }
 
+    if (fechaFiltro) {
+      const fechaObj = new Date(fechaFiltro);
+      fechaObj.setHours(0, 0, 0, 0);
+
+      filtradas = filtradas.filter((actividad) => {
+        // Convertir el string de timestamp a número
+        const timestamp = Number(actividad.fecha);
+        const actividadFechaObj = new Date(timestamp);
+        actividadFechaObj.setHours(0, 0, 0, 0);
+
+        // Compara año, mes y día para evitar problemas con zonas horarias
+        return actividadFechaObj.getFullYear() === fechaObj.getFullYear() &&
+          actividadFechaObj.getMonth() === fechaObj.getMonth() &&
+          actividadFechaObj.getDate() === fechaObj.getDate();
+      });
+    }
+
+
     setActividadesFiltradas(filtradas);
-  }, [busqueda, areaId, actividadesData]);
+  }, [busqueda, fechaFiltro, areaId, actividadesData]);
 
   // Manejar cambio de área
   const handleAreaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -283,6 +304,22 @@ export default function ActividadesPage() {
               placeholder="Buscar actividades..."
             />
           </div>
+
+          <div>
+            <label
+              htmlFor="fecha"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Fecha
+            </label>
+            <input
+              type="date"
+              id="fecha"
+              value={fechaFiltro}
+              onChange={(e) => setFechaFiltro(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-md"
+            />
+          </div>
         </div>
       </div>
 
@@ -305,7 +342,7 @@ export default function ActividadesPage() {
                       {actividad.nombre}
                     </h2>
                     <p className="text-sm text-gray-500 mt-1">
-                      {formatearFechaCompleta(formatearFecha(actividad.fecha))}{" "}<span>{convertirA12Horas(actividad.hora)}</span>
+                      {formatearFechaCompleta(formatearFecha(actividad.fecha))}
                     </p>
                     <p className="text-sm font-medium text-green-600 mt-1">
                       {actividad.area?.nombre}
