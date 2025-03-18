@@ -7,6 +7,7 @@ import { OBTENER_AREAS_POR_GRADO } from "@/app/graphql/queries/obtenerAreasPorGr
 import { formatearFecha } from "@/helpers/formatearFecha";
 import { OBTENER_TAREAS_ESTUDIANTE } from "@/app/graphql/queries/obtenerTareasEstudiante";
 import PDFThumbnail from "@/components/PDFThumbnail";
+import formatearFechaParaInput from "@/helpers/formatearFechaParaInput";
 
 // Definir los tipos
 interface Area {
@@ -214,14 +215,22 @@ export default function TareasPage() {
     if (fechaFiltro) {
       const fechaObj = new Date(fechaFiltro);
       fechaObj.setHours(0, 0, 0, 0);
-
+    
       filtradas = filtradas.filter((tarea) => {
-        const tareaFecha = new Date(tarea.fechaEntrega);
-        tareaFecha.setHours(0, 0, 0, 0);
-        return tareaFecha.getTime() === fechaObj.getTime();
+        // Convertir el string de timestamp a número
+        const timestamp = Number(tarea.fechaEntrega);
+        const tareaFechaObj = new Date(timestamp);
+        tareaFechaObj.setHours(0, 0, 0, 0);
+        
+        console.log("tareaFechaObj convertida:", tareaFechaObj);
+        console.log("fechaObj:", fechaObj);
+        
+        // Compara año, mes y día para evitar problemas con zonas horarias
+        return tareaFechaObj.getFullYear() === fechaObj.getFullYear() &&
+               tareaFechaObj.getMonth() === fechaObj.getMonth() &&
+               tareaFechaObj.getDate() === fechaObj.getDate();
       });
     }
-
     setTareasFiltradas(filtradas);
   }, [busqueda, fechaFiltro, areaId, tareasData]);
 
