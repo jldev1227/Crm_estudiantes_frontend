@@ -269,29 +269,7 @@ export default function ActualizarActividadPage() {
       newUrls.splice(index, 1);
       return newUrls;
     });
-
-    setFormData(prev => {
-      // Eliminar de la lista general de archivos
-      const nuevosFotos = prev.fotos.filter((_, i) => i !== index);
-
-      // También eliminar de fotosNuevas o pdfsNuevos si es un archivo nuevo
-      let nuevasFotosNuevas = [...(prev.fotosNuevas || [])];
-      let nuevosPdfsNuevos = [...(prev.pdfsNuevos || [])];
-
-      if (archivoAEliminar.tipo === 'application/pdf') {
-        nuevosPdfsNuevos = nuevosPdfsNuevos.filter(a => a.url !== archivoAEliminar.url);
-      } else {
-        nuevasFotosNuevas = nuevasFotosNuevas.filter(a => a.url !== archivoAEliminar.url);
-      }
-
-      return {
-        ...prev,
-        fotos: nuevosFotos,
-        fotosNuevas: nuevasFotosNuevas,
-        pdfsNuevos: nuevosPdfsNuevos
-      };
-    });
-
+    
     // Limpiar advertencia si se elimina un archivo
     setError("");
   }, [uploadedUrls]);
@@ -319,11 +297,26 @@ export default function ActualizarActividadPage() {
     // Validación básica
     if (!formData.nombre.trim()) {
       setError("El nombre de la actividad es obligatorio");
+      toast.error("El nombre de la actividad es obligatorio");
       return;
     }
 
     if (!formData.descripcion.trim()) {
       setError("La descripción es obligatoria");
+      toast.error("La descripción es obligatoria");
+      return;
+    }
+
+
+    if (!formData.hora) {
+      setError("La hora es obligatoria");
+      toast.error("La hora es obligatoria");
+
+      return;
+    }
+
+    if (uploadedUrls.length === 0) {
+      setError("Debes subir al menos un archivo");
       return;
     }
 

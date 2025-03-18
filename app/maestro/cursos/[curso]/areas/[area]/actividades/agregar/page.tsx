@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 import { Textarea } from "@heroui/input";
@@ -34,6 +34,7 @@ export default function Page() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [uploadedFiles, setUploadedFiles] = useState<{ url: string; tipo: string; nombre: string }[]>([]);
+  const [resetDropzone, setResetDropzone] = useState(false);
 
   // Estado del formulario
   const [formData, setFormData] = useState<FormData>({
@@ -81,27 +82,34 @@ export default function Page() {
   };
 
   // Esta función recibe las URLs, tipos y nombres de los archivos después de subirse
-  const handleFileUpload = (urls: string[], fileTypes: string[], fileNames: string[]) => {
+  const handleFileUpload = useCallback((urls: string[], fileTypes: string[], fileNames: string[]) => {
     const files = urls.map((url, index) => ({
       url,
       tipo: fileTypes[index],
       nombre: fileNames[index]
     }));
 
-    setUploadedFiles(files);
-    setFormData((prev) => ({ ...prev, archivos: files }));
+    // Añadir los nuevos archivos a los existentes
+    const newFiles = [...uploadedFiles, ...files];
+    setUploadedFiles(newFiles);
+    setFormData((prev) => ({ ...prev, archivos: newFiles }));
 
     // Mostrar advertencia si solo hay PDFs
-    const soloTienePdfs = files.length > 0 && files.every(file => file.tipo === 'application/pdf');
+    const soloTienePdfs = newFiles.length > 0 && newFiles.every(file => file.tipo === 'application/pdf');
     if (soloTienePdfs) {
       setError("Advertencia: Has subido solo PDFs. Para una mejor experiencia, te recomendamos incluir al menos una imagen.");
     } else {
       setError("");
     }
-  };
+
+    // Restablecer el estado de reseteo para futuras operaciones
+    if (resetDropzone) {
+      setResetDropzone(false);
+    }
+  }, [uploadedFiles, resetDropzone]);
 
   // Eliminar un archivo específico
-  const removeFile = (index: number) => {
+  const removeFile = useCallback((index: number) => {
     const newFiles = [...uploadedFiles];
     newFiles.splice(index, 1);
     setUploadedFiles(newFiles);
@@ -114,22 +122,35 @@ export default function Page() {
     } else {
       setError("");
     }
-  };
+
+    // Al eliminar un archivo, no es necesario resetear el dropzone, 
+    // ya que el componente detectará el espacio disponible mediante la prop filesCount
+  }, [uploadedFiles]);
 
   const handleSubmit = async () => {
     // Validación básica
     if (!formData.nombre.trim()) {
       setError("El nombre de la actividad es obligatorio");
+      toast.error("El nombre de la actividad es obligatorio");
       return;
     }
 
     if (!formData.descripcion.trim()) {
       setError("La descripción es obligatoria");
+      toast.error("La descripción es obligatoria");
+      return;
+    }
+
+
+    if (!formData.hora) {
+      setError("La hora es obligatoria");
+      toast.error("La hora es obligatoria");
       return;
     }
 
     if (uploadedFiles.length === 0) {
       setError("Debes subir al menos un archivo");
+      toast.error("Debes subir al menos un archivo");
       return;
     }
 
@@ -267,8 +288,12 @@ export default function Page() {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Archivos de la actividad
               </label>
-              <DropzoneActividad onFileUpload={handleFileUpload} />
-              <p className="text-xs text-gray-500 mt-1">
+              <DropzoneActividad
+                onFileUpload={handleFileUpload}
+                maxFiles={10}
+                filesCount={uploadedFiles.length}
+                resetFiles={resetDropzone}
+              />              <p className="text-xs text-gray-500 mt-1">
                 Puedes subir imágenes y PDFs. Ambos tipos aparecerán en la actividad.
               </p>
             </div>

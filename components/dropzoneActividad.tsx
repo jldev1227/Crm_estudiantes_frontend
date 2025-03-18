@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useEffect } from "react";
 import { useDropzone } from "react-dropzone";
 import { Card, CardBody } from "@heroui/card";
 import { Spinner } from "@heroui/spinner";
@@ -7,15 +7,26 @@ import { Spinner } from "@heroui/spinner";
 interface DropzoneActividadProps {
   onFileUpload: (urls: string[], fileTypes: string[], fileNames: string[]) => void;
   maxFiles?: number;
+  filesCount?: number; // Contador de archivos ya subidos
+  resetFiles?: boolean; // Prop para indicar si debe restablecer los archivos
 }
 
 const DropzoneActividad: React.FC<DropzoneActividadProps> = ({
   onFileUpload,
   maxFiles = 10,
+  filesCount = 0, // Por defecto asumimos que no hay archivos
+  resetFiles = false,
 }) => {
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
+
+  // Efecto para restablecer los archivos cuando resetFiles cambia a true
+  useEffect(() => {
+    if (resetFiles) {
+      setFiles([]);
+    }
+  }, [resetFiles]);
 
   // Esta función se ejecuta cuando se seleccionan archivos
   const onDrop = useCallback(
@@ -29,26 +40,34 @@ const DropzoneActividad: React.FC<DropzoneActividadProps> = ({
 
       if (validFiles.length !== acceptedFiles.length) {
         setUploadError(
-          "Algunos archivos fueron rechazados. Solo se permiten imágenes y PDFs de hasta 5MB.",
+          "Algunos archivos fueron rechazados. Solo se permiten imágenes y PDFs de hasta 5MB."
         );
       }
 
-      // Actualizar la lista de archivos
-      const newFiles = [...files, ...validFiles].slice(0, maxFiles);
-      setFiles(newFiles);
+      // Calcular cuántos archivos nuevos podemos añadir sin sobrepasar el límite
+      const spaceLeft = maxFiles - filesCount;
+      
+      // Actualizar la lista de archivos, considerando el límite
+      const newFiles = validFiles.slice(0, spaceLeft);
+      
+      if (newFiles.length === 0) {
+        setUploadError("Has alcanzado el límite máximo de archivos.");
+        return;
+      }
+      
+      setFiles(prevFiles => [...prevFiles, ...newFiles]);
 
       try {
         setUploading(true);
         setUploadError("");
 
-        // Simular la subida de archivos y obtener URLs
+        // Procesar archivos nuevos para obtener URLs, tipos y nombres
         const urlsAndData = await Promise.all(
           newFiles.map(
             (file) =>
-              new Promise<{url: string, type: string, name: string}>((resolve) => {
+              new Promise<{ url: string, type: string, name: string }>((resolve) => {
                 const reader = new FileReader();
                 reader.onloadend = () => {
-                  // En producción, aquí recibirías la URL del servidor después de subir el archivo
                   resolve({
                     url: reader.result as string,
                     type: file.type,
@@ -56,28 +75,29 @@ const DropzoneActividad: React.FC<DropzoneActividadProps> = ({
                   });
                 };
                 reader.readAsDataURL(file);
-              }),
-          ),
+              })
+          )
         );
 
-        // Separar URLs, tipos y nombres de archivo para pasar al componente padre
+        // Separar URLs, tipos y nombres para pasar al componente padre
         const urls = urlsAndData.map(item => item.url);
         const fileTypes = urlsAndData.map(item => item.type);
         const fileNames = urlsAndData.map(item => item.name);
 
-        // Notificar al componente padre sobre las URLs generadas, tipos y nombres de archivo
+        // Notificar al componente padre
         onFileUpload(urls, fileTypes, fileNames);
         setUploading(false);
       } catch (error) {
-        console.error("Error al subir los archivos:", error);
-        setUploadError(
-          "Error al subir los archivos. Por favor, inténtalo de nuevo.",
-        );
+        console.error("Error al procesar los archivos:", error);
+        setUploadError("Error al procesar los archivos. Por favor, inténtalo de nuevo.");
         setUploading(false);
       }
     },
-    [files, maxFiles, onFileUpload],
+    [filesCount, maxFiles, onFileUpload]
   );
+
+  // Calcular el número máximo de archivos que se pueden añadir
+  const remainingFiles = maxFiles - filesCount;
 
   // Configuración del dropzone
   const { getRootProps, getInputProps, isDragActive, isDragReject } =
@@ -87,8 +107,9 @@ const DropzoneActividad: React.FC<DropzoneActividadProps> = ({
         "image/*": [".jpg", ".jpeg", ".png", ".gif"],
         "application/pdf": [".pdf"]
       },
-      maxFiles,
-      maxSize: 5 * 1024 * 1024, // 5MB
+      maxFiles: remainingFiles > 0 ? remainingFiles : 1,
+      maxSize: 10 * 1024 * 1024, // 10MB
+      disabled: remainingFiles <= 0
     });
 
   return (
@@ -98,11 +119,13 @@ const DropzoneActividad: React.FC<DropzoneActividadProps> = ({
           <div
             {...getRootProps()}
             className={`p-6 border-2 border-dashed rounded-lg text-center cursor-pointer transition-colors ${
-              isDragActive
-                ? "border-blue-400 bg-blue-50"
-                : isDragReject
-                  ? "border-red-400 bg-red-50"
-                  : "border-gray-300 hover:border-blue-400 hover:bg-blue-50"
+              remainingFiles <= 0
+                ? "border-gray-200 bg-gray-100 opacity-60 cursor-not-allowed"
+                : isDragActive
+                  ? "border-blue-400 bg-blue-50"
+                  : isDragReject
+                    ? "border-red-400 bg-red-50"
+                    : "border-gray-300 hover:border-blue-400 hover:bg-blue-50"
             }`}
           >
             <input {...getInputProps()} />
@@ -125,14 +148,24 @@ const DropzoneActividad: React.FC<DropzoneActividadProps> = ({
                       d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
                     />
                   </svg>
-                  <p className="text-gray-600">
-                    {isDragActive
-                      ? "Suelta las imágenes o PDFs aquí..."
-                      : "Arrastra y suelta imágenes o PDFs aquí, o haz clic para seleccionar"}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Sube hasta {maxFiles} archivos (imágenes o PDFs, máximo 5MB cada uno)
-                  </p>
+                  {remainingFiles <= 0 ? (
+                    <p className="text-gray-500">
+                      Has alcanzado el límite máximo de {maxFiles} archivos
+                    </p>
+                  ) : isDragActive ? (
+                    <p className="text-gray-600">
+                      Suelta las imágenes o PDFs aquí...
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-gray-600">
+                        Arrastra y suelta imágenes o PDFs aquí, o haz clic para seleccionar
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Puedes subir {remainingFiles} archivo(s) más (imágenes o PDFs, máximo 5MB cada uno)
+                      </p>
+                    </>
+                  )}
                 </>
               )}
             </div>
