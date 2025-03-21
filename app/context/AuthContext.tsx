@@ -213,7 +213,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const diferenciaDias = Math.floor(diferenciaMilisegundos / (1000 * 60 * 60 * 24));
 
         // Incluir tareas que vencen hoy o en los próximos 3 días y no estén entregadas
-        return diferenciaDias >= 0 && diferenciaDias <= 3 && tarea.estado !== "ENTREGADA";
+        return diferenciaDias >= 0 && tarea.estado !== "ENTREGADA";
       } catch (error) {
         console.error("Error al procesar fecha de tarea:", error);
         return false;

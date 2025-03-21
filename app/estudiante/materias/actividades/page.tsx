@@ -260,7 +260,7 @@ export default function ActividadesPage() {
   return (
     <div className="container mx-auto">
       <h1 className="text-2xl md:text-3xl font-bold mb-6 text-primary">
-        Actividades diarias
+        Actividades
       </h1>
 
       {/* Filtros */}
