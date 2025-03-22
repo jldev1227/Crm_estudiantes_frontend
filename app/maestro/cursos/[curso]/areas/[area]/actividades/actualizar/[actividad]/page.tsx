@@ -207,8 +207,6 @@ export default function ActualizarActividadPage() {
     onCompleted: () => {
       toast.success(`¡Tarea "${formData.nombre}" actualizada correctamente!`, {
         duration: 4000,
-        position: 'top-center',
-        icon: '✅'
       });
 
       router.back();
@@ -312,11 +310,6 @@ export default function ActualizarActividadPage() {
       setError("La hora es obligatoria");
       toast.error("La hora es obligatoria");
 
-      return;
-    }
-
-    if (uploadedUrls.length === 0) {
-      setError("Debes subir al menos un archivo");
       return;
     }
 

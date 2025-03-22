@@ -47,8 +47,6 @@ export default function CrearTareaPage() {
       // Mostrar toast de confirmación
       toast.success(`¡Tarea "${formData.titulo}" creada con éxito!`, {
         duration: 4000,
-        position: 'top-center',
-        icon: '✅',
       });
       
       // Resetear el formulario y redirigir

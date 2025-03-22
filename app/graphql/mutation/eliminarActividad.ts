@@ -3,8 +3,6 @@ import { gql } from "@apollo/client";
 
 export const ELIMINAR_ACTIVIDAD = gql`
   mutation EliminarActividad($id: ID!) {
-    eliminarActividad(id: $id) {
-      mensaje
-    }
+    eliminarActividad(id: $id)
   }
 `;

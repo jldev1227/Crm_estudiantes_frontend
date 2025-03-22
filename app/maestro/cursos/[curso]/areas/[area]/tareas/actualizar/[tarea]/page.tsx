@@ -228,8 +228,6 @@ export default function ActualizarTareaPage() {
       // Mostrar toast de éxito
       toast.success(`¡Tarea "${formData.nombre}" actualizada correctamente!`, {
         duration: 4000,
-        position: 'top-center',
-        icon: '✅'
       });
       router.back();
     },
