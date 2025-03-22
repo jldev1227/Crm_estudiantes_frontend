@@ -52,8 +52,6 @@ export default function Page() {
       // Resetear el formulario y cerrar el modal al completar
       toast.success(`Actividad "${formData.nombre}" creada con éxito!`, {
         duration: 4000,
-        position: 'top-center',
-        icon: '✅',
       });
 
       setFormData({
@@ -148,11 +146,6 @@ export default function Page() {
       return;
     }
 
-    if (uploadedFiles.length === 0) {
-      setError("Debes subir al menos un archivo");
-      toast.error("Debes subir al menos un archivo");
-      return;
-    }
 
     setLoading(true);
     setError("");
