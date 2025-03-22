@@ -138,12 +138,6 @@ export default function CrearTareaPage() {
       return;
     }
   
-    if (uploadedFiles.length === 0) {
-      setError("Debes subir al menos un archivo");
-      toast.error("Debes subir al menos un archivo");
-      return;
-    }
-  
     setLoading(true);
     setError("");
   
