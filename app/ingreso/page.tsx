@@ -97,24 +97,6 @@ export default function Page() {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const storedUser = localStorage.getItem("usuario");
-
-    if (!token || !storedUser) return; // Si no hay token o usuario, no hacer nada
-
-    try {
-      const usuario = JSON.parse(storedUser); // Parsear usuario si existe
-
-      if (usuario?.rol) {
-        router.push(usuario.rol === "maestro" ? "/maestro" : "/estudiante");
-      }
-    } catch (error) {
-      console.error("Error al parsear usuario:", error);
-      localStorage.removeItem("usuario"); // Remover usuario si hay error
-    }
-  }, [router]); // Agregar router como dependencia
-
-  useEffect(() => {
     if (errorEstudiante) setErrorMessage(errorEstudiante.message);
     if (errorMaestro) setErrorMessage(errorMaestro.message);
   }, [errorEstudiante, errorMaestro]);

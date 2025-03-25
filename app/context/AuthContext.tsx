@@ -4,6 +4,7 @@ import { useQuery } from "@apollo/client";
 import { OBTENER_TAREAS_ESTUDIANTE } from "@/app/graphql/queries/obtenerTareasEstudiante";
 import { toast, ToastContainer } from "react-toastify";
 import { Toaster } from "react-hot-toast";
+import { OBTENER_PERFIL_ESTUDIANTE } from "../graphql/queries/obtenerPerfilEstudiante";
 
 // 🔹 1. Definir el tipo de usuario
 interface Usuario {
@@ -14,8 +15,8 @@ interface Usuario {
   fecha_nacimiento?: Date | string;
   celular_padres?: string;
   token: string;
-  grado_id?: string;
-  grado_nombre?: string;
+  grado_id?: string
+  grado_nombre?: string
   tipo_documento?: string;
   email?: string;
   celular?: string;
@@ -67,8 +68,11 @@ type AuthAction =
 const authReducer = (state: AuthState, action: AuthAction): AuthState => {
   switch (action.type) {
     case "LOGIN":
-      localStorage.setItem("token", action.payload.token);
-      localStorage.setItem("usuario", JSON.stringify(action.payload));
+      if(action.payload.token){
+        localStorage.setItem("token", action.payload.token);
+      }else {
+        localStorage.setItem("usuario", JSON.stringify(action.payload));
+      }
       return { ...state, usuario: action.payload };
     case "LOGOUT":
       localStorage.removeItem("token");
@@ -162,13 +166,17 @@ const formatToYYYYMMDD = (date: Date): string => {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
-  // Cargar usuario desde localStorage al iniciar
+
+  const { data } = useQuery(OBTENER_PERFIL_ESTUDIANTE, {
+    fetchPolicy: "network-only"
+  });
+
   useEffect(() => {
-    const storedUser = localStorage.getItem("usuario");
-    if (storedUser) {
-      dispatch({ type: "LOGIN", payload: JSON.parse(storedUser) });
+    if (data?.obtenerPerfilEstudiante) {
+      const usuario = data.obtenerPerfilEstudiante as Usuario;
+      dispatch({ type: "LOGIN", payload: {...usuario, grado_id: data.obtenerPerfilEstudiante.grado.id, grado_nombre: data.obtenerPerfilEstudiante.grado.nombre} });
     }
-  }, []);
+  }, [data]);
 
   // Verificar si el usuario es un estudiante
   const isEstudiante = state.usuario?.rol === "estudiante";
