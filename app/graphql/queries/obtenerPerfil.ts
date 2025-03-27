@@ -1,9 +1,10 @@
 import { gql } from "@apollo/client";
 
 // Consulta para obtener el perfil del estudiante
-export const OBTENER_PERFIL_ESTUDIANTE = gql`
-  query ObtenerPerfilEstudiante {
-    obtenerPerfilEstudiante {
+export const OBTENER_PERFIL = gql`
+  query ObtenerPerfil {
+  obtenerPerfil {
+    ... on Estudiante {
       id
       tipo_documento
       numero_identificacion
@@ -15,5 +16,14 @@ export const OBTENER_PERFIL_ESTUDIANTE = gql`
         nombre
       }
     }
+    ... on Maestro {
+      id
+      tipo_documento
+      numero_identificacion
+      nombre_completo
+      email
+      celular
+    }
   }
+}
 `;

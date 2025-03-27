@@ -4,7 +4,7 @@ import { useQuery } from "@apollo/client";
 import { OBTENER_TAREAS_ESTUDIANTE } from "@/app/graphql/queries/obtenerTareasEstudiante";
 import { toast, ToastContainer } from "react-toastify";
 import { Toaster } from "react-hot-toast";
-import { OBTENER_PERFIL_ESTUDIANTE } from "../graphql/queries/obtenerPerfilEstudiante";
+import { OBTENER_PERFIL } from "../graphql/queries/obtenerPerfil";
 
 // 🔹 1. Definir el tipo de usuario
 interface Usuario {
@@ -67,12 +67,12 @@ type AuthAction =
 // 🔹 4. Reducer para manejar el estado de autenticación
 const authReducer = (state: AuthState, action: AuthAction): AuthState => {
   switch (action.type) {
+
     case "LOGIN":
       if(action.payload.token){
         localStorage.setItem("token", action.payload.token);
-      }else {
-        localStorage.setItem("usuario", JSON.stringify(action.payload));
       }
+      localStorage.setItem("usuario", JSON.stringify(action.payload));
       return { ...state, usuario: action.payload };
     case "LOGOUT":
       localStorage.removeItem("token");
@@ -167,14 +167,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
 
-  const { data } = useQuery(OBTENER_PERFIL_ESTUDIANTE, {
+  const { data } = useQuery(OBTENER_PERFIL, {
     fetchPolicy: "network-only"
   });
 
   useEffect(() => {
-    if (data?.obtenerPerfilEstudiante) {
-      const usuario = data.obtenerPerfilEstudiante as Usuario;
-      dispatch({ type: "LOGIN", payload: {...usuario, grado_id: data.obtenerPerfilEstudiante.grado.id, grado_nombre: data.obtenerPerfilEstudiante.grado.nombre} });
+    if (data?.obtenerPerfil) {
+      console.log(data);
+      
+      const usuario = data.obtenerPerfil;
+      
+      // Determinar el tipo basado en campos específicos
+      if (usuario.grado) {
+        // Es un Estudiante
+        dispatch({ 
+          type: "LOGIN", 
+          payload: {
+            ...usuario,
+            grado_id: usuario.grado.id,
+            grado_nombre: usuario.grado.nombre,
+            rol: "estudiante"
+          } 
+        });
+      } else {
+        // Es un Maestro
+        dispatch({ 
+          type: "LOGIN", 
+          payload: {
+            ...usuario,
+            rol: "maestro"
+          } 
+        });
+      }
     }
   }, [data]);
 
