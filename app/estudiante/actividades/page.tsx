@@ -207,7 +207,25 @@ export default function ActividadesPage() {
       });
     }
 
-    setActividadesFiltradas(filtradas);
+    setActividadesFiltradas(filtradas.sort((a, b) => {
+      // Primero ordenar por fecha (timestamp)
+      const fechaA = parseInt(a.fecha);
+      const fechaB = parseInt(b.fecha);
+      
+      if (fechaA !== fechaB) {
+        return fechaB - fechaA; // Orden ascendente por fecha
+      }
+      
+      // Si las fechas son iguales, ordenar por hora y minuto
+      const [horasA, minutosA] = a.hora.split(':').map(Number);
+      const [horasB, minutosB] = b.hora.split(':').map(Number);
+      
+      // Convertir a minutos totales para facilitar la comparación
+      const minutostotalesA = horasA * 60 + minutosA;
+      const minutostotalesB = horasB * 60 + minutosB;
+      
+      return minutostotalesB - minutostotalesA; // Orden ascendente por hora
+    }));
   }, [busqueda, areaId, actividadesData]);
 
   // Manejar cambio de área
