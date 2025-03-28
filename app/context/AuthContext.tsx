@@ -173,8 +173,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (data?.obtenerPerfil) {
-      console.log(data);
-      
       const usuario = data.obtenerPerfil;
       
       // Determinar el tipo basado en campos específicos
@@ -275,7 +273,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             ))}
           </ul>
         </div>,
-        { autoClose: 8000, closeOnClick: false }
+        { autoClose: 12000, closeOnClick: false }
       );
     }
 
@@ -335,7 +333,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               ))}
             </ul>
           </div>,
-          { autoClose: 8000, closeOnClick: false }
+          { autoClose: 12000, closeOnClick: false }
         );
       });
     }
@@ -359,7 +357,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       <ToastContainer
         position="top-right"
-        autoClose={5000}
+        autoClose={12000}
         hideProgressBar={false}
         newestOnTop
         closeOnClick
@@ -367,7 +365,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         pauseOnFocusLoss
         draggable
         pauseOnHover
-        theme="light"
+        theme="colored"
       />
     </>
   );

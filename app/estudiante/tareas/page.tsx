@@ -228,7 +228,7 @@ export default function TareasPage() {
                tareaFechaObj.getDate() === fechaObj.getDate();
       });
     }
-    setTareasFiltradas(filtradas);
+    setTareasFiltradas(filtradas.sort((a, b) => Number(b.fechaEntrega) - Number(a.fechaEntrega)));
   }, [busqueda, fechaFiltro, areaId, tareasData]);
 
   // Manejar cambio de área

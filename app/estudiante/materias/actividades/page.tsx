@@ -5,10 +5,10 @@ import { useQuery } from "@apollo/client";
 import { useAuth } from "../../../context/AuthContext";
 import { OBTENER_AREAS_POR_GRADO } from "@/app/graphql/queries/obtenerAreasPorGrado";
 import { formatearFecha } from "@/helpers/formatearFecha";
-import { OBTENER_ACTIVIDADES_ESTUDIANTE } from "@/app/graphql/queries/obtenerActividadesEstudiante";
 import PDFThumbnail from "@/components/PDFThumbnail";
 import { OBTENER_ACTIVIDADES_ESTUDIANTE_GENERAL } from "@/app/graphql/queries/obtenerActividadesEstudiante copy";
 import { formatearFechaCompleta } from "@/helpers/formatearFechaCompleta";
+import { convertirA12Horas } from "@/helpers/convertirA12Horas";
 
 // Definir los tipos
 interface Area {
@@ -20,6 +20,7 @@ interface Actividad {
   id: string;
   nombre: string;
   fecha: string;
+  hora: string;
   descripcion: string;
   fotos: string[];
   pdfs: string[];
@@ -228,8 +229,25 @@ export default function ActividadesPage() {
     }
 
 
-    setActividadesFiltradas(filtradas);
-  }, [busqueda, fechaFiltro, areaId, actividadesData]);
+    setActividadesFiltradas(filtradas.sort((a, b) => {
+      // Primero ordenar por fecha (timestamp)
+      const fechaA = parseInt(a.fecha);
+      const fechaB = parseInt(b.fecha);
+      
+      if (fechaA !== fechaB) {
+        return fechaB - fechaA; // Orden ascendente por fecha
+      }
+      
+      // Si las fechas son iguales, ordenar por hora y minuto
+      const [horasA, minutosA] = a.hora.split(':').map(Number);
+      const [horasB, minutosB] = b.hora.split(':').map(Number);
+      
+      // Convertir a minutos totales para facilitar la comparación
+      const minutostotalesA = horasA * 60 + minutosA;
+      const minutostotalesB = horasB * 60 + minutosB;
+      
+      return minutostotalesB - minutostotalesA; // Orden ascendente por hora
+    }));  }, [busqueda, fechaFiltro, areaId, actividadesData]);
 
   // Manejar cambio de área
   const handleAreaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -342,7 +360,7 @@ export default function ActividadesPage() {
                       {actividad.nombre}
                     </h2>
                     <p className="text-sm text-gray-500 mt-1">
-                      {formatearFechaCompleta(formatearFecha(actividad.fecha))}
+                      {formatearFechaCompleta(formatearFecha(actividad.fecha))}{" "}<span>{convertirA12Horas(actividad.hora)}</span>
                     </p>
                     <p className="text-sm font-medium text-green-600 mt-1">
                       {actividad.area?.nombre}
