@@ -6,9 +6,6 @@ interface PDFThumbnailProps {
 }
 
 const PDFThumbnail: React.FC<PDFThumbnailProps> = ({ url, index }) => {
-  // Asegurarse de que la URL tenga el token SAS
-  const secureUrl = url.includes('?') ? url : `${url}?${process.env.NEXT_PUBLIC_AZURE_KEY || ''}`;
-  
   // Extraer un nombre más amigable del PDF
   const extractName = (url: string): string => {
     try {

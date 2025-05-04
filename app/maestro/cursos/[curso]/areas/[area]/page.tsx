@@ -6,7 +6,6 @@ import { formatearFecha } from "@/helpers/formatearFecha";
 import { Button } from "@heroui/button";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { OBTENER_CURSO } from "@/app/graphql/queries/obtenerCurso";
 import { ELIMINAR_ACTIVIDAD } from "@/app/graphql/mutation/eliminarActividad";
 import { Divider } from "@heroui/divider";
 import { OBTENER_ACTIVIDADES_POR_AREA } from "@/app/graphql/queries/obtenerActividadesPorArea";
@@ -16,6 +15,7 @@ import { ELIMINAR_TAREA } from "@/app/graphql/mutation/eliminarTarea";
 import { OBTENER_TAREAS_POR_GRADO_Y_AREA } from "@/app/graphql/queries/obtenerTareasPorArea";
 import { toast } from 'react-hot-toast';
 import { convertirA12Horas } from "@/helpers/convertirA12Horas";
+import { useMaestro } from "@/app/context/MaestroContext";
 
 // Define el tipo de los datos que obtendrás del servidor
 type CursoData = {
@@ -117,26 +117,20 @@ const ImagenModal = ({ isOpen, onClose, imagen, onPrev, onNext, contador }: {
 };
 
 export default function CursoPage() {
-
-  const abrirPDF = (pdfUrl: any) => {
-    // Si la URL ya tiene la clave de Azure, usarla directamente
-    if (pdfUrl.includes(process.env.NEXT_PUBLIC_AZURE_KEY)) {
-      window.open(pdfUrl, '_blank');
-    } else {
-      // Añadir la clave de Azure a la URL si es necesario
-      window.open(`${pdfUrl}?${process.env.NEXT_PUBLIC_AZURE_KEY}`, '_blank');
-    }
-  };
-
   const params = useParams();
   const id = params.curso as string;
   const area_id = params.area as string;
+
+  // Use the MaestroContext
+  const { obtenerCurso, curso, area } = useMaestro();
 
   // Estado para el modal
   const [modalVisible, setModalVisible] = useState(false);
   const [imagenActual, setImagenActual] = useState("");
   const [fotosGaleria, setFotosGaleria] = useState<string[]>([]);
   const [indiceImagen, setIndiceImagen] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Funciones para el modal
   const mostrarImagen = (fotos: string[], indice: number) => {
@@ -185,13 +179,25 @@ export default function CursoPage() {
     return () => window.removeEventListener('keydown', manejarTeclas);
   }, [modalVisible, indiceImagen, fotosGaleria]);
 
-  const {
-    loading: loadingCurso,
-    error: errorCurso,
-    data: cursoData,
-  } = useQuery(OBTENER_CURSO, {
-    variables: { id, area_id },
-  });
+  // Efecto para cargar datos del curso usando el contexto
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        if (id && area_id) {
+          await obtenerCurso(id, area_id);
+        }
+        setLoading(false);
+      } catch (err) {
+        setError("Error al cargar los datos del curso");
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, [id, area_id]);
 
   const {
     loading: loadingActividades,
@@ -209,7 +215,7 @@ export default function CursoPage() {
     variables: { grado_id: id, area_id },
   });
 
-  const [eliminarActividad, { loading: loadingDeleteActividad }] = useMutation(
+  const [eliminarActividad] = useMutation(
     ELIMINAR_ACTIVIDAD,
     {
       refetchQueries: ["ObtenerActividadesPorArea"],
@@ -219,7 +225,7 @@ export default function CursoPage() {
     },
   );
 
-  const [eliminarTarea, { loading: loadingDeleteTarea }] = useMutation(
+  const [eliminarTarea] = useMutation(
     ELIMINAR_TAREA,
     {
       refetchQueries: ["ObtenerTareasPorGradoYArea"],
@@ -303,21 +309,17 @@ export default function CursoPage() {
     return 'text-green-500';
   };
 
-  if (loadingCurso || loadingActividades || loadingTareas) return <div>Cargando...</div>;
+  if (loading || loadingActividades || loadingTareas) return <div>Cargando...</div>;
 
   // Manejar errores específicamente
-  if (errorCurso)
-    return <div>Error al cargar el curso: {errorCurso.message}</div>;
+  if (error) return <div>Error al cargar el curso: {error}</div>;
   if (errorActividades)
     return <div>Error al cargar las actividades: {errorActividades.message}</div>;
   if (errorTareas)
     return <div>Error al cargar las tareas: {errorTareas.message}</div>;
 
   // Verificar que los datos existan
-  if (!cursoData?.obtenerCurso)
-    return <div>No se encontró información del curso</div>;
-
-  const curso: CursoData = cursoData.obtenerCurso;
+  if (!curso) return <div>No se encontró información del curso</div>;
 
   // Asegurarse de que actividades sea siempre un array, incluso si es undefined
   const actividades: ActividadData[] =
@@ -331,12 +333,24 @@ export default function CursoPage() {
     <div className="">
       <div className="space-y-4">
         <h1 className="text-xl md:text-2xl uppercase font-bold text-blue-600">
-          Curso - {curso.nombre} {curso.area ? `/ ${curso.area.nombre}` : ""}
+          Curso - {curso.nombre} {area ? `/ ${area.nombre}` : ""}
         </h1>
         <div className="space-y-10">
           {/* Sección de estudiantes */}
           <div className="space-y-4">
-            <h2 className="text-gray-600 text-xl">Estudiantes</h2>
+            <div className="flex justify-between items-center">
+              <h2 className="text-gray-600 text-xl">Estudiantes</h2>
+              <Button
+                className="max-sm:w-full"
+                radius="sm"
+                as={Link}
+                color="primary"
+                href={`/maestro/cursos/${id}/areas/${area_id}/calificaciones`}
+                variant="solid"
+              >
+                Calificaciones
+              </Button>
+            </div>
             {/* Verificar que estudiantes exista antes de pasarlo al componente */}
             {curso.estudiantes && curso.estudiantes.length > 0 ? (
               <EstudiantesResponsive estudiantes={curso.estudiantes} />
@@ -353,6 +367,7 @@ export default function CursoPage() {
               <h2 className="text-gray-600 text-xl">Tareas asignadas</h2>
               <Button
                 className="max-sm:w-full"
+                radius="sm"
                 as={Link}
                 color="primary"
                 href={`/maestro/cursos/${id}/areas/${area_id}/tareas/agregar`}
@@ -501,6 +516,7 @@ export default function CursoPage() {
               <h2 className="text-gray-600 text-xl">Actividades recientes</h2>
               <Button
                 className="max-sm:w-full"
+                radius="sm"
                 as={Link}
                 color="primary"
                 href={`/maestro/cursos/${id}/areas/${area_id}/actividades/agregar`}
