@@ -11,6 +11,7 @@ export type Estudiante = {
   fecha_nacimiento: string;
   nombre_completo: string;
   celular_padres: string;
+  pension_activa?: boolean;
 };
 
 export type Curso = {

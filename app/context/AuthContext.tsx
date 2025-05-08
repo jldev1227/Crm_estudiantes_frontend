@@ -5,13 +5,14 @@ import { OBTENER_TAREAS_ESTUDIANTE } from "@/app/graphql/queries/obtenerTareasEs
 import { toast, ToastContainer } from "react-toastify";
 import { Toaster } from "react-hot-toast";
 import { OBTENER_PERFIL } from "../graphql/queries/obtenerPerfil";
+import { OBTENER_PERFIL_USUARIO } from "../graphql/queries/obtenerPerfilUsuario";
 
 // 🔹 1. Definir el tipo de usuario
 interface Usuario {
-  id: string;
+  id: number;
   nombre_completo: string;
   numero_identificacion: string;
-  rol: "maestro" | "estudiante";
+  rol: "maestro" | "estudiante" | "admin";
   fecha_nacimiento?: Date | string;
   celular_padres?: string;
   token: string;
@@ -20,6 +21,10 @@ interface Usuario {
   tipo_documento?: string;
   email?: string;
   celular?: string;
+  activo?: boolean;
+  ultimo_login?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // Interfaces para tareas
@@ -166,14 +171,38 @@ const formatToYYYYMMDD = (date: Date): string => {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
+  // Recuperar datos del usuario desde localStorage al iniciar
+  useEffect(() => {
+    const usuario = localStorage.getItem("usuario");
+    if (usuario) {
+      try {
+        const parsedUser = JSON.parse(usuario) as Usuario;
+        dispatch({ type: "LOGIN", payload: parsedUser });
+      } catch (error) {
+        console.error("Error parsing usuario from localStorage:", error);
+      }
+    }
+  }, []);
 
-  const { data } = useQuery(OBTENER_PERFIL, {
-    fetchPolicy: "network-only"
+  // Verificar si el usuario es un administrador
+  const isAdmin = state.usuario?.rol === "admin";
+
+  // Consulta para perfiles de estudiantes y maestros
+  const { data: perfilData } = useQuery(OBTENER_PERFIL, {
+    fetchPolicy: "network-only",
+    skip: isAdmin // Omitir esta consulta si el usuario es admin
   });
 
+  // Consulta específica para administradores
+  const { data: perfilUsuarioData } = useQuery(OBTENER_PERFIL_USUARIO, {
+    fetchPolicy: "network-only",
+    skip: !isAdmin // Solo ejecutar si el usuario es admin
+  });
+
+  // Efecto para actualizar el estado con los datos del perfil
   useEffect(() => {
-    if (data?.obtenerPerfil) {
-      const usuario = data.obtenerPerfil;
+    if (perfilData?.obtenerPerfil) {
+      const usuario = perfilData.obtenerPerfil;
       
       // Determinar el tipo basado en campos específicos
       if (usuario.grado) {
@@ -198,7 +227,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
       }
     }
-  }, [data]);
+  }, [perfilData]);
+
+  // Efecto para actualizar el estado con los datos del perfil de administrador
+  useEffect(() => {
+    if (perfilUsuarioData?.obtenerPerfilUsuario) {
+      const usuario = perfilUsuarioData.obtenerPerfilUsuario;
+
+      console.log(usuario)
+      
+      // Asegurarse de que es un administrador
+      if (usuario.rol === "admin") {
+        dispatch({ 
+          type: "LOGIN", 
+          payload: {
+            ...usuario,
+            rol: "admin"
+          } 
+        });
+      }
+    }
+  }, [perfilUsuarioData]);
 
   // Verificar si el usuario es un estudiante
   const isEstudiante = state.usuario?.rol === "estudiante";

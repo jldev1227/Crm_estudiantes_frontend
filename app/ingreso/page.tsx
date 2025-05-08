@@ -3,20 +3,27 @@
 import { useMutation } from "@apollo/client";
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
+import { Tabs, Tab } from "@heroui/tabs";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import { LOGIN_ESTUDIANTE } from "../graphql/mutation/loginEstudiante";
 import ToggleMaestroEstudiante from "@/components/toggleIngreso";
 import LoaderIngreso from "@/components/loaderIngreso";
 import { LOGIN_MAESTRO } from "../graphql/mutation/loginMaestro";
-import { useRouter } from "next/navigation";
+import { LOGIN_USUARIO } from "../graphql/mutation/loginUsuario";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
 
 export default function Page() {
+  const searchParams = useSearchParams();
+  const initialTab = searchParams.get('tab') || 'estudiante';
+  
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [numeroIdentificacion, setNumeroIdentificacion] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  const [isMaestro, setIsMaestro] = useState(false);
+  const [isMaestro, setIsMaestro] = useState(activeTab === 'maestro');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { login } = useAuth();
@@ -25,57 +32,111 @@ export default function Page() {
     setIsMaestro(value);
   };
 
-  // useMutation nos devuelve la función loginEstudiante y el estado (data, loading, error)
+  const handleTabChange = (key: React.Key) => {
+    setActiveTab(key as string);
+    
+    // Update URL params to persist tab selection
+    const params = new URLSearchParams(window.location.search);
+    params.set('tab', key as string);
+    
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    window.history.pushState({}, '', newUrl);
+    
+    // Reset form when changing tabs
+    setNumeroIdentificacion("");
+    setEmail("");
+    setPassword("");
+    setErrorMessage("");
+    
+    // Set isMaestro based on tab selection
+    setIsMaestro(key === 'maestro');
+  };
+
+  // useMutation hooks
   const [loginEstudiante, { data: dataEstudiante, error: errorEstudiante }] =
     useMutation(LOGIN_ESTUDIANTE);
   const [loginMaestro, { data: dataMaestro, error: errorMaestro }] =
     useMutation(LOGIN_MAESTRO);
+  const [loginUsuario, { data: dataUsuario, error: errorUsuario }] =
+    useMutation(LOGIN_USUARIO);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const mutation = isMaestro ? loginMaestro : loginEstudiante;
-
-      // Elimina el setTimeout, puede causar problemas
-      const { data } = await mutation({
-        variables: {
-          numero_identificacion: numeroIdentificacion,
-          password,
-        },
-      });
-
-      // Verifica la estructura de la respuesta
-      if (isMaestro && data?.loginMaestro) {
-        const { token, maestro } = data.loginMaestro;
-        login({
-          id: maestro.id,
-          nombre_completo: maestro.nombre_completo,
-          numero_identificacion: maestro.numero_identificacion,
-          rol: "maestro",
-          tipo_documento: maestro.tipo_documento,
-          celular: maestro.celular,
-          email: maestro.email,
-          token,
+      let data;
+      
+      if (activeTab === 'administrador') {
+        // Admin login with email/password
+        const result = await loginUsuario({
+          variables: {
+            email,
+            password,
+          },
         });
-        router.push("/maestro");
-      } else if (!isMaestro && data?.loginEstudiante) {
-        const { token, estudiante } = data.loginEstudiante;
-        login({
-          id: estudiante.id,
-          nombre_completo: estudiante.nombre_completo,
-          numero_identificacion: estudiante.numero_identificacion,
-          tipo_documento: estudiante.tipo_documento,
-          rol: "estudiante",
-          grado_id: estudiante.grado_id,
-          grado_nombre: estudiante.grado.nombre,
-          fecha_nacimiento: estudiante.fecha_nacimiento,
-          celular_padres: estudiante.celular_padres,
-          token,
-        });
-        router.push("/estudiante");
+        data = result.data;
+        
+        if (data?.loginUsuario) {
+          const { token, usuario } = data.loginUsuario;
+          login({
+            id: usuario.id,
+            nombre_completo: usuario.nombre_completo, // Add this
+            numero_identificacion: usuario.numero_identificacion, // Add this
+            email: usuario.email,
+            rol: usuario.rol,
+            token,
+          });
+          router.push("/admin");
+        }
       } else {
+        // Student or teacher login with ID/password
+        const mutation = isMaestro ? loginMaestro : loginEstudiante;
+        
+        const result = await mutation({
+          variables: {
+            numero_identificacion: numeroIdentificacion,
+            password,
+          },
+        });
+        data = result.data;
+        
+        // Handle student login
+        if (!isMaestro && data?.loginEstudiante) {
+          const { token, estudiante } = data.loginEstudiante;
+          login({
+            id: estudiante.id,
+            nombre_completo: estudiante.nombre_completo,
+            numero_identificacion: estudiante.numero_identificacion,
+            tipo_documento: estudiante.tipo_documento,
+            rol: "estudiante",
+            grado_id: estudiante.grado_id,
+            grado_nombre: estudiante.grado.nombre,
+            fecha_nacimiento: estudiante.fecha_nacimiento,
+            celular_padres: estudiante.celular_padres,
+            token,
+          });
+          router.push("/estudiante");
+        } 
+        // Handle teacher login
+        else if (isMaestro && data?.loginMaestro) {
+          const { token, maestro } = data.loginMaestro;
+          login({
+            id: maestro.id,
+            nombre_completo: maestro.nombre_completo,
+            numero_identificacion: maestro.numero_identificacion,
+            rol: "maestro",
+            tipo_documento: maestro.tipo_documento,
+            celular: maestro.celular,
+            email: maestro.email,
+            token,
+          });
+          router.push("/maestro");
+        }
+      }
+      
+      // If no successful login was processed
+      if (!data?.loginEstudiante && !data?.loginMaestro && !data?.loginUsuario) {
         setErrorMessage("Respuesta del servidor inesperada");
       }
     } catch (err: any) {
@@ -99,7 +160,8 @@ export default function Page() {
   useEffect(() => {
     if (errorEstudiante) setErrorMessage(errorEstudiante.message);
     if (errorMaestro) setErrorMessage(errorMaestro.message);
-  }, [errorEstudiante, errorMaestro]);
+    if (errorUsuario) setErrorMessage(errorUsuario.message);
+  }, [errorEstudiante, errorMaestro, errorUsuario]);
 
   if (loading) return <LoaderIngreso>Autenticando</LoaderIngreso>;
 
@@ -146,29 +208,43 @@ export default function Page() {
             </div>
           )}
 
-          <div className="flex gap-5 items-center justify-center">
-            <label
-              htmlFor="maestro-toggle"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Es maestro?
-            </label>
+          <Tabs 
+            selectedKey={activeTab} 
+            onSelectionChange={handleTabChange}
+            color="primary"
+            variant="underlined"
+            classNames={{
+              tabList: "gap-4 w-full relative rounded-none p-0 border-b border-divider",
+              cursor: "w-full bg-primary",
+              tab: "max-w-fit px-0 h-12"
+            }}
+          >
+            <Tab key="estudiante" title="Estudiante" />
+            <Tab key="maestro" title="Maestro" />
+            <Tab key="administrador" title="Administrador" />
+          </Tabs>
 
-            <ToggleMaestroEstudiante
-              id="maestro-toggle" // Add this ID to associate with the label
-              defaultChecked={isMaestro}
-              onChange={handleRoleChange}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Input
-              variant="bordered"
-              label="Número documento"
-              placeholder="Ingresa tu número de documento"
-              value={numeroIdentificacion}
-              onValueChange={setNumeroIdentificacion}
-            />
+          <div className="space-y-4">
+            {activeTab === 'administrador' ? (
+              // Admin form with email
+              <Input
+                variant="bordered"
+                label="Email"
+                placeholder="Ingresa tu email"
+                value={email}
+                onValueChange={setEmail}
+              />
+            ) : (
+              // Student/Teacher form with ID number
+              <Input
+                variant="bordered"
+                label="Número documento"
+                placeholder="Ingresa tu número de documento"
+                value={numeroIdentificacion}
+                onValueChange={setNumeroIdentificacion}
+              />
+            )}
+            
             <Input
               label="Contraseña"
               placeholder="Ingresa tu contraseña"
@@ -178,6 +254,7 @@ export default function Page() {
               onValueChange={setPassword}
             />
           </div>
+          
           <Button
             color="primary"
             className="h-14"

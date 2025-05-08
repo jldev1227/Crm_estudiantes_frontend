@@ -5,13 +5,15 @@ import { useAuth } from "./AuthContext";
 import { useApolloClient } from "@apollo/client";
 import { OBTENER_CURSOS } from "../graphql/queries/obtenerCursos";
 import { OBTENER_CURSO_GENERAL } from "../graphql/queries/obtenerCursoGeneral";
-import { Curso } from "@/types";
+import { Curso, Estudiante } from "@/types";
+import { ACTUALIZAR_PENSION } from "../graphql/mutation/actualizarPension";
 
 interface AdminContextType {
   cursos: Curso[];
   curso: Curso | null;
   obtenerCursos: () => void
   obtenerCurso: (id: string) => void
+  actualizarPension: (id: string) => void
 }
 
 // Estado inicial
@@ -33,6 +35,20 @@ const adminReducer = (state: any, action: any) => {
         ...state,
         curso: action.payload,
       };
+      case "ACTUALIZAR_PENSION":
+        if (!state.curso) return state;
+
+        return {
+          ...state,
+          curso: {
+            ...state.curso,
+            estudiantes: state.curso.estudiantes.map((estudiante : Estudiante) => 
+              estudiante.id === action.payload.id 
+                ? { ...estudiante, pension_activa: !estudiante.pension_activa } 
+                : estudiante
+            )
+          }
+        };
     default:
       return state;
   }
@@ -90,12 +106,31 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  // Función que ejecuta la mutation y despacha la acción para actualizar la pension del estudiante
+  const actualizarPension = async (id: string) => {
+    try {
+      const { data } = await client.mutate({
+        mutation: ACTUALIZAR_PENSION,
+        variables: { id }
+      });
+
+      console.log(data.actualizarPension);
+
+      dispatch({
+        type: "ACTUALIZAR_PENSION",
+        payload: { id: data.actualizarPension.id},
+      });
+    } catch (error) {
+      console.error("Error actualizando pensión:", error);
+    }
+  };
   // Valores del contexto
   const contextValue: AdminContextType = {
     cursos: state.cursos,
     curso: state.curso,
     obtenerCursos,
     obtenerCurso,
+    actualizarPension
   };
 
   return (
