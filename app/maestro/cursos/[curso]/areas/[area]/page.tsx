@@ -338,7 +338,7 @@ export default function CursoPage() {
         <div className="space-y-10">
           {/* Sección de estudiantes */}
           <div className="space-y-4">
-            <div className="flex justify-between items-center">
+            <div className="space-y-4 md:flex justify-between items-center">
               <h2 className="text-gray-600 text-xl">Estudiantes</h2>
               <Button
                 className="max-sm:w-full"

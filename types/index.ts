@@ -28,4 +28,5 @@ export type Curso = {
     id: string;
     nombre_completo: string;
   };
+  estudiantes: Estudiante[];
 };

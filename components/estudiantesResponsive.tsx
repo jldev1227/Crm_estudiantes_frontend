@@ -9,8 +9,10 @@ import { Estudiante } from "@/types";
 // Componente para mostrar estudiantes según el tamaño de pantalla
 export default function EstudiantesResponsive({
   estudiantes,
+  isAdmin
 }: {
   estudiantes: Estudiante[];
+  isAdmin: boolean
 }) {
   const isDesktop = useMediaQuery({ minWidth: 992 });
 
@@ -21,7 +23,7 @@ export default function EstudiantesResponsive({
 
   // Si es desktop, muestra la tabla
   if (isDesktop) {
-    return <TablaEstudiantes estudiantes={estudiantes} />;
+    return <TablaEstudiantes isAdmin={isAdmin} estudiantes={estudiantes} />;
   }
 
   // Si es móvil o tablet, muestra cards

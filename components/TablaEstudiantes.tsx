@@ -18,44 +18,60 @@ interface Estudiante {
   fecha_nacimiento: string;
   nombre_completo: string;
   celular_padres: string;
+  pension_activa?: boolean; // Hago opcional esta propiedad ya que podría no estar en todos los registros
 }
 
 interface TablaEstudiantesProps {
   estudiantes: Estudiante[];
+  isAdmin: boolean;
 }
-
-const columns = [
-  {
-    key: "index",
-    label: "#",
-  },
-  {
-    key: "tipo_documento",
-    label: "TIPO DOCUMENTO",
-  },
-  {
-    key: "numero_identificacion",
-    label: "NÚMERO IDENTIFICACIÓN",
-  },
-  {
-    key: "fecha_nacimiento",
-    label: "FECHA NACIMIENTO",
-  },
-  {
-    key: "nombre_completo",
-    label: "NOMBRE COMPLETO",
-  },
-  {
-    key: "celular_padres",
-    label: "CELULAR PADRES",
-  },
-];
 
 export default function TablaEstudiantes({
   estudiantes,
+  isAdmin
 }: TablaEstudiantesProps) {
   const [page, setPage] = React.useState(1);
   const rowsPerPage = 10;
+
+  // Definimos las columnas dinámicamente basadas en isAdmin
+  const columns = React.useMemo(() => {
+    const baseColumns = [
+      {
+        key: "index",
+        label: "#",
+      },
+      {
+        key: "tipo_documento",
+        label: "TIPO DOCUMENTO",
+      },
+      {
+        key: "numero_identificacion",
+        label: "NÚMERO IDENTIFICACIÓN",
+      },
+      {
+        key: "fecha_nacimiento",
+        label: "FECHA NACIMIENTO",
+      },
+      {
+        key: "nombre_completo",
+        label: "NOMBRE COMPLETO",
+      },
+      {
+        key: "celular_padres",
+        label: "CELULAR PADRES",
+      },
+    ];
+    
+    // Añadimos la columna de Pensión solo si el usuario es admin
+    if (isAdmin) {
+      baseColumns.push({
+        key: "pension_activa",
+        label: "PENSIÓN",
+      });
+    }
+    
+    return baseColumns;
+  }, [isAdmin]);
 
   const pages = Math.ceil(estudiantes.length / rowsPerPage);
 
@@ -94,12 +110,27 @@ export default function TablaEstudiantes({
             {/* Columna del índice */}
             <TableCell>{(page - 1) * rowsPerPage + index + 1}</TableCell>
 
-            {/* Resto de las columnas */}
+            {/* Resto de las columnas estándar */}
             <TableCell>{item.tipo_documento}</TableCell>
             <TableCell>{item.numero_identificacion}</TableCell>
             <TableCell>{item.fecha_nacimiento}</TableCell>
             <TableCell>{item.nombre_completo}</TableCell>
             <TableCell>{item.celular_padres}</TableCell>
+            
+            {/* Columna de Pensión, solo visible si isAdmin es true */}
+            {isAdmin && (
+              <TableCell>
+                {item.pension_activa ? (
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    Activa
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                    Inactiva
+                  </span>
+                )}
+              </TableCell>
+            )}
           </TableRow>
         ))}
       </TableBody>
