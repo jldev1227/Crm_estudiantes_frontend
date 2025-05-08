@@ -14,6 +14,8 @@ export type Estudiante = {
 };
 
 export type Curso = {
+  id: string
+  nombre: string
   area: {
     id: string;
     nombre: string;
@@ -21,5 +23,9 @@ export type Curso = {
   grado: {
     id: string;
     nombre: string;
+  };
+  director: {
+    id: string;
+    nombre_completo: string;
   };
 };

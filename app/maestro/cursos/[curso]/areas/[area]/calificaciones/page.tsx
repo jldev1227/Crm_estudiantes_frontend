@@ -34,10 +34,6 @@ const SistemaCalificaciones = () => {
 
   // Estados locales
   const [actividades, setActividades] = useState([
-    { id: "act1", nombre: "Tarea 1", porcentaje: 17.5 },
-    { id: "act2", nombre: "Tarea 2", porcentaje: 17.5 },
-    { id: "act3", nombre: "Quiz 1", porcentaje: 17.5 },
-    { id: "act4", nombre: "Quiz 2", porcentaje: 17.5 },
     { id: "final", nombre: "Evaluación Final", porcentaje: 30, isFinal: true }
   ]);
   const [estudiantes, setEstudiantes] = useState([]);
@@ -386,11 +382,12 @@ const SistemaCalificaciones = () => {
 
   return (
     <div className="space-y-6">
+      {/* Encabezado responsivo */}
       <div className="flex flex-col gap-4 md:flex-row justify-between items-start md:items-center">
         <h1 className="text-xl md:text-2xl uppercase font-bold text-blue-600">
           Curso - {curso.nombre} {area ? `/ ${area.nombre}` : ""}
         </h1>
-        <div className="flex gap-4 items-center">
+        <div className="w-full md:w-auto">
           <Select
             label="Periodo"
             selectedKeys={[periodoSeleccionado.toString()]}
@@ -398,7 +395,7 @@ const SistemaCalificaciones = () => {
               const key = Array.from(keys)[0] as string;
               handlePeriodoChange(key);
             }}
-            className="w-40"
+            className="w-full md:w-40"
           >
             <SelectItem key="1">Periodo 1</SelectItem>
             <SelectItem key="2">Periodo 2</SelectItem>
@@ -423,31 +420,38 @@ const SistemaCalificaciones = () => {
         </div>
       )}
 
-      {/* Advertencia de porcentajes incorrectos */}
+      {/* Advertencia de porcentajes incorrectos - mejorada para móvil */}
       {!porcentajes.esValido && (
         <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded">
           <p className="font-medium">⚠️ Los porcentajes no están correctamente distribuidos</p>
-          <p className="text-sm">Actividades regulares: {porcentajes.totalRegulares.toFixed(1)}% (debe ser 70%)</p>
-          <p className="text-sm">Evaluación final: {porcentajes.totalFinal.toFixed(1)}% (debe ser 30%)</p>
-          <p className="text-sm">Total: {porcentajes.total.toFixed(1)}% (debe ser 100%)</p>
-          <Button
-            color="warning"
-            size="sm"
-            className="mt-2"
-            onPress={recalcularPorcentajes}
-          >
-            Redistribuir porcentajes automáticamente
-          </Button>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-1 mt-1">
+            <p className="text-sm">Actividades regulares: {porcentajes.totalRegulares.toFixed(1)}% (debe ser 70%)</p>
+            <p className="text-sm">Evaluación final: {porcentajes.totalFinal.toFixed(1)}% (debe ser 30%)</p>
+            <p className="text-sm">Total: {porcentajes.total.toFixed(1)}% (debe ser 100%)</p>
+          </div>
+          <div className="mt-2">
+            <Button
+              color="warning"
+              size="sm"
+              fullWidth={true}
+              className="sm:w-auto"
+              onPress={recalcularPorcentajes}
+            >
+              Redistribuir porcentajes automáticamente
+            </Button>
+          </div>
         </div>
       )}
 
       {/* Gestión de actividades */}
       <div className="bg-white p-4 rounded-lg shadow">
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-4">
           <h2 className="text-xl font-bold">Actividades de Evaluación</h2>
           <Button
             color="primary"
             variant="light"
+            fullWidth={true}
+            className="sm:w-auto"
             onPress={() => setEditando(!editando)}
           >
             {editando ? "Cancelar" : "Editar Actividades"}
@@ -461,11 +465,14 @@ const SistemaCalificaciones = () => {
               <Table
                 aria-label="Tabla de actividades"
                 removeWrapper
+                classNames={{
+                  td: "px-2 py-2"
+                }}
               >
                 <TableHeader>
                   <TableColumn>Nombre</TableColumn>
                   <TableColumn>Porcentaje</TableColumn>
-                  <TableColumn>Tipo</TableColumn>
+                  <TableColumn className="hidden sm:table-cell">Tipo</TableColumn>
                   <TableColumn>Acciones</TableColumn>
                 </TableHeader>
                 <TableBody>
@@ -473,7 +480,7 @@ const SistemaCalificaciones = () => {
                     <TableRow key={actividad.id} className={actividad.isFinal ? "bg-blue-50" : ""}>
                       <TableCell>{actividad.nombre}</TableCell>
                       <TableCell>{actividad.porcentaje.toFixed(1)}%</TableCell>
-                      <TableCell>
+                      <TableCell className="hidden sm:table-cell">
                         {actividad.isFinal ? "Evaluación Final" : "Actividad Regular"}
                       </TableCell>
                       <TableCell>
@@ -496,7 +503,7 @@ const SistemaCalificaciones = () => {
 
             <div className="mt-4">
               <h3 className="text-lg font-semibold mb-3">Añadir Nueva Actividad</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div>
                   <Input
                     label="Nombre de la actividad"
@@ -517,15 +524,17 @@ const SistemaCalificaciones = () => {
                     helperText="El porcentaje será redistribuido automáticamente"
                   />
                 </div>
-                <div className="flex items-end space-x-2">
+                <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
                   <Button
                     color="primary"
+                    className="w-full sm:w-auto"
                     onPress={handleAddActividad}
                   >
                     Añadir
                   </Button>
                   <Button
                     color="secondary"
+                    className="w-full sm:w-auto"
                     onPress={recalcularPorcentajes}
                   >
                     Distribuir 70% Equitativo
@@ -536,7 +545,7 @@ const SistemaCalificaciones = () => {
           </div>
         )}
 
-        {/* Distribución de porcentajes actual */}
+        {/* Distribución de porcentajes actual - mejorado para móvil */}
         <div className="mb-4">
           <h3 className="text-md font-medium mb-2">Distribución actual:</h3>
           <div className="flex flex-wrap gap-2">
@@ -552,40 +561,41 @@ const SistemaCalificaciones = () => {
               </div>
             ))}
           </div>
-          <div className="mt-2 text-xs text-gray-600">
-            Total actividades regulares: {porcentajes.totalRegulares.toFixed(1)}% |
-            Evaluación final: {porcentajes.totalFinal.toFixed(1)}% |
-            Total: {porcentajes.total.toFixed(1)}%
+          <div className="mt-2 text-xs text-gray-600 flex flex-col sm:flex-row sm:gap-2">
+            <span>Total actividades regulares: {porcentajes.totalRegulares.toFixed(1)}%</span>
+            <span className="hidden sm:inline">|</span>
+            <span>Evaluación final: {porcentajes.totalFinal.toFixed(1)}%</span>
+            <span className="hidden sm:inline">|</span>
+            <span>Total: {porcentajes.total.toFixed(1)}%</span>
           </div>
         </div>
       </div>
 
-      {/* Tabla de calificaciones con HeroUI */}
+      {/* Tabla de calificaciones con HeroUI - mejorada para móvil */}
       <div className="bg-white p-4 rounded-lg shadow">
-        <div>
-          <h2 className="text-xl font-bold mb-4">Registro de Calificaciones</h2>
-
+        <div className='mb-4 space-y-2'>
+          <h2 className="text-xl font-bold">Registro de Calificaciones</h2>
           <p className="text-blue-600">
             Total estudiantes: {estudiantes.length}
           </p>
         </div>
 
         {estudiantes.length > 0 ? (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto -mx-4 px-4">
             <Table
               aria-label="Tabla de calificaciones"
               removeWrapper
               isHeaderSticky
               classNames={{
                 base: "max-h-[600px]",
-                table: "min-h-[150px]",
+                table: "min-h-[150px] min-w-[640px]", // Asegura un ancho mínimo para scroll horizontal
               }}
             >
               <TableHeader>
-                <TableColumn className="bg-gray-50 sticky left-0 z-10">Estudiante</TableColumn>
+                <TableColumn className="bg-gray-50 sticky left-0 z-10 min-w-[150px]">Estudiante</TableColumn>
                 {actividades.map(actividad => (
                   <TableColumn key={actividad.id}>
-                    <div className="text-center">
+                    <div className="text-center whitespace-normal px-1">
                       <div className="font-medium">{actividad.nombre}</div>
                       <div className="text-xs text-gray-500">{actividad.porcentaje.toFixed(1)}%</div>
                     </div>
@@ -596,7 +606,7 @@ const SistemaCalificaciones = () => {
               <TableBody>
                 {estudiantes.map(estudiante => (
                   <TableRow key={estudiante.id}>
-                    <TableCell className="font-medium sticky left-0 bg-white">
+                    <TableCell className="font-medium sticky left-0 bg-white min-w-[150px]">
                       {estudiante.nombre_completo}
                     </TableCell>
 
@@ -636,12 +646,13 @@ const SistemaCalificaciones = () => {
         )}
       </div>
 
-      {/* Botones de acción */}
-      <div className="flex justify-end gap-4">
+      {/* Botones de acción - mejor responsive */}
+      <div className="flex flex-col sm:flex-row sm:justify-end gap-3">
         <Button
           radius='sm'
           color="danger"
           variant="light"
+          className="w-full sm:w-auto"
           onPress={() => router.back()}
         >
           Volver
@@ -649,6 +660,7 @@ const SistemaCalificaciones = () => {
         <Button
           radius='sm'
           color="primary"
+          className="w-full sm:w-auto"
           onPress={handleGuardarCalificaciones}
           isLoading={loading || guardandoCalificaciones}
           isDisabled={!porcentajes.esValido}

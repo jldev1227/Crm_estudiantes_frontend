@@ -9,28 +9,27 @@ import {
   TableRow,
   TableCell,
 } from "@heroui/table";
-import { useMaestro } from "@/app/context/MaestroContext";
+import { useAdmin } from "@/app/context/AdminContext";
 import { Button } from "@heroui/button";
-import { useRouter } from "next/navigation";
 import { Curso } from "@/types";
+import { useRouter } from "next/navigation";
 
 export default function Page() {
   const route = useRouter();
-  const { cursos, obtenerCursosMaestro } = useMaestro();
+  const { cursos, obtenerCursos } = useAdmin();
 
   useEffect(() => {
-    obtenerCursosMaestro();
+    obtenerCursos();
   }, []);
 
   return (
     <div className="space-y-6">
       <div className="space-y-4">
         <h1 className="text-2xl uppercase font-bold text-blue-600">
-          Cursos asignados
+          Cursos
         </h1>
         <p>
-          Gestiona tus cursos asignados y realiza el registro de actividades
-          realizadas en cada curso
+          Como administrador, puedes gestionar todos los cursos, asignar directores y consultar la información detallada de cada curso.
         </p>
       </div>
 
@@ -38,24 +37,23 @@ export default function Page() {
         <Table aria-label="Example static collection table">
           <TableHeader>
             <TableColumn>CURSO</TableColumn>
-            <TableColumn>MATERIA ASIGNADA</TableColumn>
+            <TableColumn>DIRECTOR</TableColumn>
             <TableColumn>CONSULTAR</TableColumn>
           </TableHeader>
           <TableBody>
             {cursos?.map((curso: Curso, index: number) => (
               <TableRow key={index}>
-                <TableCell>{curso.grado.nombre}</TableCell>
-                <TableCell>{curso.area.nombre}</TableCell>
+                <TableCell>{curso.nombre}</TableCell>
+                <TableCell>{curso.director?.nombre_completo || 'No cuenta con director asignado'}</TableCell>
                 <TableCell>
                   <Button
-                    onPress={() => {
-                      route.push(
-                        `/maestro/cursos/${curso.grado.id}/areas/${curso.area.id}`,
-                      );
-                    }}
                     color="primary"
                     isIconOnly
-                  >
+                    onPress={() => {
+                      route.push(
+                        `/admin/cursos/${curso.id}`,
+                      );
+                    }}                  >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
