@@ -15,6 +15,7 @@ export const OBTENER_PERFIL = gql`
         id
         nombre
       }
+      pension_activa
     }
     ... on Maestro {
       id

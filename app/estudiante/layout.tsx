@@ -11,7 +11,7 @@ import { EstudianteProvider } from "../context/EstudianteContext";
 import { Button } from '@heroui/button'
 import { useRouter } from "next/navigation";
 
-export default function MaestroLayout({
+export default function EstudianteLayout({
   children,
 }: {
   children: React.ReactNode;

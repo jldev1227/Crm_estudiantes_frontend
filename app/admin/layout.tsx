@@ -45,8 +45,8 @@ export default function MaestroLayout({
           className={`${isDesktopOrLaptop ? "grid grid-cols-5" : ""} h-screen`}
         >
           {isDesktopOrLaptop ? (
-            <div>
-              {/* <div className="sticky top-0">
+        <div className="col-span-1 border-r-2 bg-blue-600 text-white h-full">
+              <div className="sticky top-0">
                 <div className="bg-white">
                   <Image
                     className="mx-auto"
@@ -137,7 +137,7 @@ export default function MaestroLayout({
                     </Button>
                   </ul>
                 </div>
-              </div> */}
+              </div>
             </div>
           ) : (
             <SideMenu/>

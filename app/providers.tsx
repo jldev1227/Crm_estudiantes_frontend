@@ -8,6 +8,7 @@ import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { ApolloProvider } from "@apollo/client"; // <--- Importa ApolloProvider
 import client from "@/app/lib/apolloClient"; // <--- Importa tu cliente
 import { AuthProvider } from "./context/AuthContext";
+import { ErrorBoundary } from "@/components/errorBoundary";
 export interface ProvidersProps {
   children: React.ReactNode;
   themeProps?: ThemeProviderProps;
@@ -25,12 +26,14 @@ export function Providers({ children, themeProps }: ProvidersProps) {
   const router = useRouter();
 
   return (
-    <ApolloProvider client={client}>
-      <HeroUIProvider navigate={router.push}>
-        <NextThemesProvider {...themeProps}>
-          <AuthProvider>{children}</AuthProvider>
-        </NextThemesProvider>
-      </HeroUIProvider>
-    </ApolloProvider>
+    <ErrorBoundary>
+      <ApolloProvider client={client}>
+        <HeroUIProvider navigate={router.push}>
+          <NextThemesProvider {...themeProps}>
+            <AuthProvider>{children}</AuthProvider>
+          </NextThemesProvider>
+        </HeroUIProvider>
+      </ApolloProvider>
+    </ErrorBoundary>
   );
 }

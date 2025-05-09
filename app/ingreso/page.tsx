@@ -7,7 +7,6 @@ import { Tabs, Tab } from "@heroui/tabs";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import { LOGIN_ESTUDIANTE } from "../graphql/mutation/loginEstudiante";
-import ToggleMaestroEstudiante from "@/components/toggleIngreso";
 import LoaderIngreso from "@/components/loaderIngreso";
 import { LOGIN_MAESTRO } from "../graphql/mutation/loginMaestro";
 import { LOGIN_USUARIO } from "../graphql/mutation/loginUsuario";
@@ -25,6 +24,7 @@ export default function Page() {
   const [errorMessage, setErrorMessage] = useState("");
   const [isMaestro, setIsMaestro] = useState(activeTab === 'maestro');
   const [loading, setLoading] = useState(false);
+  const [pensionInactiva, setPensionInactiva] = useState(false);
   const router = useRouter();
   const { login } = useAuth();
 
@@ -42,11 +42,12 @@ export default function Page() {
     const newUrl = `${window.location.pathname}?${params.toString()}`;
     window.history.pushState({}, '', newUrl);
     
-    // Reset form when changing tabs
+    // Reset form states when changing tabs
     setNumeroIdentificacion("");
     setEmail("");
     setPassword("");
     setErrorMessage("");
+    setPensionInactiva(false);
     
     // Set isMaestro based on tab selection
     setIsMaestro(key === 'maestro');
@@ -63,6 +64,8 @@ export default function Page() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
+    setPensionInactiva(false);
+    setErrorMessage("");
 
     try {
       let data;
@@ -81,8 +84,8 @@ export default function Page() {
           const { token, usuario } = data.loginUsuario;
           login({
             id: usuario.id,
-            nombre_completo: usuario.nombre_completo, // Add this
-            numero_identificacion: usuario.numero_identificacion, // Add this
+            nombre_completo: usuario.nombre_completo,
+            numero_identificacion: usuario.numero_identificacion,
             email: usuario.email,
             rol: usuario.rol,
             token,
@@ -104,6 +107,31 @@ export default function Page() {
         // Handle student login
         if (!isMaestro && data?.loginEstudiante) {
           const { token, estudiante } = data.loginEstudiante;
+          
+          // Verificar pensión activa antes de procesar el login
+          if (estudiante.pension_activa === false) {
+            setPensionInactiva(true);
+            setErrorMessage("Tu pensión no está activa. Por favor contacta con administración.");
+            
+            // Aún realizar el login pero redirigir a la página de pensión inactiva
+            login({
+              id: estudiante.id,
+              nombre_completo: estudiante.nombre_completo,
+              numero_identificacion: estudiante.numero_identificacion,
+              tipo_documento: estudiante.tipo_documento,
+              rol: "estudiante",
+              grado_id: estudiante.grado_id,
+              grado_nombre: estudiante.grado.nombre,
+              fecha_nacimiento: estudiante.fecha_nacimiento,
+              celular_padres: estudiante.celular_padres,
+              pension_activa: false,
+              token,
+            });
+            
+            return;
+          }
+          
+          // Procesar login normal si la pensión está activa
           login({
             id: estudiante.id,
             nombre_completo: estudiante.nombre_completo,
@@ -114,6 +142,7 @@ export default function Page() {
             grado_nombre: estudiante.grado.nombre,
             fecha_nacimiento: estudiante.fecha_nacimiento,
             celular_padres: estudiante.celular_padres,
+            pension_activa: true,
             token,
           });
           router.push("/estudiante");
@@ -141,6 +170,14 @@ export default function Page() {
       }
     } catch (err: any) {
       console.error("Error detallado:", err);
+      
+      // Detectar si el error está relacionado con pensión inactiva
+      const errorMessage = err.message || "";
+      if (errorMessage.toLowerCase().includes("pensión") || 
+          errorMessage.toLowerCase().includes("pension")) {
+        setPensionInactiva(true);
+      }
+      
       if (err.networkError) {
         console.error("Network error details:", err.networkError);
       }
@@ -161,6 +198,15 @@ export default function Page() {
     if (errorEstudiante) setErrorMessage(errorEstudiante.message);
     if (errorMaestro) setErrorMessage(errorMaestro.message);
     if (errorUsuario) setErrorMessage(errorUsuario.message);
+    
+    // Detectar si el error está relacionado con pensión inactiva
+    const currentError = errorEstudiante || errorMaestro || errorUsuario;
+    if (currentError && currentError.message) {
+      const message = currentError.message.toLowerCase();
+      if (message.includes("pensión") || message.includes("pension")) {
+        setPensionInactiva(true);
+      }
+    }
   }, [errorEstudiante, errorMaestro, errorUsuario]);
 
   if (loading) return <LoaderIngreso>Autenticando</LoaderIngreso>;
@@ -201,9 +247,12 @@ export default function Page() {
           <h2 className="text-2xl font-bold text-center">Inicia sesión</h2>
 
           {errorMessage && (
-            <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-2 px-4">
+            <div className={`border-l-4 p-2 px-4 ${pensionInactiva 
+              ? "bg-amber-100 border-amber-500 text-amber-700" 
+              : "bg-red-100 border-red-500 text-red-700"}`}
+            >
               <p>
-                <strong>Error:</strong> {errorMessage}
+                <strong>{pensionInactiva ? "Aviso:" : "Error:"}</strong> {errorMessage}
               </p>
             </div>
           )}

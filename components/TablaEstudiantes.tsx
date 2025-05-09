@@ -46,7 +46,6 @@ export default function TablaEstudiantes({
   
   // Función para manejar el cambio de estado de pensión
   const handlePension = (estudianteId: string) => {
-    console.log(estudianteId)
     // Llamar al callback si existe
     if (onPensionChange) {
       onPensionChange(estudianteId);
@@ -184,7 +183,7 @@ export default function TablaEstudiantes({
           {/* Cuerpo de la tabla */}
           <tbody className="bg-white divide-y divide-gray-200">
             {items.map((item, index) => (
-              <tr key={item.id} className="hover:bg-gray-50">
+                <tr key={item.id} className="hover:bg-gray-50">
                 {/* Columna del índice */}
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {(page - 1) * rowsPerPage + index + 1}
@@ -209,28 +208,29 @@ export default function TablaEstudiantes({
                 
                 {/* Columna de Pensión, solo si isAdmin es true */}
                 {isAdmin && (
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <div className="flex items-center space-x-2">
-                      {item.pension_activa ? (
-                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                          Activa
-                        </span>
-                      ) : (
-                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                          Inactiva
-                        </span>
-                      )}
-                      <button
-                        onClick={() => handlePension(item.id)}
-                        className="ml-2 px-3 py-1 text-xs font-medium rounded bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-                        aria-label={`Cambiar estado de pensión para ${item.nombre_completo}`}
-                      >
-                        Cambiar
-                      </button>
-                    </div>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm align-middle">
+                  <div className="flex items-center gap-3 min-h-[24px]">
+                    <span
+                    className={`min-w-[70px] text-center px-2 inline-block text-xs leading-5 font-semibold rounded-full ${
+                      item.pension_activa
+                      ? "bg-green-100 text-green-800"
+                      : "bg-red-100 text-red-800"
+                    }`}
+                    >
+                    {item.pension_activa ? "Activa" : "Inactiva"}
+                    </span>
+                    <button
+                    onClick={() => handlePension(item.id)}
+                    className="px-3 py-1 text-xs font-medium rounded bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                    aria-label={`Cambiar estado de pensión para ${item.nombre_completo}`}
+                    style={{ minHeight: 28 }}
+                    >
+                    Cambiar
+                    </button>
+                  </div>
                   </td>
                 )}
-              </tr>
+                </tr>
             ))}
           </tbody>
         </table>

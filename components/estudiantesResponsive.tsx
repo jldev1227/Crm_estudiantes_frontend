@@ -27,18 +27,18 @@ const calcularEdad = (fechaNacimiento: string): number => {
   try {
     const fechaNac = new Date(fechaNacimiento);
     const hoy = new Date();
-    
+
     let edad = hoy.getFullYear() - fechaNac.getFullYear();
     const mesActual = hoy.getMonth();
     const diaActual = hoy.getDate();
     const mesNacimiento = fechaNac.getMonth();
     const diaNacimiento = fechaNac.getDate();
-    
+
     // Ajustar edad si aún no ha cumplido años en el año actual
     if (mesNacimiento > mesActual || (mesNacimiento === mesActual && diaNacimiento > diaActual)) {
       edad--;
     }
-    
+
     return edad > 0 ? edad : 0;
   } catch (error) {
     console.error("Error al calcular edad:", error);
@@ -48,7 +48,7 @@ const calcularEdad = (fechaNacimiento: string): number => {
 
 export default function EstudiantesResponsive({
   estudiantes,
-  isAdmin
+  isAdmin,
 }: {
   estudiantes: EstudianteConPension[];
   isAdmin: boolean;
@@ -64,15 +64,15 @@ export default function EstudiantesResponsive({
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [pensionFilter, setPensionFilter] = useState<PensionFilter>('todas');
   const [filtrando, setFiltrando] = useState(false);
-  
+
   // Estado local de estudiantes para manipulación
   const [estudiantesFiltrados, setEstudiantesFiltrados] = useState<EstudianteConPension[]>(estudiantes);
-  
+
   // Actualizar estudiantes cuando cambia el prop
   useEffect(() => {
     aplicarFiltros(estudiantes, busqueda, sortField, sortDirection, pensionFilter);
   }, [estudiantes]);
-  
+
   // Función para aplicar todos los filtros y ordenamientos
   const aplicarFiltros = (
     listaEstudiantes: EstudianteConPension[],
@@ -84,14 +84,14 @@ export default function EstudiantesResponsive({
     // Paso 1: Filtrar por término de búsqueda
     let resultado = listaEstudiantes.filter(estudiante => {
       if (!terminoBusqueda.trim()) return true;
-      
+
       const termino = terminoBusqueda.toLowerCase();
       return (
         estudiante.nombre_completo.toLowerCase().includes(termino) ||
         estudiante.numero_identificacion.toLowerCase().includes(termino)
       );
     });
-    
+
     // Paso 2: Filtrar por estado de pensión (solo para admin)
     if (isAdmin && filtroPension !== 'todas') {
       resultado = resultado.filter(estudiante => {
@@ -100,7 +100,7 @@ export default function EstudiantesResponsive({
         return true;
       });
     }
-    
+
     // Paso 3: Ordenar resultados
     resultado.sort((a, b) => {
       // Si el campo de ordenamiento es fecha_nacimiento, convertir a edades
@@ -109,35 +109,35 @@ export default function EstudiantesResponsive({
         const edadB = calcularEdad(b.fecha_nacimiento);
         return direccionOrden === 'asc' ? edadA - edadB : edadB - edadA;
       }
-      
+
       // Si el campo de ordenamiento es pension_activa
       if (campoOrden === 'pension_activa' && isAdmin) {
         const pensionA = a.pension_activa ? 1 : 0;
         const pensionB = b.pension_activa ? 1 : 0;
         return direccionOrden === 'asc' ? pensionA - pensionB : pensionB - pensionA;
       }
-      
+
       // Para otros campos, comparar strings
       const valorA = String(a[campoOrden] || '').toLowerCase();
       const valorB = String(b[campoOrden] || '').toLowerCase();
-      
+
       if (direccionOrden === 'asc') {
         return valorA.localeCompare(valorB);
       } else {
         return valorB.localeCompare(valorA);
       }
     });
-    
+
     setEstudiantesFiltrados(resultado);
     setFiltrando(!!terminoBusqueda || filtroPension !== 'todas');
   };
-  
+
   // Manejadores de eventos
   const handleBusquedaChange = (valor: string) => {
     setBusqueda(valor);
     aplicarFiltros(estudiantes, valor, sortField, sortDirection, pensionFilter);
   };
-  
+
   const handleSortChange = (campo: SortField) => {
     // Si hacemos clic en el mismo campo, cambiamos la dirección
     if (campo === sortField) {
@@ -151,12 +151,12 @@ export default function EstudiantesResponsive({
       aplicarFiltros(estudiantes, busqueda, campo, 'asc', pensionFilter);
     }
   };
-  
+
   const handlePensionFilterChange = (valor: PensionFilter) => {
     setPensionFilter(valor);
     aplicarFiltros(estudiantes, busqueda, sortField, sortDirection, valor);
   };
-  
+
   const limpiarFiltros = () => {
     setBusqueda("");
     setPensionFilter('todas');
@@ -164,7 +164,7 @@ export default function EstudiantesResponsive({
     setSortDirection('asc');
     aplicarFiltros(estudiantes, "", 'nombre_completo', 'asc', 'todas');
   };
-  
+
   // Texto del ordenamiento actual para mostrar en botones móviles
   const getSortLabel = () => {
     const fieldLabels: Record<SortField, string> = {
@@ -174,15 +174,15 @@ export default function EstudiantesResponsive({
       fecha_nacimiento: "Edad",
       pension_activa: "Pensión"
     };
-    
+
     return `${fieldLabels[sortField]} ${sortDirection === 'asc' ? '↑' : '↓'}`;
   };
-  
+
   // Si no hay estudiantes, muestra un mensaje
   if (estudiantes.length === 0) {
     return <p>No hay estudiantes asociados al curso</p>;
   }
-  
+
   // Componentes de interfaz de búsqueda y filtrado
   const filtrosDesktop = (
     <div className="bg-white p-4 rounded-lg shadow-sm mb-4 space-y-4">
@@ -201,7 +201,7 @@ export default function EstudiantesResponsive({
             className="w-full"
           />
         </div>
-        
+
         {isAdmin && (
           <div className="w-full md:w-64">
             <Select
@@ -215,7 +215,7 @@ export default function EstudiantesResponsive({
             </Select>
           </div>
         )}
-        
+
         <div className="w-full md:w-64">
           <Select
             label="Ordenar por"
@@ -227,9 +227,9 @@ export default function EstudiantesResponsive({
             <SelectItem key="tipo_documento">Tipo de documento</SelectItem>
             <SelectItem key="fecha_nacimiento">Edad</SelectItem>
             {isAdmin ? <SelectItem key="pension_activa">Estado pensión</SelectItem> : null}
-            </Select>
+          </Select>
         </div>
-        
+
         <div className="w-full md:w-48">
           <Select
             label="Dirección"
@@ -244,39 +244,39 @@ export default function EstudiantesResponsive({
           </Select>
         </div>
       </div>
-      
+
       {filtrando && (
         <div className="flex justify-between items-center">
           <div className="flex gap-2 flex-wrap">
             {busqueda && (
-              <Chip 
+              <Chip
                 onClose={() => handleBusquedaChange("")}
-                variant="flat" 
+                variant="flat"
                 color="primary"
               >
                 Búsqueda: {busqueda}
               </Chip>
             )}
-            
+
             {isAdmin && pensionFilter !== 'todas' && (
-              <Chip 
-                onClose={() => handlePensionFilterChange("todas")} 
-                variant="flat" 
+              <Chip
+                onClose={() => handlePensionFilterChange("todas")}
+                variant="flat"
                 color={pensionFilter === 'activa' ? "success" : "danger"}
               >
                 Pensión: {pensionFilter === 'activa' ? 'Activa' : 'Inactiva'}
               </Chip>
             )}
-            
+
             <Chip variant="flat" color="default">
               Ordenado por: {getSortLabel()}
             </Chip>
           </div>
-          
-          <Button 
-            color="danger" 
-            variant="flat" 
-            size="sm" 
+
+          <Button
+            color="danger"
+            variant="flat"
+            size="sm"
             onPress={limpiarFiltros}
           >
             Limpiar filtros
@@ -298,13 +298,13 @@ export default function EstudiantesResponsive({
           </svg>
         }
       />
-      
+
       <div className="flex justify-between gap-2">
         <Dropdown>
           <DropdownTrigger>
-            <Button 
-              variant="flat" 
-              color="primary" 
+            <Button
+              variant="flat"
+              color="primary"
               className="flex-1"
               startContent={
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
@@ -333,7 +333,7 @@ export default function EstudiantesResponsive({
                 Pensión {sortField === 'pension_activa' && (sortDirection === 'asc' ? '↑' : '↓')}
               </DropdownItem>
             ) : null}
-            <DropdownItem key="invertir" 
+            <DropdownItem key="invertir"
               onPress={() => {
                 const newDirection = sortDirection === 'asc' ? 'desc' : 'asc';
                 setSortDirection(newDirection);
@@ -345,14 +345,14 @@ export default function EstudiantesResponsive({
             </DropdownItem>
           </DropdownMenu>
         </Dropdown>
-        
+
         {isAdmin && (
           <Dropdown>
             <DropdownTrigger>
-              <Button 
-                variant="flat" 
-                color={pensionFilter !== 'todas' ? 
-                  (pensionFilter === 'activa' ? "success" : "danger") : 
+              <Button
+                variant="flat"
+                color={pensionFilter !== 'todas' ?
+                  (pensionFilter === 'activa' ? "success" : "danger") :
                   "primary"
                 }
                 className="flex-1"
@@ -378,11 +378,11 @@ export default function EstudiantesResponsive({
             </DropdownMenu>
           </Dropdown>
         )}
-        
+
         {filtrando && (
-          <Button 
-            variant="flat" 
-            color="danger" 
+          <Button
+            variant="flat"
+            color="danger"
             className="flex-1"
             onPress={limpiarFiltros}
             startContent={
@@ -395,30 +395,30 @@ export default function EstudiantesResponsive({
           </Button>
         )}
       </div>
-      
+
       {filtrando && (
         <div className="flex flex-wrap gap-2 mt-2">
           {busqueda && (
-            <Chip 
+            <Chip
               size="sm"
               onClose={() => handleBusquedaChange("")}
-              variant="flat" 
+              variant="flat"
               color="primary"
             >
               {busqueda}
             </Chip>
           )}
-          
+
           {isAdmin && pensionFilter !== 'todas' && (
-            <Chip 
+            <Chip
               size="sm"
-              variant="flat" 
+              variant="flat"
               color={pensionFilter === 'activa' ? "success" : "danger"}
             >
               {pensionFilter === 'activa' ? 'Pensión activa' : 'Pensión inactiva'}
             </Chip>
           )}
-          
+
           <Chip size="sm" variant="flat" color="default">
             {getSortLabel()}
           </Chip>
@@ -433,11 +433,11 @@ export default function EstudiantesResponsive({
       <div>
         {/* Filtros para escritorio */}
         {filtrosDesktop}
-        
+
         {/* Tabla con estudiantes filtrados */}
-        <TablaEstudiantes 
-          isAdmin={isAdmin} 
-          estudiantes={estudiantesFiltrados} 
+        <TablaEstudiantes
+          isAdmin={isAdmin}
+          estudiantes={estudiantesFiltrados}
           sortField={sortField}
           sortDirection={sortDirection}
           onSortChange={handleSortChange}
@@ -452,12 +452,12 @@ export default function EstudiantesResponsive({
     <div>
       {/* Filtros para móvil */}
       {filtrosMobile}
-      
+
       {/* Mensaje con conteo de resultados */}
       <p className="text-sm text-gray-500 mb-4">
         Mostrando {estudiantesFiltrados.length} de {estudiantes.length} estudiantes
       </p>
-      
+
       {/* Cards de estudiantes */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {estudiantesFiltrados.map((estudiante: EstudianteConPension) => (
@@ -469,7 +469,7 @@ export default function EstudiantesResponsive({
               <div className="flex justify-between items-start">
                 <h3 className="font-bold text-lg">{estudiante.nombre_completo}</h3>
                 {isAdmin && (
-                  <Chip 
+                  <Chip
                     size="sm"
                     color={estudiante.pension_activa ? "success" : "danger"}
                     variant="flat"
@@ -478,7 +478,7 @@ export default function EstudiantesResponsive({
                   </Chip>
                 )}
               </div>
-              
+
               <div className="mt-2 space-y-1">
                 <p className="text-sm text-gray-600 flex items-center gap-1">
                   <span className="font-medium">Tipo doc:</span> {estudiante.tipo_documento}
@@ -493,6 +493,10 @@ export default function EstudiantesResponsive({
                   <span className="font-medium">Teléfono:</span> {estudiante.celular_padres}
                 </p>
               </div>
+
+              <Button onPress={() => actualizarPension(estudiante.id)}
+                className="mt-6" color={estudiante.pension_activa ? "danger" : "success"}
+                fullWidth>{estudiante.pension_activa ? "Desactivar" : "Activar"} pensión</Button>
             </div>
           </Card>
         ))}

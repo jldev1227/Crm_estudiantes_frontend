@@ -4,6 +4,8 @@ import { useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useAdmin } from "@/app/context/AdminContext";
 import EstudiantesResponsive from "@/components/estudiantesResponsive";
+import { Button } from "@heroui/button";
+import Link from "next/link";
 
 // Define el tipo de los datos que obtendrás del servidor
 type CursoData = {
@@ -65,9 +67,14 @@ export default function CursoPage() {
   return (
     <div className="">
       <div className="space-y-4">
-        <h1 className="text-xl md:text-2xl uppercase font-bold text-blue-600">
-          Curso - {curso.nombre}
-        </h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl md:text-2xl uppercase font-bold text-blue-600">
+            Curso - {curso.nombre}
+          </h1>
+          <Button as={Link} color="primary" href={"/admin/cursos"}>
+            Volver
+          </Button>
+        </div>
         {curso.estudiantes && curso.estudiantes.length > 0 ? (
           <EstudiantesResponsive isAdmin={true} estudiantes={curso.estudiantes} />
         ) : (
