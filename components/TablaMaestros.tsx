@@ -1,82 +1,36 @@
 "use client";
 
+import { Maestro } from "@/types";
 import { Pagination } from "@heroui/pagination";
 import React from "react";
 
 // Definimos interfaces para ordenamiento
-type SortField = 'nombre_completo' | 'numero_identificacion' | 'tipo_documento' | 'fecha_nacimiento' | 'pension_activa';
+type SortField = 'nombre_completo' | 'numero_identificacion' | 'tipo_documento';
 type SortDirection = 'asc' | 'desc';
 
-// Definimos interfaces
-interface Estudiante {
-  id: string;
-  tipo_documento: string;
-  numero_identificacion: string;
-  fecha_nacimiento: string;
-  nombre_completo: string;
-  celular_padres: string;
-  pension_activa?: boolean;
-}
-
 interface TablaEstudiantesProps {
-  estudiantes: Estudiante[];
-  isAdmin?: boolean;
+  maestros: Maestro[];
   onPensionChange?: (estudianteId: string) => void;
   sortField?: SortField;
   sortDirection?: SortDirection;
   onSortChange?: (campo: SortField) => void;
 }
 
-export default function TablaEstudiantes({
-  estudiantes,
-  isAdmin,
-  onPensionChange,
+export default function TablaMaestros({
+  maestros,
   sortField = 'nombre_completo',
   sortDirection = 'asc',
   onSortChange
 }: TablaEstudiantesProps) {
   const [page, setPage] = React.useState(1);
-  const [estudiantesState, setEstudiantesState] = React.useState<Estudiante[]>(estudiantes);
+  const [estudiantesState, setEstudiantesState] = React.useState<Maestro[]>(maestros);
   const rowsPerPage = 10;
-  
-  // Actualizar estudiantesState cuando cambie el prop estudiantes
-  React.useEffect(() => {
-    setEstudiantesState(estudiantes);
-  }, [estudiantes]);
-  
-  // Función para manejar el cambio de estado de pensión
-  const handlePension = (estudianteId: string) => {
-    // Llamar al callback si existe
-    if (onPensionChange) {
-      onPensionChange(estudianteId);
-    }
-  };
-  
-  // Función para calcular la edad a partir de fecha_nacimiento
-  const calcularEdad = (fechaNacimiento: string): number => {
-    try {
-      const fechaNac = new Date(fechaNacimiento);
-      const hoy = new Date();
-      
-      let edad = hoy.getFullYear() - fechaNac.getFullYear();
-      const mesActual = hoy.getMonth();
-      const diaActual = hoy.getDate();
-      const mesNacimiento = fechaNac.getMonth();
-      const diaNacimiento = fechaNac.getDate();
-      
-      // Ajustar edad si aún no ha cumplido años en el año actual
-      if (mesNacimiento > mesActual || (mesNacimiento === mesActual && diaNacimiento > diaActual)) {
-        edad--;
-      }
-      
-      return edad > 0 ? edad : 0;
-    } catch (error) {
-      console.error("Error al calcular edad:", error);
-      return 0;
-    }
-  };
 
-  // Definimos las columnas dinámicamente basadas en isAdmin
+  // Actualizar estudiantesState cuando cambie el prop maestros
+  React.useEffect(() => {
+    setEstudiantesState(maestros);
+  }, [maestros]);
+
   const columns = React.useMemo(() => {
     const baseColumns = [
       {
@@ -100,28 +54,19 @@ export default function TablaEstudiantes({
         sortable: true
       },
       {
-        key: "fecha_nacimiento",
-        label: "FECHA NACIMIENTO / EDAD",
-        sortable: true
+        key: "email",
+        label: "EMAIL",
+        sortable: false
       },
       {
-        key: "celular_padres",
-        label: "CELULAR PADRES",
+        key: "celular",
+        label: "CELULAR",
         sortable: false
       },
     ];
 
-    // Añadimos la columna de Pensión solo si el usuario es admin
-    if (isAdmin) {
-      baseColumns.push({
-        key: "pension_activa",
-        label: "PENSIÓN",
-        sortable: true
-      });
-    }
-
     return baseColumns;
-  }, [isAdmin]);
+  }, []);
 
   const pages = Math.ceil(estudiantesState.length / rowsPerPage);
 
@@ -140,7 +85,7 @@ export default function TablaEstudiantes({
   // Función para renderizar flechas de ordenamiento
   const renderSortArrow = (key: string) => {
     if (key !== sortField as string || key === 'index' || key === 'celular_padres') return null;
-    
+
     return (
       <span className="ml-1">
         {sortDirection === 'asc' ? (
@@ -179,16 +124,16 @@ export default function TablaEstudiantes({
               ))}
             </tr>
           </thead>
-          
+
           {/* Cuerpo de la tabla */}
           <tbody className="bg-white divide-y divide-gray-200">
             {items.map((item, index) => (
-                <tr key={item.id} className="hover:bg-gray-50">
+              <tr key={item.id} className="hover:bg-gray-50">
                 {/* Columna del índice */}
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {(page - 1) * rowsPerPage + index + 1}
                 </td>
-                
+
                 {/* Columnas estándar */}
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {item.tipo_documento}
@@ -200,37 +145,12 @@ export default function TablaEstudiantes({
                   {item.nombre_completo}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {item.fecha_nacimiento} ({calcularEdad(item.fecha_nacimiento)} años)
+                  {item.email}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {item.celular_padres}
+                  {item.celular}
                 </td>
-                
-                {/* Columna de Pensión, solo si isAdmin es true */}
-                {isAdmin && (
-                  <td className="px-6 py-4 whitespace-nowrap text-sm align-middle">
-                  <div className="flex items-center gap-3 min-h-[24px]">
-                    <span
-                    className={`min-w-[70px] text-center px-2 inline-block text-xs leading-5 font-semibold rounded-full ${
-                      item.pension_activa
-                      ? "bg-green-100 text-green-800"
-                      : "bg-red-100 text-red-800"
-                    }`}
-                    >
-                    {item.pension_activa ? "Activa" : "Inactiva"}
-                    </span>
-                    <button
-                    onClick={() => handlePension(item.id)}
-                    className="px-3 py-1 text-xs font-medium rounded bg-primary-500 text-white hover:bg-primary-700 transition-colors"
-                    aria-label={`Cambiar estado de pensión para ${item.nombre_completo}`}
-                    style={{ minHeight: 28 }}
-                    >
-                    Cambiar
-                    </button>
-                  </div>
-                  </td>
-                )}
-                </tr>
+              </tr>
             ))}
           </tbody>
         </table>

@@ -184,7 +184,7 @@ export default function CursoPage() {
     const fetchData = async () => {
       setLoading(true);
       setError(null);
-      
+
       try {
         if (id && area_id) {
           await obtenerCurso(id, area_id);
@@ -195,7 +195,7 @@ export default function CursoPage() {
         setLoading(false);
       }
     };
-    
+
     fetchData();
   }, [id, area_id]);
 
@@ -330,11 +330,16 @@ export default function CursoPage() {
     tareasData?.obtenerTareasPorGradoYArea || [];
 
   return (
-    <div className="">
+    <div>
       <div className="space-y-4">
-        <h1 className="text-xl md:text-2xl uppercase font-bold text-blue-600">
-          Curso - {curso.nombre} {area ? `/ ${area.nombre}` : ""}
-        </h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl md:text-2xl uppercase font-bold text-blue-600">
+            Curso - {curso.nombre}
+          </h1>
+          <Button radius="sm" as={Link} color="primary" href={"/admin/cursos"}>
+            Volver
+          </Button>
+        </div>
         <div className="space-y-10">
           {/* Sección de estudiantes */}
           <div className="space-y-4">

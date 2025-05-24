@@ -178,14 +178,8 @@ const SistemaCalificaciones = () => {
 
   // Añadir nueva actividad
   const handleAddActividad = () => {
-    if (!nuevaActividad.nombre || !nuevaActividad.porcentaje) {
-      toast.error("Ingrese nombre y porcentaje para la nueva actividad");
-      return;
-    }
-
-    const porcentaje = parseFloat(nuevaActividad.porcentaje);
-    if (isNaN(porcentaje) || porcentaje <= 0 || porcentaje > 100) {
-      toast.error("El porcentaje debe ser un valor numérico entre 0 y 100");
+    if (!nuevaActividad.nombre) {
+      toast.error("Ingrese nombre para la nueva actividad");
       return;
     }
 
@@ -197,7 +191,6 @@ const SistemaCalificaciones = () => {
     const nuevaActividadObj = {
       id: `act${actividades.length + 1}`,
       nombre: nuevaActividad.nombre,
-      porcentaje: porcentaje
     };
 
     // Añadir la nueva actividad a las actividades regulares
@@ -217,7 +210,7 @@ const SistemaCalificaciones = () => {
     });
 
     // Reiniciar el formulario
-    setNuevaActividad({ nombre: "", porcentaje: "" });
+    setNuevaActividad({ nombre: "" });
 
     toast.success(`Actividad "${nuevaActividad.nombre}" añadida. Porcentajes redistribuidos automáticamente.`);
   };
@@ -512,18 +505,6 @@ const SistemaCalificaciones = () => {
                     onValueChange={(val) => setNuevaActividad({ ...nuevaActividad, nombre: val })}
                   />
                 </div>
-                <div>
-                  <Input
-                    type="number"
-                    label="Porcentaje (%)"
-                    placeholder="Ej: 10"
-                    value={nuevaActividad.porcentaje}
-                    onValueChange={(val) => setNuevaActividad({ ...nuevaActividad, porcentaje: val })}
-                    min="1"
-                    max="70"
-                    helperText="El porcentaje será redistribuido automáticamente"
-                  />
-                </div>
                 <div className="flex flex-col sm:flex-row gap-2 sm:items-end">
                   <Button
                     color="primary"
@@ -532,13 +513,13 @@ const SistemaCalificaciones = () => {
                   >
                     Añadir
                   </Button>
-                  <Button
+                  {/* <Button
                     color="secondary"
                     className="w-full sm:w-auto"
                     onPress={recalcularPorcentajes}
                   >
                     Distribuir 70% Equitativo
-                  </Button>
+                  </Button> */}
                 </div>
               </div>
             </div>

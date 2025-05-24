@@ -14,6 +14,15 @@ export type Estudiante = {
   pension_activa?: boolean;
 };
 
+export type Maestro = {
+  id: string;
+  nombre_completo: string;
+  email: boolean;
+  celular: string;
+  tipo_documento: string;
+  numero_identificacion: string;
+};
+
 export type Curso = {
   id: string
   nombre: string
