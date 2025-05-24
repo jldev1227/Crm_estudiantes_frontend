@@ -1,7 +1,9 @@
 "use client";
 
 import { Maestro } from "@/types";
+import { Button } from "@heroui/button";
 import { Pagination } from "@heroui/pagination";
+import { EditIcon, EyeIcon } from "lucide-react";
 import React from "react";
 
 // Definimos interfaces para ordenamiento
@@ -61,6 +63,11 @@ export default function TablaMaestros({
       {
         key: "celular",
         label: "CELULAR",
+        sortable: false
+      },
+      {
+        key: "acciones",
+        label: "ACCIONES",
         sortable: false
       },
     ];
@@ -149,6 +156,20 @@ export default function TablaMaestros({
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {item.celular}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 space-x-2">
+                  <Button
+                    isIconOnly
+                    color="primary"
+                  >
+                    <EyeIcon />
+                  </Button>
+                  <Button
+                    isIconOnly
+                    color="warning"
+                  >
+                    <EditIcon />
+                  </Button>
                 </td>
               </tr>
             ))}

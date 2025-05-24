@@ -5,7 +5,7 @@ import { useAdmin } from "@/app/context/AdminContext";
 import MaestrosResponsive from "@/components/maestroResponsive";
 
 export default function Page() {
-  const { maestros, obtenerMaestros } = useAdmin();
+  const { maestros, estaCargando, obtenerMaestros } = useAdmin();
 
   useEffect(() => {
     obtenerMaestros();
@@ -23,7 +23,14 @@ export default function Page() {
       </div>
 
       <div>
-        <MaestrosResponsive maestros={maestros}/>
+        {!estaCargando && maestros.length > 0 ? (
+          <MaestrosResponsive maestros={maestros} />
+        ) : (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative text-center">
+            <strong className="font-bold">¡Atención!</strong>
+            <span className="block sm:inline ml-2">No hay maestros registrados.</span>
+            </div>
+        )}
       </div>
     </div>
   );

@@ -9,7 +9,6 @@ export const OBTENER_MAESTROS = gql`
             celular
             tipo_documento
             numero_identificacion
-            password
         }
     }
 `;
