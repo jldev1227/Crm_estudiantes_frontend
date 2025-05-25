@@ -40,3 +40,7 @@ export type Curso = {
   };
   estudiantes: Estudiante[];
 };
+
+export type Actividad = {
+  
+}

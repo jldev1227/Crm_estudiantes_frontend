@@ -101,8 +101,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
         query: OBTENER_CURSOS
       });
 
-      console.log(data);
-
       dispatch({
         type: "OBTENER_CURSOS",
         payload: data.obtenerCursos,
@@ -142,8 +140,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
         mutation: ACTUALIZAR_PENSION,
         variables: { id }
       });
-
-      console.log(data.actualizarPension);
 
       dispatch({
         type: "ACTUALIZAR_PENSION",

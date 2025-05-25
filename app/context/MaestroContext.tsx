@@ -71,8 +71,6 @@ export function MaestroProvider({ children }: { children: React.ReactNode }) {
 
   // Función para obtener un curso específico con su área
   const obtenerCurso = async (id: string, area_id: string) => {
-
-    console.log(id, area_id)
     try {
       const { data } = await client.query({
         query: OBTENER_CURSO,

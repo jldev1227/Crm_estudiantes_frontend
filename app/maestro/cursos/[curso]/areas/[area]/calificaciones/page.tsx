@@ -10,6 +10,29 @@ import { toast } from 'react-hot-toast';
 import { useParams, useRouter } from 'next/navigation';
 import { useMaestro } from "@/app/context/MaestroContext";
 import { GUARDAR_CALIFICACIONES } from "@/app/graphql/mutation/guardarCalificaciones";
+import { Estudiante } from '@/types';
+
+type Actividad = {
+  id: string;
+  nombre: string;
+  porcentaje: number;
+  isFinal: boolean
+}
+
+// Tipos para las calificaciones del contexto
+type Nota = {
+  id: string;
+  valor: number;
+  nombre: string;
+  porcentaje: number;
+  actividad_id: string
+};
+
+type CalificacionContext = {
+  periodo: number;
+  estudiante_id: string | number;
+  notas: Nota[];
+};
 
 const SistemaCalificaciones = () => {
   const params = useParams();
@@ -33,13 +56,16 @@ const SistemaCalificaciones = () => {
   } = useMaestro();
 
   // Estados locales
-  const [actividades, setActividades] = useState([
+  const [actividades, setActividades] = useState<Actividad[]>([
     { id: "final", nombre: "Evaluación Final", porcentaje: 30, isFinal: true }
   ]);
-  const [estudiantes, setEstudiantes] = useState([]);
-  const [calificaciones, setCalificaciones] = useState({});
+  const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
+  const [calificaciones, setCalificaciones] = useState<{ [estudianteId: string]: { [actividadId: string]: string } }>({});
   const [editando, setEditando] = useState(false);
-  const [nuevaActividad, setNuevaActividad] = useState({ nombre: "", porcentaje: "" });
+  const [nuevaActividad, setNuevaActividad] = useState<{
+    nombre: string;
+    porcentaje: string
+  }>({ nombre: "", porcentaje: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -66,6 +92,7 @@ const SistemaCalificaciones = () => {
   const fetchData = useCallback(async () => {
     if (!grado_id || !area_id) return;
 
+
     try {
       // Cargar datos del curso
       await obtenerCurso(grado_id, area_id);
@@ -76,7 +103,7 @@ const SistemaCalificaciones = () => {
       setError("Error al cargar los datos");
       console.error(err);
     }
-  }, [grado_id, area_id, periodoSeleccionado, obtenerCurso, obtenerCalificaciones]);
+  }, [grado_id, area_id, periodoSeleccionado]);
 
   // Cargar datos al montar el componente
   useEffect(() => {
@@ -98,65 +125,171 @@ const SistemaCalificaciones = () => {
     }
   }, [curso]);
 
-  // Efecto para cargar calificaciones existentes desde el contexto
+  // Efecto para cargar calificaciones existentes desde el contexto - CORREGIDO
   useEffect(() => {
-    if (calificacionesContext) {
-      const nuevasCalificaciones = {};
+    if (calificacionesContext && Array.isArray(calificacionesContext)) {
+      console.log('Procesando calificaciones del contexto:', calificacionesContext);
 
-      calificacionesContext.forEach(calificacion => {
-        nuevasCalificaciones[calificacion.estudiante_id] = {};
+      // Filtrar solo las calificaciones del período actual
+      const calificacionesPeriodoActual = calificacionesContext.filter(
+        (calificacion: any) => calificacion.periodo === periodoSeleccionado
+      );
 
-        calificacion.notas.forEach(nota => {
-          nuevasCalificaciones[calificacion.estudiante_id][nota.id] = nota.valor;
+      console.log('Calificaciones del período actual:', calificacionesPeriodoActual);
+
+      if (calificacionesPeriodoActual.length > 0) {
+        // Extraer todas las actividades únicas de las calificaciones existentes
+        const actividadesExistentes = new Set<string>();
+        const actividadesInfo = new Map<string, { nombre: string; porcentaje: number }>();
+
+        calificacionesPeriodoActual.forEach((calificacion: any) => {
+          calificacion.notas.forEach((nota: any) => {
+            actividadesExistentes.add(nota.actividad_id);
+            actividadesInfo.set(nota.actividad_id, {
+              nombre: nota.nombre,
+              porcentaje: nota.porcentaje
+            });
+          });
         });
-      });
 
-      setCalificaciones(nuevasCalificaciones);
+        // Crear array de actividades basado en las calificaciones existentes
+        const nuevasActividades: Actividad[] = [];
+
+        actividadesExistentes.forEach(actividadId => {
+          const info = actividadesInfo.get(actividadId);
+          if (info) {
+            nuevasActividades.push({
+              id: actividadId,
+              nombre: info.nombre,
+              porcentaje: info.porcentaje,
+              isFinal: actividadId === 'final' || info.nombre.toLowerCase().includes('final')
+            });
+          }
+        });
+
+        // Asegurar que la evaluación final esté presente si no existe
+        const tieneEvaluacionFinal = nuevasActividades.some(act => act.isFinal);
+        if (!tieneEvaluacionFinal) {
+          nuevasActividades.push({
+            id: "final",
+            nombre: "Evaluación Final",
+            porcentaje: 30,
+            isFinal: true
+          });
+        }
+
+        // Actualizar las actividades solo si son diferentes
+        setActividades(prev => {
+          const idsActuales = prev.map(a => a.id).sort();
+          const idsNuevos = nuevasActividades.map(a => a.id).sort();
+
+          if (JSON.stringify(idsActuales) !== JSON.stringify(idsNuevos)) {
+            return nuevasActividades;
+          }
+          return prev;
+        });
+
+        // Mapear las calificaciones a la estructura local - CONVERTIR A STRING
+        const nuevasCalificaciones: { [estudianteId: string]: { [actividadId: string]: string } } = {};
+
+        // Inicializar para todos los estudiantes
+        estudiantes.forEach(estudiante => {
+          nuevasCalificaciones[estudiante.id] = {};
+          nuevasActividades.forEach(actividad => {
+            nuevasCalificaciones[estudiante.id][actividad.id] = '';
+          });
+        });
+
+        // Llenar con los valores existentes - CONVERTIR NÚMEROS A STRING
+        calificacionesPeriodoActual.forEach((calificacion: any) => {
+          const estudianteId = calificacion.estudiante_id.toString();
+
+          if (nuevasCalificaciones[estudianteId]) {
+            calificacion.notas.forEach((nota: any) => {
+              if (nota.actividad_id && nota.valor !== undefined && nota.valor !== null) {
+                // CONVERTIR EL NÚMERO A STRING
+                nuevasCalificaciones[estudianteId][nota.actividad_id] = nota.valor.toString();
+              }
+            });
+          }
+        });
+
+        console.log('Calificaciones mapeadas:', nuevasCalificaciones);
+        setCalificaciones(nuevasCalificaciones);
+      } else {
+        // Si no hay calificaciones para este período, resetear a actividades por defecto
+        console.log('No hay calificaciones para el período actual, usando actividades por defecto');
+        setActividades([
+          { id: "final", nombre: "Evaluación Final", porcentaje: 30, isFinal: true }
+        ]);
+
+        // Inicializar calificaciones vacías para todos los estudiantes
+        const calificacionesVacias: { [estudianteId: string]: { [actividadId: string]: string } } = {};
+        estudiantes.forEach(estudiante => {
+          calificacionesVacias[estudiante.id] = { "final": '' };
+        });
+        setCalificaciones(calificacionesVacias);
+      }
     }
-  }, [calificacionesContext]);
+  }, [calificacionesContext, periodoSeleccionado, estudiantes]);
 
-  // Efecto para inicializar la estructura de calificaciones con los estudiantes disponibles
+  // Efecto para sincronizar calificaciones cuando cambian estudiantes o actividades
   useEffect(() => {
-    if (estudiantes.length > 0 && Object.keys(calificaciones).length === 0) {
-      const nuevasCalificaciones = {};
+    setCalificaciones(prev => {
+      const nuevasCalificaciones: { [estudianteId: string]: { [actividadId: string]: string } } = {};
 
       estudiantes.forEach(estudiante => {
         nuevasCalificaciones[estudiante.id] = {};
-
         actividades.forEach(actividad => {
-          nuevasCalificaciones[estudiante.id][actividad.id] = '';
+          // Mantener valor anterior si existe, si no, dejar vacío
+          nuevasCalificaciones[estudiante.id][actividad.id] =
+            prev?.[estudiante.id]?.[actividad.id] ?? '';
         });
       });
 
-      setCalificaciones(nuevasCalificaciones);
-    }
+      return nuevasCalificaciones;
+    });
   }, [estudiantes, actividades]);
 
-  // Función para distribuir porcentajes equitativamente entre actividades regulares
-  const distribuirPorcentajes = useCallback((actividadesRegulares, actividadesFinal) => {
+  // Función distribuirPorcentajes - CORREGIDA
+  const distribuirPorcentajes = useCallback((actividadesRegulares: Actividad[], actividadesFinal: Actividad[]): Actividad[] => {
     if (actividadesRegulares.length === 0) {
-      return []; // Si no hay actividades regulares, devolver array vacío
+      return [...actividadesFinal]; // Devolver solo las actividades finales si no hay regulares
     }
 
     // El nuevo porcentaje para cada actividad regular (total 70% dividido equitativamente)
     const nuevoPorcentaje = REGULAR_ACTIVITIES_PERCENTAGE / actividadesRegulares.length;
 
-    // Actualizar los porcentajes
-    const nuevasActividadesRegulares = actividadesRegulares.map(act => ({
+    // Actualizar los porcentajes de las actividades regulares
+    const nuevasActividadesRegulares: Actividad[] = actividadesRegulares.map((act: Actividad) => ({
       ...act,
       porcentaje: nuevoPorcentaje
     }));
 
     return [...nuevasActividadesRegulares, ...actividadesFinal];
-  }, []);
+  }, [REGULAR_ACTIVITIES_PERCENTAGE]);
 
-  // Manejar cambio de periodo
-  const handlePeriodoChange = (periodo) => {
-    establecerPeriodo(parseInt(periodo));
+  // Función mejorada para manejar el cambio de período
+  const handlePeriodoChange = (periodo: string) => {
+    const periodoNumerico = parseInt(periodo);
+    establecerPeriodo(periodoNumerico);
+
+    // Limpiar calificaciones al cambiar de período
+    setCalificaciones({});
+
+    // Resetear actividades a las por defecto
+    setActividades([
+      { id: "final", nombre: "Evaluación Final", porcentaje: 30, isFinal: true }
+    ]);
+
+    // Cargar calificaciones del nuevo período
+    if (grado_id && area_id) {
+      obtenerCalificaciones(grado_id, area_id, periodoNumerico);
+    }
   };
 
   // Manejar cambio de calificación
-  const handleCalificacionChange = (estudianteId, actividadId, valor) => {
+  const handleCalificacionChange = (estudianteId: string, actividadId: string, valor: string) => {
     // Validar que la nota esté entre 0 y 5
     const valorNumerico = parseFloat(valor);
     if (isNaN(valorNumerico) && valor !== '') {
@@ -176,7 +309,7 @@ const SistemaCalificaciones = () => {
     }));
   };
 
-  // Añadir nueva actividad
+  // Añadir nueva actividad - CORREGIDO COMPLETAMENTE
   const handleAddActividad = () => {
     if (!nuevaActividad.nombre) {
       toast.error("Ingrese nombre para la nueva actividad");
@@ -184,17 +317,19 @@ const SistemaCalificaciones = () => {
     }
 
     // Separar actividades regulares de la evaluación final
-    const actividadesRegulares = actividades.filter(act => !act.isFinal);
-    const actividadesFinal = actividades.filter(act => act.isFinal);
+    const actividadesRegulares: Actividad[] = actividades.filter(act => !act.isFinal);
+    const actividadesFinal: Actividad[] = actividades.filter(act => act.isFinal);
 
-    // Crear la nueva actividad
-    const nuevaActividadObj = {
+    // Crear la nueva actividad con TODAS las propiedades del tipo Actividad
+    const nuevaActividadObj: Actividad = {
       id: `act${actividades.length + 1}`,
       nombre: nuevaActividad.nombre,
+      porcentaje: 0, // Se calculará automáticamente en distribuirPorcentajes
+      isFinal: false // Es una actividad regular, no final
     };
 
     // Añadir la nueva actividad a las actividades regulares
-    const nuevasActividadesRegulares = [...actividadesRegulares, nuevaActividadObj];
+    const nuevasActividadesRegulares: Actividad[] = [...actividadesRegulares, nuevaActividadObj];
 
     // Redistribuir porcentajes automáticamente
     const nuevasActividades = distribuirPorcentajes(nuevasActividadesRegulares, actividadesFinal);
@@ -209,8 +344,8 @@ const SistemaCalificaciones = () => {
       return nuevo;
     });
 
-    // Reiniciar el formulario
-    setNuevaActividad({ nombre: "" });
+    // Reiniciar el formulario - CORREGIR también esto
+    setNuevaActividad({ nombre: "", porcentaje: '' }); // Solo limpiar nombre, no porcentaje
 
     toast.success(`Actividad "${nuevaActividad.nombre}" añadida. Porcentajes redistribuidos automáticamente.`);
   };
@@ -234,7 +369,7 @@ const SistemaCalificaciones = () => {
   };
 
   // Calcular nota final para un estudiante
-  const calcularNotaFinal = (estudianteId) => {
+  const calcularNotaFinal = (estudianteId: string) => {
     if (!calificaciones[estudianteId]) return "-";
 
     let notaFinal = 0;
@@ -255,7 +390,7 @@ const SistemaCalificaciones = () => {
   };
 
   // Eliminar actividad
-  const handleEliminarActividad = (actividadId) => {
+  const handleEliminarActividad = (actividadId: string) => {
     if (actividades.length <= 1) {
       toast.error("Debe haber al menos una actividad");
       return;
@@ -263,7 +398,7 @@ const SistemaCalificaciones = () => {
 
     // No permitir eliminar la evaluación final
     const actividad = actividades.find(act => act.id === actividadId);
-    if (actividad.isFinal) {
+    if (actividad?.isFinal) {
       toast.error("No se puede eliminar la evaluación final");
       return;
     }
@@ -309,7 +444,7 @@ const SistemaCalificaciones = () => {
         notas: actividades.map(actividad => ({
           actividad_id: actividad.id,
           nombre: actividad.nombre,
-          valor: parseFloat(calificaciones[estudiante.id][actividad.id] || 0),
+          valor: parseFloat(calificaciones[estudiante.id][actividad.id] || '0'),
           porcentaje: actividad.porcentaje
         }))
       }));
@@ -346,6 +481,159 @@ const SistemaCalificaciones = () => {
       esValido: Math.abs(totalRegulares - REGULAR_ACTIVITIES_PERCENTAGE) < 0.1 &&
         Math.abs(totalFinal - FINAL_EVALUATION_PERCENTAGE) < 0.1
     };
+  };
+
+  // Efecto para cargar calificaciones existentes desde el contexto y autocompletar
+  useEffect(() => {
+    if (calificacionesContext && Array.isArray(calificacionesContext)) {
+      // Filtrar solo las calificaciones del período actual
+      const calificacionesPeriodoActual = calificacionesContext.filter(
+        (calificacion: CalificacionContext) => calificacion.periodo === periodoSeleccionado
+      );
+
+      if (calificacionesPeriodoActual.length > 0) {
+        // Extraer todas las actividades únicas de las calificaciones existentes
+        const actividadesExistentes = new Set<string>();
+        const actividadesInfo = new Map<string, { nombre: string; porcentaje: number }>();
+
+        calificacionesPeriodoActual.forEach((calificacion: CalificacionContext) => {
+          calificacion.notas.forEach((nota: Nota) => {
+            actividadesExistentes.add(nota.actividad_id);
+            actividadesInfo.set(nota.actividad_id, {
+              nombre: nota.nombre,
+              porcentaje: nota.porcentaje
+            });
+          });
+        });
+
+        // Crear array de actividades basado en las calificaciones existentes
+        const nuevasActividades: Actividad[] = [];
+
+        actividadesExistentes.forEach(actividadId => {
+          const info = actividadesInfo.get(actividadId);
+          if (info) {
+            nuevasActividades.push({
+              id: actividadId,
+              nombre: info.nombre,
+              porcentaje: info.porcentaje,
+              isFinal: actividadId === 'final' || info.nombre.toLowerCase().includes('final')
+            });
+          }
+        });
+
+        // Asegurar que la evaluación final esté presente si no existe
+        const tieneEvaluacionFinal = nuevasActividades.some(act => act.isFinal);
+        if (!tieneEvaluacionFinal) {
+          nuevasActividades.push({
+            id: "final",
+            nombre: "Evaluación Final",
+            porcentaje: 30,
+            isFinal: true
+          });
+        }
+
+        // Actualizar las actividades
+        setActividades(nuevasActividades);
+
+        // Mapear las calificaciones a la estructura local
+        const nuevasCalificaciones: { [estudianteId: string]: { [actividadId: string]: string } } = {};
+
+        calificacionesPeriodoActual.forEach((calificacion: CalificacionContext) => {
+          const estudianteId = calificacion.estudiante_id.toString();
+          nuevasCalificaciones[estudianteId] = {};
+
+          // Inicializar todas las actividades con valor vacío
+          nuevasActividades.forEach(actividad => {
+            nuevasCalificaciones[estudianteId][actividad.id] = '';
+          });
+
+          // Llenar con los valores existentes
+          calificacion.notas.forEach((nota: Nota) => {
+            if (nota.actividad_id && nota.valor !== undefined && nota.valor !== null) {
+              nuevasCalificaciones[estudianteId][nota.actividad_id] = nota.valor.toString();
+            }
+          });
+        });
+        setCalificaciones(nuevasCalificaciones);
+      } else {
+        // Si no hay calificaciones para este período, resetear a actividades por defecto
+        console.log('No hay calificaciones para el período actual, usando actividades por defecto');
+        setActividades([
+          { id: "final", nombre: "Evaluación Final", porcentaje: 30, isFinal: true }
+        ]);
+        setCalificaciones({});
+      }
+    }
+  }, [calificacionesContext, periodoSeleccionado]);
+
+  // Efecto modificado para sincronizar calificaciones cuando cambian estudiantes o actividades
+  // Solo se ejecuta si no hay calificaciones del contexto o si se agregan nuevos estudiantes
+  useEffect(() => {
+    if (!calificacionesContext || calificacionesContext.length === 0) {
+      setCalificaciones(prev => {
+        const nuevasCalificaciones: { [estudianteId: string]: { [actividadId: string]: string } } = {};
+
+        estudiantes.forEach(estudiante => {
+          nuevasCalificaciones[estudiante.id] = {};
+          actividades.forEach(actividad => {
+            // Mantener valor anterior si existe, si no, dejar vacío
+            nuevasCalificaciones[estudiante.id][actividad.id] =
+              prev?.[estudiante.id]?.[actividad.id] ?? '';
+          });
+        });
+
+        return nuevasCalificaciones;
+      });
+    } else {
+      // Si hay calificaciones del contexto, solo agregar estudiantes nuevos que no estén en las calificaciones
+      setCalificaciones(prev => {
+        const nuevasCalificaciones = { ...prev };
+
+        estudiantes.forEach(estudiante => {
+          // Si el estudiante no existe en las calificaciones actuales, agregarlo
+          if (!nuevasCalificaciones[estudiante.id]) {
+            nuevasCalificaciones[estudiante.id] = {};
+            actividades.forEach(actividad => {
+              nuevasCalificaciones[estudiante.id][actividad.id] = '';
+            });
+          } else {
+            // Si el estudiante existe, asegurar que tenga todas las actividades
+            actividades.forEach(actividad => {
+              if (nuevasCalificaciones[estudiante.id][actividad.id] === undefined) {
+                nuevasCalificaciones[estudiante.id][actividad.id] = '';
+              }
+            });
+          }
+        });
+
+        return nuevasCalificaciones;
+      });
+    }
+  }, [estudiantes, actividades, calificacionesContext]);
+
+  // Función auxiliar para verificar si hay calificaciones para el período actual
+  const tieneCalificacionesGuardadas = () => {
+    if (!calificacionesContext || !Array.isArray(calificacionesContext)) return false;
+
+    return calificacionesContext.some(
+      (calificacion: CalificacionContext) => calificacion.periodo === periodoSeleccionado
+    );
+  };
+
+  // Mostrar indicador de calificaciones existentes
+  const CalificacionesStatus = () => {
+    const hayCalificaciones = tieneCalificacionesGuardadas();
+
+    if (hayCalificaciones) {
+      return (
+        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+          <p className="font-medium">✅ Calificaciones existentes cargadas</p>
+          <p className="text-sm">Se han cargado las calificaciones previamente guardadas para este período</p>
+        </div>
+      );
+    }
+
+    return null;
   };
 
   // Verificar si hay notas para mostrar advertencia
@@ -574,14 +862,16 @@ const SistemaCalificaciones = () => {
             >
               <TableHeader>
                 <TableColumn className="bg-gray-50 sticky left-0 z-10 min-w-[150px]">Estudiante</TableColumn>
-                {actividades.map(actividad => (
-                  <TableColumn key={actividad.id}>
-                    <div className="text-center whitespace-normal px-1">
-                      <div className="font-medium">{actividad.nombre}</div>
-                      <div className="text-xs text-gray-500">{actividad.porcentaje.toFixed(1)}%</div>
-                    </div>
-                  </TableColumn>
-                ))}
+                <>
+                  {actividades.map((actividad) => (
+                    <TableColumn key={actividad.id}>
+                      <div className="text-center whitespace-normal px-1">
+                        <div className="font-medium">{actividad.nombre}</div>
+                        <div className="text-xs text-gray-500">{actividad.porcentaje.toFixed(1)}%</div>
+                      </div>
+                    </TableColumn>
+                  ))}
+                </>
                 <TableColumn>Nota Final</TableColumn>
               </TableHeader>
               <TableBody>
@@ -591,19 +881,21 @@ const SistemaCalificaciones = () => {
                       {estudiante.nombre_completo}
                     </TableCell>
 
-                    {actividades.map(actividad => (
-                      <TableCell key={`${estudiante.id}-${actividad.id}`} className="text-center">
-                        <input
-                          type="number"
-                          className="w-16 p-1 border rounded text-center"
-                          min="0"
-                          max="5"
-                          step="0.1"
-                          value={calificaciones[estudiante.id]?.[actividad.id] || ''}
-                          onChange={(e) => handleCalificacionChange(estudiante.id, actividad.id, e.target.value)}
-                        />
-                      </TableCell>
-                    ))}
+                    <>
+                      {actividades.map(actividad => (
+                        <TableCell key={`${estudiante.id}-${actividad.id}`} className="text-center">
+                          <input
+                            type="number"
+                            className="w-16 p-1 border rounded text-center"
+                            min="0"
+                            max="5"
+                            step="0.1"
+                            value={calificaciones[estudiante.id]?.[actividad.id] || ''}
+                            onChange={(e) => handleCalificacionChange(estudiante.id, actividad.id, e.target.value)}
+                          />
+                        </TableCell>
+                      ))}
+                    </>
 
                     <TableCell className="text-center font-bold">
                       <span className={`${parseFloat(calcularNotaFinal(estudiante.id)) >= 3.5

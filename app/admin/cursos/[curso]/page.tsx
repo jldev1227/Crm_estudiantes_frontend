@@ -28,7 +28,6 @@ export default function CursoPage() {
         if (id) {
           await obtenerCurso(id);
         }
-        console.log(curso)
         setLoading(false);
       } catch (err) {
         setError("Error al cargar los datos del curso");

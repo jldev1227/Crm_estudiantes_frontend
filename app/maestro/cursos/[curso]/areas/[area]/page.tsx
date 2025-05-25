@@ -18,14 +18,6 @@ import { convertirA12Horas } from "@/helpers/convertirA12Horas";
 import { useMaestro } from "@/app/context/MaestroContext";
 
 // Define el tipo de los datos que obtendrás del servidor
-type CursoData = {
-  id: string;
-  nombre: string;
-  estudiantes: any[];
-  area?: AreaData; // Hacerlo opcional por si no viene del servidor
-};
-
-// Define el tipo de los datos que obtendrás del servidor
 type AreaData = {
   id: string;
   nombre: string;
@@ -122,7 +114,7 @@ export default function CursoPage() {
   const area_id = params.area as string;
 
   // Use the MaestroContext
-  const { obtenerCurso, curso, area } = useMaestro();
+  const { obtenerCurso, curso } = useMaestro();
 
   // Estado para el modal
   const [modalVisible, setModalVisible] = useState(false);
