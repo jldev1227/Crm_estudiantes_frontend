@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import { useMaestro } from '@/app/context/MaestroContext';
 import { useParams, useRouter } from 'next/navigation';
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Divider } from "@heroui/divider";
@@ -11,9 +10,9 @@ import { Button } from "@heroui/button";
 import { Avatar } from "@heroui/avatar";
 import { Progress } from "@heroui/progress";
 import EstudiantesResponsive from "@/components/estudiantesResponsive";
-import { useAuth } from "@/app/context/AuthContext";
 import { useValidateCourseAccess } from "@/hooks/useValidateCourseAccess";
 import { useAdmin } from "@/app/context/AdminContext";
+import { GraduationCap } from "lucide-react";
 
 // Iconos como componentes
 const EyeIcon = () => (
@@ -47,12 +46,6 @@ const UserGroupIcon = () => (
     </svg>
 );
 
-const AcademicCapIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-4">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443a55.381 55.381 0 0 1 5.25 2.882V15" />
-    </svg>
-);
-
 export default function CursoDashboard() {
     const params = useParams();
     const router = useRouter();
@@ -60,7 +53,9 @@ export default function CursoDashboard() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const { obtenerCurso, curso } = useAdmin();
+    const { obtenerCurso, curso, actualizarPension} = useAdmin();
+
+    console.log(curso)
 
     // Efecto para cargar datos del curso usando el contexto
     useEffect(() => {
@@ -71,7 +66,6 @@ export default function CursoDashboard() {
             try {
                 if (id) {
                     await obtenerCurso(id);
-                    console.log(curso);
                 }
                 setLoading(false);
             } catch (err) {
@@ -90,14 +84,19 @@ export default function CursoDashboard() {
         if (!curso?.areas || !curso?.estudiantes) return null;
 
         const maestrosUnicos = new Set(curso.areas.map((area: any) => area.maestro.id));
-        const areasDelDirector = curso.areas.filter((area: any) => area.maestro.id === curso.director.id);
+        const directorId = curso.director?.id;
+        const areasDelDirector = directorId
+            ? curso.areas.filter((area: any) => area.maestro.id === directorId)
+            : [];
 
         return {
             totalEstudiantes: curso.estudiantes.length,
             totalAreas: curso.areas.length,
             totalMaestros: maestrosUnicos.size,
             areasDelDirector: areasDelDirector.length,
-            porcentajeDirector: Math.round((areasDelDirector.length / curso.areas.length) * 100)
+            porcentajeDirector: curso.areas.length > 0
+                ? Math.round((areasDelDirector.length / curso.areas.length) * 100)
+                : 0
         };
     }, [curso]);
 
@@ -105,13 +104,14 @@ export default function CursoDashboard() {
     const areasPorMaestro = useMemo(() => {
         if (!curso?.areas) return [];
 
+        const directorId = curso.director?.id;
         const grupos = curso.areas.reduce((acc: any, area: any) => {
             const maestroId = area.maestro.id;
             if (!acc[maestroId]) {
                 acc[maestroId] = {
                     maestro: area.maestro,
                     areas: [],
-                    esDirector: maestroId === curso.director.id
+                    esDirector: directorId ? maestroId === directorId : false
                 };
             }
             acc[maestroId].areas.push(area);
@@ -194,7 +194,7 @@ export default function CursoDashboard() {
             <Card className="border border-gray-200">
                 <CardBody className="text-center py-8">
                     <div className="text-gray-500">
-                        <AcademicCapIcon />
+                        <GraduationCap strokeWidth={1} />
                         <p className="mt-2 font-medium">No se encontró información del curso</p>
                         <p className="text-sm">Verifica que el ID del curso sea correcto</p>
                     </div>
@@ -211,17 +211,12 @@ export default function CursoDashboard() {
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 w-full">
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                                <AcademicCapIcon />
+                                <GraduationCap strokeWidth={1} />
                             </div>
                             <div>
                                 <h1 className="text-2xl font-bold text-blue-600">
                                     {curso.nombre}
                                 </h1>
-                                <div className="flex items-center gap-2 mt-1">
-                                    <Chip size="sm" color="success" variant="flat">
-                                        Director: {curso.director?.nombre_completo}
-                                    </Chip>
-                                </div>
                             </div>
                         </div>
                         <div className="flex gap-2">
@@ -498,7 +493,7 @@ export default function CursoDashboard() {
                 <Divider />
                 <CardBody className="pt-4">
                     {/* Aquí insertas tu componente de tabla de estudiantes */}
-                    <EstudiantesResponsive estudiantes={curso.estudiantes} />
+                    <EstudiantesResponsive estudiantes={curso.estudiantes} isAdmin={true} handlePension={actualizarPension}/>
                 </CardBody>
             </Card>
         </div>

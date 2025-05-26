@@ -7,10 +7,9 @@ import { Tooltip } from "@heroui/tooltip";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Divider } from "@heroui/divider";
 import { useRouter } from "next/navigation";
-import { Grado } from "@/types";
-import { useAuth } from "@/app/context/AuthContext";
 import { GraduationCap, Users, BookOpen, Settings } from "lucide-react";
 import { useAdmin } from "@/app/context/AdminContext";
+import { Curso } from "@/types";
 
 // Iconos como componentes
 const EyeIcon = () => (
@@ -41,9 +40,6 @@ const FolderIcon = () => (
 export default function Page() {
   const router = useRouter();
   const { cursos, obtenerCursos } = useAdmin(); // Cambiado de cursos a cursos
-  const { usuario } = useAuth();
-
-  console.log(cursos);
 
   useEffect(() => {
     obtenerCursos(); // Cambiado de obtenerCursos a obtenerCursos
@@ -90,7 +86,7 @@ export default function Page() {
   };
 
   // Obtener color para el chip según el estado del grado
-  const getColorEstado = (grado: Grado) => {
+  const getColorEstado = (grado: Curso) => {
     if (!grado.director) return 'warning';
     return 'success';
   };

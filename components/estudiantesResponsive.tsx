@@ -498,6 +498,7 @@ export default function EstudiantesResponsive({
                   className="mt-6"
                   color={estudiante.pension_activa ? "danger" : "success"}
                   fullWidth
+                  variant="flat"
                 >
                   {estudiante.pension_activa ? "Desactivar" : "Activar"} pensión
                 </Button>

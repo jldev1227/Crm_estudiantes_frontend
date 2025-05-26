@@ -15,6 +15,9 @@ export const OBTENER_CURSO_GENERAL = gql`
         nombre_completo
         numero_identificacion
         celular_padres
+        fecha_nacimiento
+        tipo_documento
+        pension_activa
       }
       areas {
         id
