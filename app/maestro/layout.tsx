@@ -46,7 +46,7 @@ export default function MaestroLayout({
         >
           {isDesktopOrLaptop ? (
             <div className="col-span-1 border-r-2 bg-blue-600 text-white h-full">
-              <div className="sticky top-0">
+              {/* <div className="sticky top-0">
                 <div className="bg-white">
                   <Image
                     className="mx-auto"
@@ -137,7 +137,7 @@ export default function MaestroLayout({
                     </Button>
                   </ul>
                 </div>
-              </div>
+              </div> */}
             </div>
           ) : (
             <SideMenu></SideMenu>

@@ -17,7 +17,7 @@ export type Estudiante = {
 export type Maestro = {
   id: string;
   nombre_completo: string;
-  email: boolean;
+  email: string;
   celular: string;
   tipo_documento: string;
   numero_identificacion: string;
@@ -26,18 +26,12 @@ export type Maestro = {
 export type Curso = {
   id: string
   nombre: string
-  area: {
-    id: string;
-    nombre: string;
-  };
+  areas: Area[]
   grado: {
     id: string;
     nombre: string;
   };
-  director: {
-    id: string;
-    nombre_completo: string;
-  };
+  director: Maestro;
   estudiantes: Estudiante[];
 };
 
