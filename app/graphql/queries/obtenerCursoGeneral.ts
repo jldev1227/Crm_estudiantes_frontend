@@ -1,19 +1,30 @@
 import { gql } from "@apollo/client";
 
 export const OBTENER_CURSO_GENERAL = gql`
-  query ObtenerCursoGeneral($id: ID!) {
+  query ObtenerCursoConAreas($id: ID!) {
     obtenerCursoGeneral(id: $id) {
       id
       nombre
+      director {
+        id
+        nombre_completo
+        email
+      }
       estudiantes {
         id
-        tipo_documento
-        numero_identificacion
-        fecha_nacimiento
         nombre_completo
+        numero_identificacion
         celular_padres
-        grado_id
-        pension_activa
+      }
+      areas {
+        id
+        nombre
+        maestro {
+          id
+          nombre_completo
+          email
+        }
+        asignacion_id
       }
     }
   }

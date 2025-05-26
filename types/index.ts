@@ -41,6 +41,7 @@ export type Curso = {
   estudiantes: Estudiante[];
 };
 
-export type Actividad = {
-  
+export type Area = {
+  id: string;
+  nombre: string;
 }

@@ -1,87 +1,358 @@
 "use client";
 
-import React, { useEffect } from "react";
-import {
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
-} from "@heroui/table";
+import React, { useEffect, useMemo } from "react";
 import { useMaestro } from "@/app/context/MaestroContext";
 import { Button } from "@heroui/button";
+import { Chip } from "@heroui/chip";
+import { Tooltip } from "@heroui/tooltip";
+import { Card, CardBody, CardHeader } from "@heroui/card";
+import { Divider } from "@heroui/divider";
 import { useRouter } from "next/navigation";
 import { Curso } from "@/types";
+import { useAuth } from "@/app/context/AuthContext";
+import { GraduationCap } from "lucide-react";
+
+// Iconos como componentes
+const EyeIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-4">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+  </svg>
+);
+
+const DocumentIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-4">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+  </svg>
+);
+
+const PlusIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-4">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+  </svg>
+);
+
+const ChartIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-4">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
+  </svg>
+);
+
+const FolderIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-4">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25H11.69Z" />
+  </svg>
+);
 
 export default function Page() {
-  const route = useRouter();
+  const router = useRouter();
   const { cursos, obtenerCursosMaestro } = useMaestro();
+  const { usuario } = useAuth();
 
   useEffect(() => {
     obtenerCursosMaestro();
   }, []);
 
+  // Agrupar cursos por grado
+  const cursosPorGrado = useMemo(() => {
+    if (!cursos) return {};
+
+    return cursos.reduce((acc: {
+      [key: string]: {
+        grado: any,
+        materias: Curso[],
+        esDirector: boolean
+      }
+    }, curso: Curso) => {
+      const gradoNombre = curso.grado.nombre;
+
+      if (!acc[gradoNombre]) {
+        // Verificar si el maestro actual es director de este grado
+        const esDirectorDelGrado = curso.grado.director?.id === usuario?.id;
+
+        acc[gradoNombre] = {
+          grado: curso.grado,
+          materias: [],
+          esDirector: esDirectorDelGrado
+        };
+      }
+
+      acc[gradoNombre].materias.push(curso);
+
+      return acc;
+    }, {});
+  }, [cursos, usuario?.id]);
+
+
+  // Funciones de navegación por materia
+  const verMateria = (gradoId: string, areaId: string) => {
+    router.push(`/maestro/cursos/${gradoId}/areas/${areaId}`);
+  };
+
+  const agregarActividad = (gradoId: string, areaId: string) => {
+    router.push(`/maestro/cursos/${gradoId}/areas/${areaId}/actividades/agregar`);
+  };
+
+  const verReportesMateria = (gradoId: string, areaId: string) => {
+    router.push(`/maestro/cursos/${gradoId}/areas/${areaId}/calificaciones`);
+  };
+
+  // Funciones de navegación por grado
+  const verGradoCompleto = (gradoId: string) => {
+    router.push(`/maestro/cursos/${gradoId}`);
+  };
+
+  const verCalificaciones = (gradoId: string) => {
+    router.push(`/maestro/cursos/${gradoId}/calificaciones`);
+  };
+
+  const verEstadisticas = (gradoId: string) => {
+    router.push(`/maestro/cursos/${gradoId}/estadisticas`);
+  };
+
+  // Obtener color para el chip según el área
+  const getColorArea = (areaNombre: string) => {
+    const colores: { [key: string]: any } = {
+      'MATEMATICAS': 'primary',
+      'ESPAÑOL': 'secondary',
+      'CIENCIAS': 'success',
+      'SOCIALES': 'warning',
+      'INGLES': 'danger',
+      'EDUCACION FISICA': 'default'
+    };
+    return colores[areaNombre.toUpperCase()] || 'default';
+  };
+
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="space-y-4">
         <h1 className="text-2xl uppercase font-bold text-blue-600">
-          Cursos asignados
+          Cursos Asignados
         </h1>
-        <p>
-          Gestiona tus cursos asignados y realiza el registro de actividades
-          realizadas en cada curso
+        <p className="text-gray-600">
+          Gestiona tus cursos asignados y realiza el registro de actividades realizadas en cada curso
         </p>
       </div>
 
-      <div>
-        <Table aria-label="Example static collection table">
-          <TableHeader>
-            <TableColumn>CURSO</TableColumn>
-            <TableColumn>MATERIA ASIGNADA</TableColumn>
-            <TableColumn>CONSULTAR</TableColumn>
-          </TableHeader>
-          <TableBody>
-            {cursos?.map((curso: Curso, index: number) => (
-              <TableRow key={index}>
-                <TableCell>{curso.grado.nombre}</TableCell>
-                <TableCell>{curso.area.nombre}</TableCell>
-                <TableCell>
-                  <Button
-                    onPress={() => {
-                      route.push(
-                        `/maestro/cursos/${curso.grado.id}/areas/${curso.area.id}`,
-                      );
-                    }}
-                    color="primary"
-                    isIconOnly
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth={1.5}
-                      stroke="currentColor"
-                      className="size-6"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
-                      />
-                    </svg>
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+      {/* Estadísticas rápidas */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+          <div className="text-2xl font-bold text-blue-600">
+            {Object.keys(cursosPorGrado).length}
+          </div>
+          <div className="text-sm text-blue-600">Grados Asignados</div>
+        </div>
+        <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+          <div className="text-2xl font-bold text-green-600">
+            {cursos?.length || 0}
+          </div>
+          <div className="text-sm text-green-600">Total de Materias</div>
+        </div>
+        <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+          <div className="text-2xl font-bold text-orange-600">
+            {Object.values(cursosPorGrado).filter(g => g.esDirector).length}
+          </div>
+          <div className="text-sm text-orange-600">Grados que Diriges</div>
+        </div>
+        <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+          <div className="text-2xl font-bold text-purple-600">
+            {cursos?.filter(c => !c.area.nombre.includes('MATEMATICAS') && !c.area.nombre.includes('ESPAÑOL')).length || 0}
+          </div>
+          <div className="text-sm text-purple-600">Materias Especializadas</div>
+        </div>
       </div>
+
+      {/* Cards por Grado */}
+      <div className="space-y-6">
+        {Object.values(cursosPorGrado).map((gradoData) => (
+          <Card key={gradoData.grado.id} className="w-full shadow-sm">
+            <CardHeader className="pb-3">
+              <div className="flex justify-between items-start w-full">
+                <div className="flex items-center gap-4">
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-800">
+                      {gradoData.grado.nombre.toUpperCase()}
+                    </h3>
+                    {gradoData.esDirector && (
+                      <Chip size="sm" color="success" variant="flat" className="font-medium">
+                        Director
+                      </Chip>
+                    )}
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-sm text-gray-600">
+                        {gradoData.materias.length} materia{gradoData.materias.length !== 1 ? 's' : ''} asignada{gradoData.materias.length !== 1 ? 's' : ''}
+                      </span>
+                      {gradoData.grado.director && !gradoData.esDirector && (
+                        <Chip size="sm" color="default" variant="flat">
+                          Director: {gradoData.grado.director.nombre_completo || 'Sin nombre'}
+                        </Chip>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Acciones generales del grado */}
+                {gradoData.esDirector && (
+                  <div className="flex items-center gap-2">
+                    <Tooltip content="Ver grado completo">
+                      <Button
+                        size="sm"
+                        color="primary"
+                        variant="flat"
+                        isIconOnly
+                        onPress={() => verGradoCompleto(gradoData.grado.id)}
+                      >
+                        <GraduationCap strokeWidth={1} />
+                      </Button>
+                    </Tooltip>
+                    <Tooltip content="Ver calificaciones">
+                      <Button
+                        size="sm"
+                        color="success"
+                        variant="flat"
+                        isIconOnly
+                        onPress={() => verCalificaciones(gradoData.grado.id)}
+                      >
+                        <DocumentIcon />
+                      </Button>
+                    </Tooltip>
+
+                    {/* <Tooltip content="Ver estadísticas">
+                    <Button
+                      size="sm"
+                      color="warning"
+                      variant="flat"
+                      isIconOnly
+                      onPress={() => verEstadisticas(gradoData.grado.id)}
+                    >
+                      <ChartIcon />
+                    </Button>
+                  </Tooltip> */}
+                  </div>
+                )}
+              </div>
+            </CardHeader>
+
+            <Divider />
+
+            <CardBody className="pt-4">
+              <div className="space-y-3">
+                <h4 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">
+                  Materias que enseñas en este grado
+                </h4>
+
+                <div className="grid grid-cols-1 gap-3">
+                  {gradoData.materias.map((curso) => (
+                    <div key={`${curso.grado.id}-${curso.area.id}`} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <Chip
+                          size="sm"
+                          color={getColorArea(curso.area.nombre)}
+                          variant="flat"
+                          className="font-medium"
+                        >
+                          {curso.area.nombre}
+                        </Chip>
+                        <span className="text-sm text-gray-600">
+                          Área de {curso.area.nombre.toLowerCase()}
+                        </span>
+                      </div>
+
+                      {/* Acciones por materia */}
+                      <div className="flex items-center gap-1">
+                        <Tooltip content={`Ver ${curso.area.nombre}`}>
+                          <Button
+                            size="sm"
+                            color="primary"
+                            variant="light"
+                            isIconOnly
+                            onPress={() => verMateria(curso.grado.id, curso.area.id)}
+                          >
+                            <EyeIcon />
+                          </Button>
+                        </Tooltip>
+
+                        <Tooltip content={`Agregar actividad a ${curso.area.nombre}`}>
+                          <Button
+                            size="sm"
+                            color="success"
+                            variant="light"
+                            isIconOnly
+                            onPress={() => agregarActividad(curso.grado.id, curso.area.id)}
+                          >
+                            <PlusIcon />
+                          </Button>
+                        </Tooltip>
+
+                        <Tooltip content={`Calificaciones de ${curso.area.nombre}`}>
+                          <Button
+                            size="sm"
+                            color="secondary"
+                            variant="light"
+                            isIconOnly
+                            onPress={() => verReportesMateria(curso.grado.id, curso.area.id)}
+                          >
+                            <DocumentIcon />
+                          </Button>
+                        </Tooltip>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Acciones rápidas del grado
+                <div className="mt-4 pt-3 border-t border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-600">
+                      Acciones rápidas para {gradoData.grado.nombre}:
+                    </span>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        color="primary"
+                        variant="light"
+                        onPress={() => verGradoCompleto(gradoData.grado.id)}
+                        startContent={<FolderIcon />}
+                      >
+                        Ver todo
+                      </Button>
+                      <Button
+                        size="sm"
+                        color="success"
+                        variant="light"
+                        onPress={() => verCalificaciones(gradoData.grado.id)}
+                        startContent={<DocumentIcon />}
+                      >
+                        Calificaciones
+                      </Button>
+                    </div>
+                  </div>
+                </div> */}
+              </div>
+            </CardBody>
+          </Card>
+        ))}
+      </div>
+
+      {/* Mensaje si no hay cursos */}
+      {(!cursos || cursos.length === 0) && (
+        <Card className="w-full">
+          <CardBody className="text-center py-12">
+            <div className="text-gray-500">
+              <div className="w-16 h-16 mx-auto mb-4 text-gray-300">
+                <FolderIcon />
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                No tienes cursos asignados
+              </h3>
+              <p className="text-sm text-gray-600">
+                Contacta al coordinador académico para que te asigne cursos y materias
+              </p>
+            </div>
+          </CardBody>
+        </Card>
+      )}
     </div>
   );
 }

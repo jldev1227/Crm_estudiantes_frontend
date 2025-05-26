@@ -4,6 +4,7 @@ import { useApolloClient } from "@apollo/client";
 import { OBTENER_CURSOS_MAESTRO } from "../graphql/queries/obtenerCursosMaestro";
 import { OBTENER_CURSO } from "../graphql/queries/obtenerCurso";
 import { OBTENER_CALIFICACIONES } from "../graphql/queries/obtenerCalificaciones";
+import { OBTENER_CURSO_GENERAL } from "../graphql/queries/obtenerCursoGeneral";
 
 // Estado inicial
 const initialState = {
@@ -91,6 +92,29 @@ export function MaestroProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Función para obtener un curso específico con su área
+  const obtenerCursoGeneral = async (id: string) => {
+    try {
+      const { data } = await client.query({
+        query: OBTENER_CURSO_GENERAL,
+        variables: { id },
+      });
+
+      dispatch({
+        type: "OBTENER_CURSO",
+        payload: {
+          curso: data.obtenerCursoGeneral,
+        },
+      });
+
+      console.log(data)
+
+      return data.obtenerCursoGeneral;
+    } catch (error) {
+      console.error("Error obteniendo curso:", error);
+    }
+  };
+
   // Función para obtener calificaciones
   const obtenerCalificaciones = async (grado_id: string, area_id: string, periodo: number) => {
     try {
@@ -129,6 +153,7 @@ export function MaestroProvider({ children }: { children: React.ReactNode }) {
         periodoSeleccionado: state.periodoSeleccionado,
         obtenerCursosMaestro,
         obtenerCurso,
+        obtenerCursoGeneral,
         obtenerCalificaciones,
         establecerPeriodo,
       }}

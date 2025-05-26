@@ -326,7 +326,7 @@ export default function CursoPage() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h1 className="text-xl md:text-2xl uppercase font-bold text-blue-600">
-            Curso - {curso.nombre}
+            Curso - {curso.nombre} / {curso.area.nombre}
           </h1>
           <Button radius="sm" as={Link} color="primary" href={"/admin/cursos"}>
             Volver
