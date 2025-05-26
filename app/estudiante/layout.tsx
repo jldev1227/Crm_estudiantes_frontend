@@ -180,7 +180,7 @@ export default function EstudianteLayout({
               </div>
             </div>
           ) : (
-            <SideMenu></SideMenu>
+            <SideMenu/>
           )}
           <div className="col-span-4 p-4 md:p-10">{children}</div>
         </main>

@@ -84,7 +84,7 @@ export default function EstudiantePage() {
           </div>
         </div>
 
-        <div className="mt-8 flex space-x-4">
+        <div className="mt-8 flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0 items-center justify-center">
           <div className="flex items-center space-x-2 text-gray-600">
             <BookOpen size={20} />
             <span>Progreso Académico</span>

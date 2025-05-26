@@ -25,7 +25,8 @@ const GimnasioLogo = () => {
         width={42}
         height={42}
         alt="Logo"
-      />      <span className="font-bold text-inherit">Gimnasio Vancouver</span>
+      />      
+      <span className="font-bold text-inherit">Gimnasio Vancouver</span>
     </div>
   );
 };
@@ -99,19 +100,19 @@ export default function SideMenu() {
   return (
     <Navbar isBordered isMenuOpen={isMenuOpen} onMenuOpenChange={setIsMenuOpen}>
       {/* Menú móvil - Toggle */}
-      <NavbarContent className="sm:hidden" justify="start">
+      <NavbarContent className="md:hidden" justify="start">
         <NavbarMenuToggle aria-label={isMenuOpen ? "Cerrar menú" : "Abrir menú"} />
       </NavbarContent>
 
       {/* Logo en móvil */}
-      <NavbarContent className="sm:hidden pr-3" justify="center">
+      <NavbarContent className="md:hidden pr-3" justify="center">
         <NavbarBrand>
           <GimnasioLogo />
         </NavbarBrand>
       </NavbarContent>
 
       {/* Menú desktop */}
-      <NavbarContent className="hidden sm:flex gap-4" justify="center">
+      <NavbarContent className="hidden md:flex gap-4" justify="center">
         <NavbarBrand>
           <GimnasioLogo />
         </NavbarBrand>
