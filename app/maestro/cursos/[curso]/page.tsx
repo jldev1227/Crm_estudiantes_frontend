@@ -13,6 +13,7 @@ import { Progress } from "@heroui/progress";
 import EstudiantesResponsive from "@/components/estudiantesResponsive";
 import { useAuth } from "@/app/context/AuthContext";
 import { useValidateCourseAccess } from "@/hooks/useValidateCourseAccess";
+import { GraduationCap } from "lucide-react";
 
 // Iconos como componentes
 const EyeIcon = () => (
@@ -46,12 +47,6 @@ const UserGroupIcon = () => (
     </svg>
 );
 
-const AcademicCapIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-4">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443a55.381 55.381 0 0 1 5.25 2.882V15" />
-    </svg>
-);
-
 export default function CursoDashboard() {
     const params = useParams();
     const router = useRouter();
@@ -60,7 +55,6 @@ export default function CursoDashboard() {
     const [error, setError] = useState<string | null>(null);
 
     const { obtenerCursoGeneral, curso } = useMaestro();
-    const { usuario } = useAuth();
 
     // Efecto para cargar datos del curso usando el contexto
     useEffect(() => {
@@ -194,7 +188,7 @@ export default function CursoDashboard() {
             <Card className="border border-gray-200">
                 <CardBody className="text-center py-8">
                     <div className="text-gray-500">
-                        <AcademicCapIcon />
+                        <GraduationCap strokeWidth={1} />
                         <p className="mt-2 font-medium">No se encontró información del curso</p>
                         <p className="text-sm">Verifica que el ID del curso sea correcto</p>
                     </div>
@@ -208,20 +202,15 @@ export default function CursoDashboard() {
             {/* Header del Curso */}
             <Card className="shadow-sm">
                 <CardHeader className="pb-3">
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 w-full">
+                    <div className="flex flex-col sm:flex-row justify-between items-start md:items-center gap-4 w-full">
                         <div className="flex items-center gap-4">
                             <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                                <AcademicCapIcon />
+                                <GraduationCap strokeWidth={1} />
                             </div>
                             <div>
                                 <h1 className="text-2xl font-bold text-blue-600">
                                     {curso.nombre}
                                 </h1>
-                                <div className="flex items-center gap-2 mt-1">
-                                    <Chip size="sm" color="success" variant="flat">
-                                        Director: {curso.director?.nombre_completo}
-                                    </Chip>
-                                </div>
                             </div>
                         </div>
                         <div className="flex gap-2">
@@ -260,7 +249,7 @@ export default function CursoDashboard() {
                             <div className="text-2xl font-bold text-green-600 mb-1">
                                 {estadisticas.totalAreas}
                             </div>
-                            <div className="text-sm text-green-600">Áreas Académicas</div>
+                            <div className="text-sm text-green-600">Áreas</div>
                         </CardBody>
                     </Card>
 
@@ -278,74 +267,10 @@ export default function CursoDashboard() {
                             <div className="text-2xl font-bold text-purple-600 mb-1">
                                 {estadisticas.porcentajeDirector}%
                             </div>
-                            <div className="text-sm text-purple-600">Carga del Director</div>
+                            <div className="text-sm text-purple-600">Tu carga Académica</div>
                         </CardBody>
                     </Card>
                 </div>
-            )}
-
-            {/* Información del Director */}
-            {curso.director && (
-                <Card className="shadow-sm">
-                    <CardHeader className="pb-3">
-                        <h2 className="text-xl font-bold text-gray-800">Director del Curso</h2>
-                    </CardHeader>
-                    <Divider />
-                    <CardBody className="pt-4">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                                <Avatar
-                                    name={curso.director.nombre_completo.split(' ').map((n: string) => n[0]).join('')}
-                                    size="lg"
-                                    className="bg-blue-600 text-white"
-                                />
-                                <div>
-                                    <h3 className="text-lg font-semibold text-gray-800">
-                                        {curso.director.nombre_completo}
-                                    </h3>
-                                    <p className="text-sm text-gray-600">{curso.director.email}</p>
-                                    <div className="flex items-center gap-2 mt-2">
-                                        <Chip size="sm" color="success" variant="flat">
-                                            Director de Curso
-                                        </Chip>
-                                        {estadisticas && (
-                                            <Chip size="sm" color="primary" variant="flat">
-                                                {estadisticas.areasDelDirector} áreas asignadas
-                                            </Chip>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="flex gap-2">
-                                <Button
-                                    size="sm"
-                                    color="primary"
-                                    variant="flat"
-                                    onPress={() => verMaestro(curso.director.id)}
-                                    startContent={<EyeIcon />}
-                                >
-                                    Ver Perfil
-                                </Button>
-                            </div>
-                        </div>
-
-                        {/* Progreso de carga académica del director */}
-                        {estadisticas && (
-                            <div className="mt-4">
-                                <div className="flex justify-between items-center mb-2">
-                                    <span className="text-sm font-medium text-gray-600">Carga Académica del Director</span>
-                                    <span className="text-sm text-gray-500">{estadisticas.areasDelDirector}/{estadisticas.totalAreas}</span>
-                                </div>
-                                <Progress
-                                    value={estadisticas.porcentajeDirector}
-                                    color="primary"
-                                    size="sm"
-                                    className="max-w-md"
-                                />
-                            </div>
-                        )}
-                    </CardBody>
-                </Card>
             )}
 
             {/* Maestros y sus Áreas */}
@@ -380,7 +305,7 @@ export default function CursoDashboard() {
                                                     <div className="flex items-center gap-1 mt-1">
                                                         {grupo.esDirector && (
                                                             <Chip size="sm" color="success" variant="dot">
-                                                                Director
+                                                                Tú
                                                             </Chip>
                                                         )}
                                                         <Chip size="sm" color="default" variant="flat">
@@ -401,7 +326,7 @@ export default function CursoDashboard() {
                                         </div>
 
                                         <div className="space-y-2">
-                                            <h4 className="text-sm font-medium text-gray-700">Áreas que enseña:</h4>
+                                            <h4 className="text-sm font-medium text-gray-700">Áreas que enseña{grupo.esDirector && 's'}:</h4>
                                             <div className="flex flex-wrap gap-2">
                                                 {grupo.areas.map((area: any) => (
                                                     <Tooltip key={area.id} content={`Ver ${area.nombre}`}>

@@ -1,10 +1,12 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useAuth } from "./AuthContext";
 import { useQuery, useLazyQuery } from "@apollo/client";
 import { OBTENER_AREAS_POR_GRADO } from "../graphql/queries/obtenerAreasPorGrado";
 import { OBTENER_ACTIVIDADES_POR_AREA } from "../graphql/queries/obtenerActividadesPorArea";
+import socketService from "@/services/socketService";
+import { addToast } from "@heroui/toast";
 
 // Definir los tipos
 interface Area {
@@ -25,6 +27,21 @@ interface Actividad {
   area: Area;
 }
 
+interface SocketEventLog {
+  eventName: string;
+  data: any;
+  timestamp: Date;
+}
+
+interface EstudianteErrorEvent {
+  error: string;
+  id: string;
+}
+
+interface EstudiantePensionActualizadaResponse {
+  estado_pension: boolean
+}
+
 interface EstudianteContextType {
   areas: Area[];
   actividades: Actividad[];
@@ -36,6 +53,13 @@ interface EstudianteContextType {
   obtenerActividadesPorFecha: (fecha: string) => void;
   filtrarActividades: (texto: string) => void;
   actividadesFiltradas: Actividad[];
+
+  // Propiedades para Socket.IO
+  socketConnected: boolean;
+  socketEventLogs: SocketEventLog[];
+  clearSocketEventLogs: () => void;
+  connectSocket?: (usuarioId: string) => void;
+  disconnectSocket?: () => void;
 }
 
 // Crear el contexto
@@ -53,6 +77,10 @@ export const EstudianteProvider: React.FC<{ children: React.ReactNode }> = ({
   const [actividadesFiltradas, setActividadesFiltradas] = useState<Actividad[]>(
     [],
   );
+
+  // Estado para Socket.IO
+  const [socketConnected, setSocketConnected] = useState<boolean>(false);
+  const [socketEventLogs, setSocketEventLogs] = useState<SocketEventLog[]>([]);
 
   // Query para obtener áreas por grado
   const {
@@ -135,6 +163,101 @@ export const EstudianteProvider: React.FC<{ children: React.ReactNode }> = ({
     setActividadesFiltradas(filtradas);
   };
 
+  // Inicializar Socket.IO cuando el usuario esté autenticado
+  useEffect(() => {
+    if (usuario?.id) {
+      // Conectar socket
+      socketService.connect(usuario.id.toString());
+
+      // Verificar conexión inicial y configurar manejo de eventos de conexión
+      const checkConnection = () => {
+        const isConnected = socketService.isConnected();
+
+        setSocketConnected(isConnected);
+      };
+
+      // Verificar estado inicial
+      checkConnection();
+
+      // Manejar eventos de conexión
+      const handleConnect = () => {
+        setSocketConnected(true);
+      };
+
+      const handleDisconnect = () => {
+        setSocketConnected(false);
+        addToast({
+          title: "Error",
+          description: "Desconectado de actualizaciones en tiempo real",
+          color: "danger",
+        });
+      };
+
+      // Manejadores para eventos de servicios
+      const handlePensionActualizada = (data: EstudiantePensionActualizadaResponse) => {
+        setSocketEventLogs((prev) => [
+          ...prev,
+          {
+            eventName: "estudiante:pension-actualizada",
+            data,
+            timestamp: new Date(),
+          },
+        ]);
+
+        if (data.estado_pension) {
+          addToast({
+            title: "Acceso habilitado",
+            description: "Ya puedes acceder a la plataforma. Tu pensión ha sido renovada.",
+            color: "success",
+          });
+        } else {
+            addToast({
+              title: "Se ha deshabilitado tu acceso por falta de pago",
+              description: `Seras suspendido hasta que se realice renovación de tu pensión`,
+              color: "warning",
+            });
+            setTimeout(() => {
+              window.location.reload();
+            }, 5000);
+        }
+      };
+
+      const handleEstudianteError = (data: EstudianteErrorEvent) => {
+        // Verificar si el error corresponde al Estudiante actual
+        if (data.id) {
+          addToast({
+            title: "Error con el Estudiante",
+            description: data.error,
+            color: "danger",
+          });
+        }
+      };
+
+      // Registrar manejadores de eventos de conexión
+      socketService.on("connect", handleConnect);
+      socketService.on("disconnect", handleDisconnect);
+
+      // Registrar manejadores de eventos de estudiante
+      socketService.on("estudiante:pension-actualizada", handlePensionActualizada);
+
+      socketService.on("estudiante:error", handleEstudianteError);
+
+      return () => {
+        // Limpiar al desmontar
+        socketService.off("connect");
+        socketService.off("disconnect");
+
+        // Limpiar manejadores de eventos de servicios
+        socketService.off("estudiante:pension-actualizada");
+      };
+    }
+  }, [usuario?.id]);
+
+  // Función para limpiar el registro de eventos de socket
+  const clearSocketEventLogs = useCallback(() => {
+    setSocketEventLogs([]);
+  }, []);
+
   // Valores del contexto
   const contextValue: EstudianteContextType = {
     areas,
@@ -147,6 +270,10 @@ export const EstudianteProvider: React.FC<{ children: React.ReactNode }> = ({
     obtenerActividadesPorFecha,
     filtrarActividades,
     actividadesFiltradas,
+
+    socketConnected,
+    socketEventLogs,
+    clearSocketEventLogs,
   };
 
   return (
