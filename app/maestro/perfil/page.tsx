@@ -1,5 +1,5 @@
 "use client";
-import React, { Key, useState } from 'react';
+import React, { useState } from 'react';
 import { User, Mail, Phone, Briefcase, HashIcon, Edit2, X, Check } from 'lucide-react';
 import { useAuth } from "@/app/context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";

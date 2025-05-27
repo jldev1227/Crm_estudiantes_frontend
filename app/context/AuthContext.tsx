@@ -79,6 +79,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         // Guardar rol temporalmente para la próxima carga (solo para saber qué query ejecutar)
         localStorage.setItem("usuario", JSON.stringify({ rol: action.payload.rol }));
       }
+
       
       return {
         ...state,
