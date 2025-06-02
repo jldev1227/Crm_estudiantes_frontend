@@ -11,7 +11,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useMaestro } from "@/app/context/MaestroContext";
 import { GUARDAR_CALIFICACIONES } from "@/app/graphql/mutation/guardarCalificaciones";
 import { Estudiante } from '@/types';
-import { AlertTriangle, CheckCircle, Download, File, XCircle } from 'lucide-react';
+import { CheckCircle, Download, File, XCircle } from 'lucide-react';
 import { handleGenerateAreaPDF } from '@/components/ui/reportArea';
 import { Card, CardHeader, CardBody } from '@heroui/card';
 import { Chip } from '@heroui/chip';
@@ -122,7 +122,6 @@ const SistemaCalificaciones = () => {
   // Efecto para cargar datos del curso
   const fetchData = useCallback(async () => {
     if (!grado_id || !area_id) return;
-
 
     try {
       // Cargar datos del curso
@@ -1077,18 +1076,6 @@ const SistemaCalificaciones = () => {
               <Chip size="sm" color="primary" variant="flat">
                 {estudiantes.length} estudiantes
               </Chip>
-              {validation.isValid && (
-                <Tooltip content="Descargar reporte de calificaciones">
-                  <Button 
-                    size="sm" 
-                    color="success" 
-                    variant="flat"
-                    startContent={<Download className="w-4 h-4" />}
-                  >
-                    Descargar
-                  </Button>
-                </Tooltip>
-              )}
             </div>
           </div>
         </CardHeader>

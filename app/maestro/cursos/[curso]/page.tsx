@@ -9,7 +9,6 @@ import { Chip } from "@heroui/chip";
 import { Tooltip } from "@heroui/tooltip";
 import { Button } from "@heroui/button";
 import { Avatar } from "@heroui/avatar";
-import { Progress } from "@heroui/progress";
 import EstudiantesResponsive from "@/components/estudiantesResponsive";
 import { useAuth } from "@/app/context/AuthContext";
 import { useValidateCourseAccess } from "@/hooks/useValidateCourseAccess";
@@ -51,6 +50,7 @@ export default function CursoDashboard() {
     const params = useParams();
     const router = useRouter();
     const id = params.curso as string;
+    const { usuario } = useAuth()
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -65,7 +65,6 @@ export default function CursoDashboard() {
             try {
                 if (id) {
                     await obtenerCursoGeneral(id);
-                    console.log(curso);
                 }
                 setLoading(false);
             } catch (err) {
@@ -198,7 +197,7 @@ export default function CursoDashboard() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 p-4 md:p-10">
             {/* Header del Curso */}
             <Card className="shadow-sm">
                 <CardHeader className="pb-3">
@@ -212,18 +211,6 @@ export default function CursoDashboard() {
                                     {curso.nombre}
                                 </h1>
                             </div>
-                        </div>
-                        <div className="flex gap-2">
-                            <Tooltip content="Ver reportes del curso">
-                                <Button size="sm" color="success" variant="flat" isIconOnly>
-                                    <DocumentIcon />
-                                </Button>
-                            </Tooltip>
-                            <Tooltip content="Ver estadísticas">
-                                <Button size="sm" color="warning" variant="flat" isIconOnly>
-                                    <ChartIcon />
-                                </Button>
-                            </Tooltip>
                         </div>
                     </div>
                 </CardHeader>
@@ -423,7 +410,7 @@ export default function CursoDashboard() {
                 <Divider />
                 <CardBody className="pt-4">
                     {/* Aquí insertas tu componente de tabla de estudiantes */}
-                    <EstudiantesResponsive estudiantes={curso.estudiantes} />
+                    <EstudiantesResponsive estudiantes={curso.estudiantes} isDirector={curso.director.id === usuario?.id} isVisible={true} />
                 </CardBody>
             </Card>
         </div>

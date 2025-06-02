@@ -259,15 +259,12 @@ export default function ActualizarActividadPage() {
   );
 
   const removeFile = useCallback((index: number) => {
-    // Obtener el archivo que se va a eliminar
-    const archivoAEliminar = uploadedUrls[index];
-
     setUploadedUrls(prev => {
       const newUrls = [...prev];
       newUrls.splice(index, 1);
       return newUrls;
     });
-    
+
     // Limpiar advertencia si se elimina un archivo
     setError("");
   }, [uploadedUrls]);
@@ -382,72 +379,6 @@ export default function ActualizarActividadPage() {
     () => uploadedUrls.length >= 10,
     [uploadedUrls.length],
   );
-
-  // Función mejorada para detectar el tipo de archivo
-  // Función mejorada para detectar el tipo de archivo con más especificidad para SVG
-  const detectarTipoArchivo = (url: string): string => {
-    if (!url) return "application/octet-stream";
-
-    // Para data URIs - extraer el tipo directamente
-    if (url.startsWith('data:')) {
-      const match = url.match(/^data:([^;]+);/);
-      if (match && match[1]) {
-        return match[1];
-      }
-
-      // Detección específica para diferentes tipos de data URIs
-      if (url.startsWith('data:image/svg+xml')) {
-        return 'image/svg+xml';
-      } else if (url.startsWith('data:image/')) {
-        return 'image/jpeg';
-      } else if (url.startsWith('data:application/pdf')) {
-        return 'application/pdf';
-      }
-    }
-
-    // Para URLs normales - inferir por extensión o path
-    // Verificación de SVG con múltiples patrones
-    if (
-      url.toLowerCase().endsWith('.svg') ||
-      url.toLowerCase().includes('.svg%2bxml') ||
-      url.toLowerCase().includes('.svg%2Bxml') ||
-      url.toLowerCase().includes('svg+xml') ||
-      url.includes('/SVG/')
-    ) {
-      return "image/svg+xml";
-    }
-
-    // Para PDF
-    if (url.toLowerCase().endsWith('.pdf') || url.includes('/PDFs/')) {
-      return "application/pdf";
-    }
-
-    // Para imágenes comunes
-    if (url.toLowerCase().endsWith('.jpg') || url.toLowerCase().endsWith('.jpeg')) {
-      return "image/jpeg";
-    } else if (url.toLowerCase().endsWith('.png')) {
-      return "image/png";
-    } else if (url.toLowerCase().endsWith('.gif')) {
-      return "image/gif";
-    }
-
-    // Inferencia por path
-    if (url.includes('/images/') || url.includes('/fotos/')) {
-      // Buscar patrones adicionales para SVG en rutas
-      if (url.includes('svg') || url.includes('SVG')) {
-        return 'image/svg+xml';
-      }
-      return "image/jpeg"; // Asumimos JPEG por defecto para paths de imagen
-    }
-
-    // Inspección adicional para SVG basada en la URL completa
-    if (url.includes('svg') || url.includes('SVG')) {
-      return 'image/svg+xml';
-    }
-
-    // Por defecto, lo tratamos como archivo genérico
-    return "application/octet-stream";
-  };
 
   // Componente mejorado para renderizar diferentes tipos de archivos incluyendo octet-stream
   const renderizarArchivo = (archivo: { tipo: string, url: string, nombre: string }, index: number, onRemove: any) => {
@@ -576,7 +507,7 @@ export default function ActualizarActividadPage() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6 p-4 md:p-10">
       <div className="flex flex-col gap-1">
         <h1 className="text-3xl text-primary font-bold">
           Actualizar actividad

@@ -65,26 +65,6 @@ export default function Page() {
     router.push(`/admin/cursos/${gradoId}`);
   };
 
-  const verEstudiantes = (gradoId: string) => {
-    router.push(`/admin/cursos/${gradoId}/estudiantes`);
-  };
-
-  const verMaterias = (gradoId: string) => {
-    router.push(`/admin/cursos/${gradoId}/materias`);
-  };
-
-  const verCalificaciones = (gradoId: string) => {
-    router.push(`/admin/cursos/${gradoId}/calificaciones`);
-  };
-
-  const verEstadisticas = (gradoId: string) => {
-    router.push(`/admin/cursos/${gradoId}/estadisticas`);
-  };
-
-  const configurarGrado = (gradoId: string) => {
-    router.push(`/admin/cursos/${gradoId}/configuracion`);
-  };
-
   // Obtener color para el chip según el estado del grado
   const getColorEstado = (grado: Curso) => {
     if (!grado.director) return 'warning';
@@ -180,128 +160,11 @@ export default function Page() {
                       <GraduationCap strokeWidth={1} />
                     </Button>
                   </Tooltip>
-                  <Tooltip content="Configurar grado">
-                    <Button
-                      size="sm"
-                      color="secondary"
-                      variant="flat"
-                      isIconOnly
-                      onPress={() => configurarGrado(grado.id)}
-                    >
-                      <Settings strokeWidth={1} />
-                    </Button>
-                  </Tooltip>
                 </div>
               </div>
             </CardHeader>
 
             <Divider />
-
-            <CardBody className="pt-4">
-              <div className="space-y-3">
-                <h4 className="font-semibold text-gray-700 text-sm uppercase tracking-wide">
-                  Opciones de gestión
-                </h4>
-
-                <div className="grid grid-cols-1 gap-3">
-                  {/* Estudiantes */}
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <Users className="w-5 h-5 text-blue-600" />
-                      <div>
-                        <span className="font-medium text-gray-800">Estudiantes</span>
-                        <p className="text-sm text-gray-600">Gestionar lista de estudiantes del grado</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Tooltip content="Ver estudiantes">
-                        <Button
-                          size="sm"
-                          color="primary"
-                          variant="light"
-                          isIconOnly
-                          onPress={() => verEstudiantes(grado.id)}
-                        >
-                          <EyeIcon />
-                        </Button>
-                      </Tooltip>
-                    </div>
-                  </div>
-
-                  {/* Materias */}
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <BookOpen className="w-5 h-5 text-green-600" />
-                      <div>
-                        <span className="font-medium text-gray-800">Materias y Maestros</span>
-                        <p className="text-sm text-gray-600">Asignar materias y maestros al grado</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Tooltip content="Ver materias">
-                        <Button
-                          size="sm"
-                          color="success"
-                          variant="light"
-                          isIconOnly
-                          onPress={() => verMaterias(grado.id)}
-                        >
-                          <EyeIcon />
-                        </Button>
-                      </Tooltip>
-                    </div>
-                  </div>
-
-                  {/* Calificaciones */}
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <DocumentIcon />
-                      <div>
-                        <span className="font-medium text-gray-800">Calificaciones</span>
-                        <p className="text-sm text-gray-600">Revisar calificaciones y reportes académicos</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Tooltip content="Ver calificaciones">
-                        <Button
-                          size="sm"
-                          color="secondary"
-                          variant="light"
-                          isIconOnly
-                          onPress={() => verCalificaciones(grado.id)}
-                        >
-                          <DocumentIcon />
-                        </Button>
-                      </Tooltip>
-                    </div>
-                  </div>
-
-                  {/* Estadísticas */}
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <ChartIcon />
-                      <div>
-                        <span className="font-medium text-gray-800">Estadísticas</span>
-                        <p className="text-sm text-gray-600">Analizar rendimiento y métricas del grado</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Tooltip content="Ver estadísticas">
-                        <Button
-                          size="sm"
-                          color="warning"
-                          variant="light"
-                          isIconOnly
-                          onPress={() => verEstadisticas(grado.id)}
-                        >
-                          <ChartIcon />
-                        </Button>
-                      </Tooltip>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </CardBody>
           </Card>
         ))}
       </div>

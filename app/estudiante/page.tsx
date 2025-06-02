@@ -1,7 +1,7 @@
 "use client";
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { BookOpen, CheckSquare, ChevronRight, Clock } from 'lucide-react';
+import { BookOpen, CheckSquare, ChevronRight, Clock, Award } from 'lucide-react';
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 export default function EstudiantePage() {
@@ -17,6 +17,10 @@ export default function EstudiantePage() {
 
   const navigateToTareasPendientes = () => {
     router.push("/estudiante/tareas");
+  };
+
+  const navigateToCalificaciones = () => {
+    router.push("/estudiante/calificaciones");
   };
 
   return (
@@ -35,7 +39,7 @@ export default function EstudiantePage() {
           {/* Card de Materias Asignadas */}
           <div 
             onClick={navigateToMaterias}
-            className="bg-primary-500 text-white rounded-2xl px-5 py-8 sm:p-8 shadow-lg flex flex-col sm:flex-row items-center sm:space-x-6 gap-5 cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-xl"
+            className="bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-2xl px-5 py-8 sm:p-8 shadow-lg flex flex-col sm:flex-row items-center sm:space-x-6 gap-5 cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-xl"
           >
             <div className="bg-white bg-opacity-20 rounded-full p-4">
               <BookOpen size={48} className="text-white" />
@@ -54,7 +58,7 @@ export default function EstudiantePage() {
             onClick={navigateToActividades}
             className="bg-gray-100 rounded-2xl p-6 shadow-lg flex flex-col sm:flex-row items-center sm:space-x-6 gap-5 cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-xl"
           >
-            <div className="bg-primary-500 bg-opacity-20 rounded-full p-4">
+            <div className="bg-gradient-to-r from-primary-500 to-primary-600 bg-opacity-20 rounded-full p-4">
               <CheckSquare size={48} className="text-primary-500" />
             </div>
             <div className="flex-grow text-center">
@@ -78,6 +82,23 @@ export default function EstudiantePage() {
               <h2 className="text-2xl font-bold mb-2 text-gray-800">Tareas Pendientes</h2>
               <p className="text-gray-600">
                 Revisa y organiza tus entregas próximas
+              </p>
+            </div>
+            <ChevronRight size={32} className="text-gray-500" />
+          </div>
+
+          {/* Card de Calificaciones */}
+          <div 
+            onClick={navigateToCalificaciones}
+            className="bg-green-50 rounded-2xl p-6 shadow-lg flex flex-col sm:flex-row items-center sm:space-x-6 gap-5 cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-xl"
+          >
+            <div className="bg-green-500 bg-opacity-20 rounded-full p-4">
+              <Award size={48} className="text-green-600" />
+            </div>
+            <div className="flex-grow text-center">
+              <h2 className="text-2xl font-bold mb-2 text-gray-800">Calificaciones</h2>
+              <p className="text-gray-600">
+                Consulta tus notas y rendimiento académico
               </p>
             </div>
             <ChevronRight size={32} className="text-gray-500" />

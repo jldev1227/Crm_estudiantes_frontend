@@ -8,9 +8,20 @@ import { Tooltip } from "@heroui/tooltip";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Divider } from "@heroui/divider";
 import { useRouter } from "next/navigation";
-import { Curso } from "@/types";
+import { Area, Curso, Grado } from "@/types";
 import { useAuth } from "@/app/context/AuthContext";
 import { GraduationCap } from "lucide-react";
+
+type GradoData = {
+  grado: Grado;
+  esDirector: boolean;
+  materias: Array<{
+    grado: Grado
+    area: Area
+  }>;
+};
+
+type CursosPorGrado = Record<string, GradoData>;
 
 // Iconos como componentes
 const EyeIcon = () => (
@@ -32,17 +43,12 @@ const PlusIcon = () => (
   </svg>
 );
 
-const ChartIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-4">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" />
-  </svg>
-);
-
 const FolderIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-4">
     <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25H11.69Z" />
   </svg>
 );
+
 
 export default function Page() {
   const router = useRouter();
@@ -57,9 +63,11 @@ export default function Page() {
   const cursosPorGrado = useMemo(() => {
     if (!cursos) return {};
 
+    console.log(cursos)
+
     return cursos.reduce((acc: {
       [key: string]: {
-        grado: any,
+        grado: Grado,
         materias: Curso[],
         esDirector: boolean
       }
@@ -102,14 +110,6 @@ export default function Page() {
     router.push(`/maestro/cursos/${gradoId}`);
   };
 
-  const verCalificaciones = (gradoId: string) => {
-    router.push(`/maestro/cursos/${gradoId}/calificaciones`);
-  };
-
-  const verEstadisticas = (gradoId: string) => {
-    router.push(`/maestro/cursos/${gradoId}/estadisticas`);
-  };
-
   // Obtener color para el chip según el área
   const getColorArea = (areaNombre: string) => {
     const colores: { [key: string]: any } = {
@@ -124,7 +124,7 @@ export default function Page() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 md:p-10">
       {/* Header */}
       <div className="space-y-4">
         <h1 className="text-2xl uppercase font-bold text-blue-600">
@@ -136,7 +136,7 @@ export default function Page() {
       </div>
 
       {/* Estadísticas rápidas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
           <div className="text-2xl font-bold text-blue-600">
             {Object.keys(cursosPorGrado).length}
@@ -151,21 +151,15 @@ export default function Page() {
         </div>
         <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
           <div className="text-2xl font-bold text-orange-600">
-            {Object.values(cursosPorGrado).filter(g => g.esDirector).length}
+            {Object.values(cursosPorGrado as CursosPorGrado).filter((g : GradoData) => g.esDirector).length}
           </div>
           <div className="text-sm text-orange-600">Grados que Diriges</div>
-        </div>
-        <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-          <div className="text-2xl font-bold text-purple-600">
-            {cursos?.filter(c => !c.area.nombre.includes('MATEMATICAS') && !c.area.nombre.includes('ESPAÑOL')).length || 0}
-          </div>
-          <div className="text-sm text-purple-600">Materias Especializadas</div>
         </div>
       </div>
 
       {/* Cards por Grado */}
       <div className="space-y-6">
-        {Object.values(cursosPorGrado).map((gradoData) => (
+        {Object.values(cursosPorGrado as CursosPorGrado).map((gradoData : GradoData) => (
           <Card key={gradoData.grado.id} className="w-full shadow-sm">
             <CardHeader className="pb-3">
               <div className="flex justify-between items-start w-full">
@@ -206,29 +200,6 @@ export default function Page() {
                         <GraduationCap strokeWidth={1} />
                       </Button>
                     </Tooltip>
-                    <Tooltip content="Ver calificaciones">
-                      <Button
-                        size="sm"
-                        color="success"
-                        variant="flat"
-                        isIconOnly
-                        onPress={() => verCalificaciones(gradoData.grado.id)}
-                      >
-                        <DocumentIcon />
-                      </Button>
-                    </Tooltip>
-
-                    {/* <Tooltip content="Ver estadísticas">
-                    <Button
-                      size="sm"
-                      color="warning"
-                      variant="flat"
-                      isIconOnly
-                      onPress={() => verEstadisticas(gradoData.grado.id)}
-                    >
-                      <ChartIcon />
-                    </Button>
-                  </Tooltip> */}
                   </div>
                 )}
               </div>

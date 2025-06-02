@@ -48,7 +48,7 @@ export default function CrearTareaPage() {
       toast.success(`¡Tarea "${formData.titulo}" creada con éxito!`, {
         duration: 4000,
       });
-      
+
       // Resetear el formulario y redirigir
       setFormData({
         titulo: "",
@@ -64,7 +64,7 @@ export default function CrearTareaPage() {
       console.error("Error al crear la tarea:", error);
       setError(error.message);
       setLoading(false);
-      
+
       // Mostrar toast de error
       toast.error(`Error: ${error.message}`, {
         duration: 5000,
@@ -123,32 +123,32 @@ export default function CrearTareaPage() {
       toast.error("El título de la tarea es obligatorio");
       return;
     }
-  
+
     if (!formData.descripcion.trim()) {
       setError("La descripción es obligatoria");
       toast.error("La descripción es obligatoria");
       return;
     }
-    
+
     if (!formData.fechaEntrega) {
       setError("La fecha de entrega es obligatoria");
       toast.error("La fecha de entrega es obligatoria");
       return;
     }
-  
+
     setLoading(true);
     setError("");
-  
+
     try {
       // Separar imágenes y PDFs
       const imageFiles = formData.archivos
         .filter(archivo => archivo.tipo.startsWith('image/'))
         .map(archivo => archivo.url);
-      
+
       const pdfFiles = formData.archivos
         .filter(archivo => archivo.tipo === 'application/pdf')
         .map(archivo => archivo.url);
-      
+
       // Variables para la mutación
       const variables = {
         input: {
@@ -161,13 +161,13 @@ export default function CrearTareaPage() {
           area_id,
         }
       };
-  
-      
+
+
       await crearTarea({ variables });
-    } catch (err : any) {
+    } catch (err: any) {
       console.error("Error al crear la tarea:", err);
       setError(err.message || "Ocurrió un error al crear la tarea");
-      
+
       // Actualizar toast de carga a error
       toast.error(`Error: ${err.message || "Ocurrió un error al crear la tarea"}`, {
         id: "crear-tarea",
@@ -179,7 +179,7 @@ export default function CrearTareaPage() {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6 p-4 md:p-10">
       <div className="flex flex-col gap-1">
         <h1 className="text-3xl text-primary font-bold">Crear nueva tarea</h1>
       </div>

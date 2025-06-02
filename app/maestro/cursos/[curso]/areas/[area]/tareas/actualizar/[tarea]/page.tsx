@@ -34,19 +34,9 @@ interface FormData {
   reemplazarPdfs?: boolean;
 }
 
-// Función para verificar si una cadena es una fecha válida en formato ISO
-const isValidISODate = (dateString: string): boolean => {
-  const regex = /^\d{4}-\d{2}-\d{2}$/;
-  if (!regex.test(dateString)) return false;
-
-  const date = new Date(dateString);
-  return date instanceof Date && !isNaN(date.getTime());
-};
-
 const esUrlExterna = (url: string): boolean => {
   return url.startsWith('https://') || url.startsWith('http://');
 };
-
 
 const esArchivoDescargable = (archivo: ArchivoTarea): boolean => {
   // Es descargable si es una URL externa y no es una imagen ni un PDF
@@ -584,7 +574,7 @@ export default function ActualizarTareaPage() {
 
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6 p-4 md:p-10">
       <div className="flex flex-col gap-1">
         <h1 className="text-3xl text-primary font-bold">Actualizar tarea</h1>
       </div>

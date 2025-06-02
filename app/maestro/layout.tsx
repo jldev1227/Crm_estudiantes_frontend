@@ -45,8 +45,8 @@ export default function MaestroLayout({
           className={`${isDesktopOrLaptop ? "grid grid-cols-5" : ""} h-screen`}
         >
           {isDesktopOrLaptop ? (
-            <div className="col-span-1 border-r-2 bg-blue-600 text-white h-full">
-              {/* <div className="sticky top-0">
+            <div className="bg-gradient-to-r from-primary-500 to-primary-600 col-span-1 border-r-2 text-white h-full">
+              <div className="sticky top-0">
                 <div className="bg-white">
                   <Image
                     className="mx-auto"
@@ -137,12 +137,12 @@ export default function MaestroLayout({
                     </Button>
                   </ul>
                 </div>
-              </div> */}
+              </div>
             </div>
           ) : (
             <SideMenu></SideMenu>
           )}
-          <div className="col-span-4 p-4 md:p-10">{children}</div>
+          <div className="col-span-4">{children}</div>
         </main>
       </ProtectedRoute>
     </MaestroProvider>

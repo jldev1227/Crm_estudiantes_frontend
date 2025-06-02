@@ -65,6 +65,10 @@ export default function SideMenu() {
     {
       label: "Tareas",
       href: "/estudiante/tareas",
+    },
+    {
+      label: "Calificaciones",
+      href: "/estudiante/calificaciones",
     }
   ];
 
@@ -76,7 +80,23 @@ export default function SideMenu() {
   ];
 
   // Determinar qué menú mostrar basado en el rol
-  const menuItems = usuario?.rol === "maestro" ? menuItemsMaestro : menuItemsEstudiante;
+  const menuItemsAdmin = [
+    {
+      label: "Cursos",
+      href: "/admin/cursos",
+    },
+    {
+      label: "Maestros",
+      href: "/admin/maestros",
+    }
+  ];
+
+  const menuItems =
+    usuario?.rol === "admin"
+      ? menuItemsAdmin
+      : usuario?.rol === "maestro"
+      ? menuItemsMaestro
+      : menuItemsEstudiante;
 
   const handleLinkClick = () => {
     setIsMenuOpen(false);

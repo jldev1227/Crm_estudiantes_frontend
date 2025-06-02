@@ -7,6 +7,7 @@ import { OBTENER_AREAS_POR_GRADO } from "../graphql/queries/obtenerAreasPorGrado
 import { OBTENER_ACTIVIDADES_POR_AREA } from "../graphql/queries/obtenerActividadesPorArea";
 import socketService from "@/services/socketService";
 import { addToast } from "@heroui/toast";
+import { OBTENER_CALIFICACIONES_ESTUDIANTE } from "../graphql/queries/obtenerCalificacionesEstudiante";
 
 // Definir los tipos
 interface Area {
@@ -45,11 +46,17 @@ interface EstudiantePensionActualizadaResponse {
 interface EstudianteContextType {
   areas: Area[];
   actividades: Actividad[];
+  calificaciones: any[];
   cargandoAreas: boolean;
   cargandoActividades: boolean;
+  cargandoCalificaciones: boolean;
   errorAreas: any;
   errorActividades: any;
+  erroCalificaciones: any;
   obtenerActividades: (areaId: string) => void;
+  obtenerCalificaciones: (
+    area_id: string,
+    periodo: number) => void;
   obtenerActividadesPorFecha: (fecha: string) => void;
   filtrarActividades: (texto: string) => void;
   actividadesFiltradas: Actividad[];
@@ -74,6 +81,7 @@ export const EstudianteProvider: React.FC<{ children: React.ReactNode }> = ({
   const { usuario } = useAuth();
   const [areas, setAreas] = useState<Area[]>([]);
   const [actividades, setActividades] = useState<Actividad[]>([]);
+  const [calificaciones, setCalificaciones] = useState<any[]>([]);
   const [actividadesFiltradas, setActividadesFiltradas] = useState<Actividad[]>(
     [],
   );
@@ -94,6 +102,16 @@ export const EstudianteProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Query para obtener actividades (se ejecutará bajo demanda)
   const [
+    obtenerCalificacionesQuery,
+    {
+      loading: cargandoCalificaciones,
+      error: erroCalificaciones,
+      data: dataCalificaciones,
+    },
+  ] = useLazyQuery(OBTENER_CALIFICACIONES_ESTUDIANTE);
+
+  // Query para obtener calificaciones
+  const [
     obtenerActividadesQuery,
     {
       loading: cargandoActividades,
@@ -108,6 +126,13 @@ export const EstudianteProvider: React.FC<{ children: React.ReactNode }> = ({
       setAreas(dataAreas.obtenerAreasPorGrado);
     }
   }, [dataAreas]);
+
+  // Actualizar calificaciones cuando se carguen los datos
+  useEffect(() => {
+    if (dataCalificaciones && dataCalificaciones.obtenerCalificacionEstudiante) {
+      setCalificaciones(dataCalificaciones.obtenerCalificacionEstudiante);
+    }
+  }, [dataCalificaciones]);
 
   // Actualizar actividades cuando se carguen los datos
   useEffect(() => {
@@ -128,6 +153,31 @@ export const EstudianteProvider: React.FC<{ children: React.ReactNode }> = ({
         areaId: areaId,
       },
     });
+  };
+
+  // Función para obtener actividades de un área específica
+  // ✅ VERSIÓN CORREGIDA - OPCIÓN 1 (Async/Await):
+  const obtenerCalificaciones = async (area_id: string, periodo: number) => {
+    try {
+      if (!usuario?.id || !usuario?.grado_id) {
+        console.warn('Faltan datos del usuario para obtener calificaciones');
+        return null;
+      }
+
+      const { data } = await obtenerCalificacionesQuery({
+        variables: {
+          estudiante_id: usuario.id,
+          grado_id: usuario.grado_id,
+          area_id: area_id,
+          periodo: periodo,
+        },
+      });
+
+      return data?.obtenerCalificacionEstudiante || null;
+    } catch (error) {
+      console.error('Error obteniendo calificaciones:', error);
+      throw error;
+    }
   };
 
   // Función para obtener actividades por fecha
@@ -211,14 +261,14 @@ export const EstudianteProvider: React.FC<{ children: React.ReactNode }> = ({
             color: "success",
           });
         } else {
-            addToast({
-              title: "Se ha deshabilitado tu acceso por falta de pago",
-              description: `Seras suspendido hasta que se realice renovación de tu pensión`,
-              color: "warning",
-            });
-            setTimeout(() => {
-              window.location.reload();
-            }, 5000);
+          addToast({
+            title: "Se ha deshabilitado tu acceso por falta de pago",
+            description: `Seras suspendido hasta que se realice renovación de tu pensión`,
+            color: "warning",
+          });
+          setTimeout(() => {
+            window.location.reload();
+          }, 5000);
         }
       };
 
@@ -262,11 +312,15 @@ export const EstudianteProvider: React.FC<{ children: React.ReactNode }> = ({
   const contextValue: EstudianteContextType = {
     areas,
     actividades,
+    calificaciones,
     cargandoAreas,
     cargandoActividades,
+    cargandoCalificaciones,
     errorAreas,
     errorActividades,
+    erroCalificaciones,
     obtenerActividades,
+    obtenerCalificaciones,
     obtenerActividadesPorFecha,
     filtrarActividades,
     actividadesFiltradas,

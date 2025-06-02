@@ -8,8 +8,6 @@ import { useParams, useRouter } from "next/navigation";
 import DropzoneActividad from "@/components/dropzoneActividad";
 import { CREAR_ACTIVIDAD } from "@/app/graphql/mutation/crearActividad";
 import { formatearFechaColombiaParaInput } from "@/helpers/formatearFechaColombiaParaInput";
-import PDFPreview from "@/components/pdfPreview";
-import ReactPDFPreview from "@/components/pdfPreview";
 import NextPDFPreview from "@/components/pdfPreview";
 import toast from "react-hot-toast";
 
@@ -185,7 +183,7 @@ export default function Page() {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6 p-4 md:p-10">
       <div className="flex flex-col gap-1">
         <h1 className="text-3xl text-primary font-bold">Crea una actividad</h1>
       </div>

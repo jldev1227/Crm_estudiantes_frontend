@@ -27,10 +27,7 @@ export type Curso = {
   id: string
   nombre: string
   areas: Area[]
-  grado: {
-    id: string;
-    nombre: string;
-  };
+  grado: Grado;
   director: Maestro;
   estudiantes: Estudiante[];
 };
@@ -38,4 +35,10 @@ export type Curso = {
 export type Area = {
   id: string;
   nombre: string;
+}
+
+export type Grado = {
+  id: string;
+  nombre: string;
+  director?: Maestro
 }

@@ -55,7 +55,7 @@ const formatearFecha = (timestamp: string | number): string => {
         <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-2xl overflow-hidden">
           
           {/* Encabezado del Perfil */}
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-8">
+          <div className="bg-gradient-to-r from-primary-500 to-primary-600 text-white p-8">
             <div className="flex flex-col sm:flex-row items-center gap-6">
               <div className="bg-white bg-opacity-20 rounded-full p-4">
                 <Shield size={64} className="text-white" />

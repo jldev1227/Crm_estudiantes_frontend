@@ -140,11 +140,11 @@ export default function CursoDashboard() {
 
     // Navegación
     const verArea = (areaId: string) => {
-        router.push(`/maestro/cursos/${curso?.id}/areas/${areaId}`);
+        router.push(`/admin/cursos/${curso?.id}/areas/${areaId}`);
     };
 
     const verMaestro = (maestroId: string) => {
-        router.push(`/maestro/maestros/${maestroId}/perfil`);
+        router.push(`/admin/maestros/${maestroId}/perfil`);
     };
 
 
@@ -204,7 +204,7 @@ export default function CursoDashboard() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 p-4 md:p-10">
             {/* Header del Curso */}
             <Card className="shadow-sm">
                 <CardHeader className="pb-3">
@@ -221,13 +221,14 @@ export default function CursoDashboard() {
                         </div>
                         <div className="flex gap-2">
                             <Tooltip content="Ver reportes del curso">
-                                <Button size="sm" color="success" variant="flat" isIconOnly>
+                                <Button
+                                    size="sm"
+                                    color="success"
+                                    variant="flat"
+                                    isIconOnly
+                                    onPress={() => router.push(`/admin/cursos/${curso?.id}/calificaciones`)}
+                                >
                                     <DocumentIcon />
-                                </Button>
-                            </Tooltip>
-                            <Tooltip content="Ver estadísticas">
-                                <Button size="sm" color="warning" variant="flat" isIconOnly>
-                                    <ChartIcon />
                                 </Button>
                             </Tooltip>
                         </div>

@@ -48,10 +48,14 @@ const calcularEdad = (fechaNacimiento: string): number => {
 export default function EstudiantesResponsive({
   estudiantes,
   isAdmin,
+  isDirector,
+  isVisible,
   handlePension
 }: {
   estudiantes: EstudianteConPension[];
   isAdmin?: boolean;
+  isDirector?: boolean;
+  isVisible?: boolean;
   handlePension?: (id: string) => void;
 }) {
   const isDesktop = useMediaQuery({ minWidth: 992 });
@@ -435,6 +439,8 @@ export default function EstudiantesResponsive({
         {/* Tabla con estudiantes filtrados */}
         <TablaEstudiantes
           isAdmin={isAdmin}
+          isDirector={isDirector}
+          isVisible={isVisible}
           estudiantes={estudiantesFiltrados}
           sortField={sortField}
           sortDirection={sortDirection}
@@ -479,7 +485,7 @@ export default function EstudiantesResponsive({
 
               <div className="mt-2 space-y-1">
                 <p className="text-sm text-gray-600 flex items-center gap-1">
-                  <span className="font-medium">Tipo doc:</span> {estudiante.tipo_documento}
+                  <span className="font-medium">Tipo documento:</span> {estudiante.tipo_documento}
                 </p>
                 <p className="text-sm text-gray-600 flex items-center gap-1">
                   <span className="font-medium">Documento:</span> {estudiante.numero_identificacion}

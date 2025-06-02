@@ -331,7 +331,7 @@ export default function MaestrosResponsive({
                             <div className="mt-2 space-y-4">
                                 <div className="space-y-1">
                                     <p className="text-sm text-gray-600 flex items-center gap-1">
-                                        <span className="font-medium">Tipo doc:</span> {maestro.tipo_documento}
+                                        <span className="font-medium">Tipo documento:</span> {maestro.tipo_documento}
                                     </p>
                                     <p className="text-sm text-gray-600 flex items-center gap-1">
                                         <span className="font-medium">Documento:</span> {maestro.numero_identificacion}

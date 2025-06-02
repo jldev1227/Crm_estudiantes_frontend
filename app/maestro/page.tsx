@@ -25,7 +25,7 @@ export default function CourseManagementWelcome() {
         onClick={handleCourseNavigation}
         className="w-full max-w-xl cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-xl"
       >
-        <div className="bg-primary-500 text-white rounded-2xl px-5 py-8 sm:p-8 shadow-lg flex flex-col sm:flex-row max-sm:text-center items-center sm:space-x-6 gap-5">
+        <div className="bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-2xl px-5 py-8 sm:p-8 shadow-lg flex flex-col sm:flex-row max-sm:text-center items-center sm:space-x-6 gap-5">
           <div className="bg-white bg-opacity-20 rounded-full p-4">
             <GraduationCap size={64} className="text-white" />
           </div>
