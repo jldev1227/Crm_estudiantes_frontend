@@ -1,11 +1,12 @@
-
 // Hook simple para validación de acceso
-import { useAuth } from '@/app/context/AuthContext';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+
+import { useAuth } from "@/app/context/AuthContext";
+import { Curso } from "@/types";
 
 // Solución 1: Hook que retorna si debe mostrar contenido
-export const useValidateCourseAccess = (curso: any) => {
+export const useValidateCourseAccess = (curso: Curso) => {
   const { usuario } = useAuth();
   const router = useRouter();
   const [shouldRender, setShouldRender] = useState(true); // Siempre inicia en true
@@ -13,7 +14,7 @@ export const useValidateCourseAccess = (curso: any) => {
 
   useEffect(() => {
     // Si no hay datos aún, no hacer nada pero mantener el hook
-    if (!usuario || !curso) {
+    if (!usuario || !curso || !curso.director) {
       return; // ✅ No hacer early return antes del hook
     }
 
@@ -21,12 +22,13 @@ export const useValidateCourseAccess = (curso: any) => {
     if (hasValidated) return;
 
     // Validación simple: admin OR director del curso
-    const hasAccess = usuario.rol === 'admin' || usuario.id === curso.director?.id;
+    const hasAccess =
+      usuario.rol === "admin" || usuario.id === curso.director?.id;
 
     if (!hasAccess) {
       setShouldRender(false);
       setHasValidated(true);
-      alert('No tienes permisos para acceder a este curso');
+      alert("No tienes permisos para acceder a este curso");
       router.back();
     } else {
       setShouldRender(true);

@@ -1,14 +1,11 @@
-import { gql } from '@apollo/client';
+import { gql } from "@apollo/client";
 
 export const ACTUALIZAR_CONTACTO_ESTUDIANTE = gql`
   mutation ActualizarContactoEstudiante(
-    $id: ID!, 
+    $id: ID!
     $input: ActualizarContactoEstudianteInput!
   ) {
-    actualizarContactoEstudiante(
-      id: $id, 
-      input: $input
-    ) {
+    actualizarContactoEstudiante(id: $id, input: $input) {
       success
       mensaje
       estudiante {

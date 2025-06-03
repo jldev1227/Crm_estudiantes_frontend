@@ -1,7 +1,5 @@
 "use client";
 import { useMutation, useQuery } from "@apollo/client";
-import EstudiantesResponsive from "@/components/estudiantesResponsive";
-import { formatearFecha } from "@/helpers/formatearFecha";
 import { Button } from "@heroui/button";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Chip } from "@heroui/chip";
@@ -9,20 +7,12 @@ import { Divider } from "@heroui/divider";
 import { Tooltip } from "@heroui/tooltip";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ELIMINAR_ACTIVIDAD } from "@/app/graphql/mutation/eliminarActividad";
-import { OBTENER_ACTIVIDADES_POR_AREA } from "@/app/graphql/queries/obtenerActividadesPorArea";
 import { useState, useEffect } from "react";
-import PDFThumbnail from "@/components/PDFThumbnail";
-import { ELIMINAR_TAREA } from "@/app/graphql/mutation/eliminarTarea";
-import { OBTENER_TAREAS_POR_GRADO_Y_AREA } from "@/app/graphql/queries/obtenerTareasPorArea";
-import { toast } from 'react-hot-toast';
-import { convertirA12Horas } from "@/helpers/convertirA12Horas";
-import { useMaestro } from "@/app/context/MaestroContext";
+import { toast } from "react-hot-toast";
 import {
   Clock,
   Calendar as CalendarIcon,
   FileText,
-  Image as ImageIcon,
   Users,
   BookOpen,
   Plus,
@@ -33,8 +23,19 @@ import {
   XCircle,
   AlertTriangle,
   Camera,
-  FileDown
+  FileDown,
 } from "lucide-react";
+import Image from "next/image";
+
+import { ELIMINAR_ACTIVIDAD } from "@/app/graphql/mutation/eliminarActividad";
+import { OBTENER_ACTIVIDADES_POR_AREA } from "@/app/graphql/queries/obtenerActividadesPorArea";
+import PDFThumbnail from "@/components/PDFThumbnail";
+import { ELIMINAR_TAREA } from "@/app/graphql/mutation/eliminarTarea";
+import { OBTENER_TAREAS_POR_GRADO_Y_AREA } from "@/app/graphql/queries/obtenerTareasPorArea";
+import { convertirA12Horas } from "@/helpers/convertirA12Horas";
+import { useMaestro } from "@/app/context/MaestroContext";
+import { formatearFecha } from "@/helpers/formatearFecha";
+import EstudiantesResponsive from "@/components/estudiantesResponsive";
 
 type ActividadData = {
   id: string;
@@ -52,13 +53,20 @@ type TareaData = {
   fechaEntrega: string;
   fecha: string;
   descripcion: string;
-  estado: 'activa' | 'vencida' | 'cancelada';
+  estado: "activa" | "vencida" | "cancelada";
   fotos: string[];
   pdfs: string[];
 };
 
 // Componente Modal simple para mostrar imágenes
-const ImagenModal = ({ isOpen, onClose, imagen, onPrev, onNext, contador }: {
+const ImagenModal = ({
+  isOpen,
+  onClose,
+  imagen,
+  onPrev,
+  onNext,
+  contador,
+}: {
   isOpen: boolean;
   onClose: () => void;
   imagen: string;
@@ -69,16 +77,34 @@ const ImagenModal = ({ isOpen, onClose, imagen, onPrev, onNext, contador }: {
   if (!isOpen) return null;
 
   return (
-    <div className="!mt-0 fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
-      onClick={onClose}>
-      <div className="max-w-4xl max-h-[85vh] relative" onClick={e => e.stopPropagation()}>
+    <div
+      className="!mt-0 fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
+      role="button"
+      onClick={onClose}
+    >
+      <div
+        className="max-w-4xl max-h-[85vh] relative"
+        role="button"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Botón de cierre */}
         <button
           className="absolute top-2 right-2 z-10 text-white bg-black/50 rounded-full p-2 hover:bg-black/70"
           onClick={onClose}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          <svg
+            className="h-6 w-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M6 18L18 6M6 6l12 12"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+            />
           </svg>
         </button>
 
@@ -88,20 +114,34 @@ const ImagenModal = ({ isOpen, onClose, imagen, onPrev, onNext, contador }: {
         </div>
 
         {/* Imagen */}
-        <img
-          src={imagen}
+        <Image
           alt="Imagen ampliada"
           className="max-h-[80vh] max-w-full object-contain rounded-lg"
+          src={imagen}
         />
 
         {/* Controles */}
         <div className="absolute inset-y-0 left-0 flex items-center">
           <button
             className="bg-black/30 text-white p-2 rounded-full hover:bg-black/50 ml-2"
-            onClick={(e) => { e.stopPropagation(); onPrev(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onPrev();
+            }}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <svg
+              className="h-6 w-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M15 19l-7-7 7-7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+              />
             </svg>
           </button>
         </div>
@@ -109,10 +149,24 @@ const ImagenModal = ({ isOpen, onClose, imagen, onPrev, onNext, contador }: {
         <div className="absolute inset-y-0 right-0 flex items-center">
           <button
             className="bg-black/30 text-white p-2 rounded-full hover:bg-black/50 mr-2"
-            onClick={(e) => { e.stopPropagation(); onNext(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onNext();
+            }}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            <svg
+              className="h-6 w-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9 5l7 7-7 7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+              />
             </svg>
           </button>
         </div>
@@ -139,7 +193,10 @@ export default function CursoPage() {
 
   // Funciones para el modal
   const mostrarImagen = (fotos: string[], indice: number) => {
-    const fotosConKey = fotos.map(foto => `${foto}?${process.env.NEXT_PUBLIC_AZURE_KEY}`);
+    const fotosConKey = fotos.map(
+      (foto) => `${foto}?${process.env.NEXT_PUBLIC_AZURE_KEY}`,
+    );
+
     setFotosGaleria(fotosConKey);
     setIndiceImagen(indice);
     setImagenActual(fotosConKey[indice]);
@@ -151,13 +208,17 @@ export default function CursoPage() {
   };
 
   const imagenAnterior = () => {
-    const nuevoIndice = indiceImagen === 0 ? fotosGaleria.length - 1 : indiceImagen - 1;
+    const nuevoIndice =
+      indiceImagen === 0 ? fotosGaleria.length - 1 : indiceImagen - 1;
+
     setIndiceImagen(nuevoIndice);
     setImagenActual(fotosGaleria[nuevoIndice]);
   };
 
   const imagenSiguiente = () => {
-    const nuevoIndice = indiceImagen === fotosGaleria.length - 1 ? 0 : indiceImagen + 1;
+    const nuevoIndice =
+      indiceImagen === fotosGaleria.length - 1 ? 0 : indiceImagen + 1;
+
     setIndiceImagen(nuevoIndice);
     setImagenActual(fotosGaleria[nuevoIndice]);
   };
@@ -167,19 +228,21 @@ export default function CursoPage() {
     const manejarTeclas = (e: KeyboardEvent) => {
       if (!modalVisible) return;
       switch (e.key) {
-        case 'ArrowLeft':
+        case "ArrowLeft":
           imagenAnterior();
           break;
-        case 'ArrowRight':
+        case "ArrowRight":
           imagenSiguiente();
           break;
-        case 'Escape':
+        case "Escape":
           ocultarImagen();
           break;
       }
     };
-    window.addEventListener('keydown', manejarTeclas);
-    return () => window.removeEventListener('keydown', manejarTeclas);
+
+    window.addEventListener("keydown", manejarTeclas);
+
+    return () => window.removeEventListener("keydown", manejarTeclas);
   }, [modalVisible, indiceImagen, fotosGaleria]);
 
   // Efecto para cargar datos del curso usando el contexto
@@ -197,6 +260,7 @@ export default function CursoPage() {
         setLoading(false);
       }
     };
+
     fetchData();
   }, [id, area_id]);
 
@@ -216,25 +280,19 @@ export default function CursoPage() {
     variables: { grado_id: id, area_id },
   });
 
-  const [eliminarActividad] = useMutation(
-    ELIMINAR_ACTIVIDAD,
-    {
-      refetchQueries: ["ObtenerActividadesPorArea"],
-      onError: (error) => {
-        console.error("Error al eliminar actividad:", error);
-      },
+  const [eliminarActividad] = useMutation(ELIMINAR_ACTIVIDAD, {
+    refetchQueries: ["ObtenerActividadesPorArea"],
+    onError: (error) => {
+      console.error("Error al eliminar actividad:", error);
     },
-  );
+  });
 
-  const [eliminarTarea] = useMutation(
-    ELIMINAR_TAREA,
-    {
-      refetchQueries: ["ObtenerTareasPorGradoYArea"],
-      onError: (error) => {
-        console.error("Error al eliminar tarea:", error);
-      },
+  const [eliminarTarea] = useMutation(ELIMINAR_TAREA, {
+    refetchQueries: ["ObtenerTareasPorGradoYArea"],
+    onError: (error) => {
+      console.error("Error al eliminar tarea:", error);
     },
-  );
+  });
 
   const handleEliminarActividad = async (id: string | number) => {
     if (
@@ -249,12 +307,12 @@ export default function CursoPage() {
         });
         toast.success("Actividad eliminada exitosamente", {
           id: "eliminar-actividad",
-          duration: 3000
+          duration: 3000,
         });
       } catch (error) {
         toast.error("Error al eliminar la actividad", {
           id: "eliminar-actividad",
-          duration: 3000
+          duration: 3000,
         });
       }
     }
@@ -273,12 +331,12 @@ export default function CursoPage() {
         });
         toast.success("Tarea eliminada exitosamente", {
           id: "eliminar-tarea",
-          duration: 3000
+          duration: 3000,
         });
       } catch (error) {
         toast.error("Error al eliminar la tarea", {
           id: "eliminar-tarea",
-          duration: 3000
+          duration: 3000,
         });
       }
     }
@@ -288,50 +346,53 @@ export default function CursoPage() {
   const estaTareaVencida = (fechaEntrega: string): boolean => {
     const hoy = new Date();
     const fechaLimite = new Date(fechaEntrega);
+
     return hoy > fechaLimite;
   };
 
   // Función para obtener el estado de la tarea con iconos
   const getEstadoTarea = (tarea: TareaData) => {
-    if (tarea.estado === 'cancelada') {
+    if (tarea.estado === "cancelada") {
       return {
         icon: <XCircle size={16} />,
-        text: 'Cancelada',
-        color: 'danger' as const
+        text: "Cancelada",
+        color: "danger" as const,
       };
     }
-    if (tarea.estado === 'vencida' || estaTareaVencida(tarea.fechaEntrega)) {
+    if (tarea.estado === "vencida" || estaTareaVencida(tarea.fechaEntrega)) {
       return {
         icon: <AlertTriangle size={16} />,
-        text: 'Vencida',
-        color: 'warning' as const
+        text: "Vencida",
+        color: "warning" as const,
       };
     }
+
     return {
       icon: <CheckCircle size={16} />,
-      text: 'Activa',
-      color: 'success' as const
+      text: "Activa",
+      color: "success" as const,
     };
   };
 
   // Función para obtener color del área
   const getColorArea = (areaNombre: string) => {
     const colores: { [key: string]: any } = {
-      'MATEMATICAS': 'primary',
-      'ESPAÑOL': 'secondary',
-      'CIENCIAS': 'success',
-      'SOCIALES': 'warning',
-      'INGLES': 'danger',
-      'EDUCACION FISICA': 'default'
+      MATEMATICAS: "primary",
+      ESPAÑOL: "secondary",
+      CIENCIAS: "success",
+      SOCIALES: "warning",
+      INGLES: "danger",
+      "EDUCACION FISICA": "default",
     };
-    return colores[areaNombre.toUpperCase()] || 'default';
+
+    return colores[areaNombre.toUpperCase()] || "default";
   };
 
   if (loading || loadingActividades || loadingTareas) {
     return (
       <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4" />
           <p className="text-gray-600">Cargando curso...</p>
         </div>
       </div>
@@ -339,15 +400,36 @@ export default function CursoPage() {
   }
 
   // Manejar errores específicamente
-  if (error) return <div className="text-center text-red-500 p-8">Error al cargar el curso: {error}</div>;
-  if (errorActividades) return <div className="text-center text-red-500 p-8">Error al cargar las actividades: {errorActividades.message}</div>;
-  if (errorTareas) return <div className="text-center text-red-500 p-8">Error al cargar las tareas: {errorTareas.message}</div>;
+  if (error)
+    return (
+      <div className="text-center text-red-500 p-8">
+        Error al cargar el curso: {error}
+      </div>
+    );
+  if (errorActividades)
+    return (
+      <div className="text-center text-red-500 p-8">
+        Error al cargar las actividades: {errorActividades.message}
+      </div>
+    );
+  if (errorTareas)
+    return (
+      <div className="text-center text-red-500 p-8">
+        Error al cargar las tareas: {errorTareas.message}
+      </div>
+    );
 
   // Verificar que los datos existan
-  if (!curso) return <div className="text-center text-gray-500 p-8">No se encontró información del curso</div>;
+  if (!curso)
+    return (
+      <div className="text-center text-gray-500 p-8">
+        No se encontró información del curso
+      </div>
+    );
 
   // Asegurarse de que actividades sea siempre un array
-  const actividades: ActividadData[] = actividadesData?.obtenerActividadesPorArea || [];
+  const actividades: ActividadData[] =
+    actividadesData?.obtenerActividadesPorArea || [];
   const tareas: TareaData[] = tareasData?.obtenerTareasPorGradoYArea || [];
 
   return (
@@ -359,17 +441,17 @@ export default function CursoPage() {
             <div className="flex items-center gap-4">
               <Button
                 isIconOnly
-                variant="light"
                 as={Link}
-                href="/maestro/cursos"
                 className="hover:bg-gray-100"
+                href="/maestro/cursos"
+                variant="light"
               >
                 <ArrowLeft size={20} />
               </Button>
               <div>
                 <div className="flex items-center gap-3 mb-2">
                   <div className="p-2 bg-primary-100 rounded-lg">
-                    <BookOpen size={20} className="text-primary-600" />
+                    <BookOpen className="text-primary-600" size={20} />
                   </div>
                   <div>
                     <h1 className="text-xl md:text-2xl font-bold text-gray-800">
@@ -377,10 +459,10 @@ export default function CursoPage() {
                     </h1>
                     <div className="flex items-center gap-2">
                       <Chip
-                        size="sm"
-                        color={getColorArea(curso.area.nombre)}
-                        variant="flat"
                         className="font-medium"
+                        color={getColorArea(curso.area.nombre)}
+                        size="sm"
+                        variant="flat"
                       >
                         {curso.area.nombre}
                       </Chip>
@@ -392,12 +474,12 @@ export default function CursoPage() {
             <div className="flex items-center gap-2">
               <Tooltip content="Ver calificaciones">
                 <Button
-                  color="primary"
-                  variant="flat"
-                  size="sm"
                   as={Link}
+                  color="primary"
                   href={`/maestro/cursos/${id}/areas/${area_id}/calificaciones`}
+                  size="sm"
                   startContent={<FileText size={16} />}
+                  variant="flat"
                 >
                   Calificaciones
                 </Button>
@@ -425,7 +507,13 @@ export default function CursoPage() {
             <CheckCircle className="text-green-600" size={24} />
             <div>
               <div className="text-2xl font-bold text-green-600">
-                {tareas.filter(t => t.estado === 'activa' && !estaTareaVencida(t.fechaEntrega)).length}
+                {
+                  tareas.filter(
+                    (t) =>
+                      t.estado === "activa" &&
+                      !estaTareaVencida(t.fechaEntrega),
+                  ).length
+                }
               </div>
               <div className="text-sm text-green-600">Tareas Activas</div>
             </div>
@@ -447,7 +535,11 @@ export default function CursoPage() {
             <AlertTriangle className="text-orange-600" size={24} />
             <div>
               <div className="text-2xl font-bold text-orange-600">
-                {tareas.filter(t => estaTareaVencida(formatearFecha(t.fechaEntrega))).length}
+                {
+                  tareas.filter((t) =>
+                    estaTareaVencida(formatearFecha(t.fechaEntrega)),
+                  ).length
+                }
               </div>
               <div className="text-sm text-orange-600">Tareas Vencidas</div>
             </div>
@@ -463,7 +555,7 @@ export default function CursoPage() {
               <Users size={20} />
               Estudiantes del Curso
             </h2>
-            <Chip size="sm" variant="flat" color="default">
+            <Chip color="default" size="sm" variant="flat">
               {curso.estudiantes?.length || 0} estudiantes
             </Chip>
           </div>
@@ -474,8 +566,10 @@ export default function CursoPage() {
             <EstudiantesResponsive estudiantes={curso.estudiantes} />
           ) : (
             <div className="text-center py-8">
-              <Users size={48} className="text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500">No hay estudiantes matriculados en este curso</p>
+              <Users className="text-gray-400 mx-auto mb-4" size={48} />
+              <p className="text-gray-500">
+                No hay estudiantes matriculados en este curso
+              </p>
             </div>
           )}
         </CardBody>
@@ -490,10 +584,10 @@ export default function CursoPage() {
               Tareas Asignadas
             </h2>
             <Button
-              color="primary"
-              size="sm"
               as={Link}
+              color="primary"
               href={`/maestro/cursos/${id}/areas/${area_id}/tareas/agregar`}
+              size="sm"
               startContent={<Plus size={16} />}
             >
               Nueva Tarea
@@ -506,8 +600,12 @@ export default function CursoPage() {
             {tareas.length > 0 ? (
               tareas.map((tarea) => {
                 const estadoTarea = getEstadoTarea(tarea);
+
                 return (
-                  <Card key={tarea.id} className="shadow-sm border hover:shadow-md transition-shadow">
+                  <Card
+                    key={tarea.id}
+                    className="shadow-sm border hover:shadow-md transition-shadow"
+                  >
                     <CardBody className="p-6">
                       <div className="space-y-4">
                         {/* Header de la tarea */}
@@ -519,20 +617,24 @@ export default function CursoPage() {
                             <div className="flex items-center gap-4 text-sm text-gray-600">
                               <div className="flex items-center gap-1">
                                 <CalendarIcon size={14} />
-                                <span>Asignada: {formatearFecha(tarea.fecha)}</span>
+                                <span>
+                                  Asignada: {formatearFecha(tarea.fecha)}
+                                </span>
                               </div>
                               <div className="flex items-center gap-1">
                                 <Clock size={14} />
-                                <span>Entrega: {formatearFecha(tarea.fechaEntrega)}</span>
+                                <span>
+                                  Entrega: {formatearFecha(tarea.fechaEntrega)}
+                                </span>
                               </div>
                             </div>
                           </div>
                           <Chip
-                            size="sm"
-                            color={estadoTarea.color}
-                            variant="flat"
-                            startContent={estadoTarea.icon}
                             className="font-medium"
+                            color={estadoTarea.color}
+                            size="sm"
+                            startContent={estadoTarea.icon}
+                            variant="flat"
                           >
                             {estadoTarea.text}
                           </Chip>
@@ -542,32 +644,47 @@ export default function CursoPage() {
                         <p className="text-gray-700">{tarea.descripcion}</p>
 
                         {/* Archivos adjuntos */}
-                        {(tarea.fotos?.length > 0 || tarea.pdfs?.length > 0) && (
+                        {(tarea.fotos?.length > 0 ||
+                          tarea.pdfs?.length > 0) && (
                           <div>
                             <p className="font-medium text-gray-700 mb-3 flex items-center gap-2">
                               {tarea.fotos?.length > 0 && <Camera size={16} />}
                               {tarea.pdfs?.length > 0 && <FileDown size={16} />}
-                              Archivos adjuntos ({(tarea.fotos?.length || 0) + (tarea.pdfs?.length || 0)})
+                              Archivos adjuntos (
+                              {(tarea.fotos?.length || 0) +
+                                (tarea.pdfs?.length || 0)}
+                              )
                             </p>
                             <div className="relative group">
                               <div className="flex overflow-x-auto gap-4 pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                                 {/* Fotos */}
                                 {tarea.fotos?.map((foto, index) => (
-                                  <div key={`foto-${index}`} className="flex-none">
-                                    <div className="w-24 h-24 md:w-32 md:h-32 rounded-lg overflow-hidden border-2 border-gray-200 hover:border-gray-300 transition-colors cursor-pointer"
-                                      onClick={() => mostrarImagen(tarea.fotos, index)}>
-                                      <img
-                                        src={`${foto}?${process.env.NEXT_PUBLIC_AZURE_KEY}`}
+                                  <div
+                                    key={`foto-${index}`}
+                                    className="flex-none"
+                                  >
+                                    <div
+                                      className="w-24 h-24 md:w-32 md:h-32 rounded-lg overflow-hidden border-2 border-gray-200 hover:border-gray-300 transition-colors cursor-pointer"
+                                      role="button"
+                                      onClick={() =>
+                                        mostrarImagen(tarea.fotos, index)
+                                      }
+                                    >
+                                      <Image
                                         alt={`Foto ${index + 1}`}
                                         className="w-full h-full object-cover hover:scale-105 transition-transform"
+                                        src={`${foto}?${process.env.NEXT_PUBLIC_AZURE_KEY}`}
                                       />
                                     </div>
                                   </div>
                                 ))}
                                 {/* PDFs */}
                                 {tarea.pdfs?.map((pdfUrl, index) => (
-                                  <div key={`pdf-${index}`} className="flex-none w-24 h-24 md:w-32 md:h-32">
-                                    <PDFThumbnail url={pdfUrl} index={index} />
+                                  <div
+                                    key={`pdf-${index}`}
+                                    className="flex-none w-24 h-24 md:w-32 md:h-32"
+                                  >
+                                    <PDFThumbnail index={index} url={pdfUrl} />
                                   </div>
                                 ))}
                               </div>
@@ -579,21 +696,21 @@ export default function CursoPage() {
                         <Divider />
                         <div className="flex gap-2 justify-end">
                           <Button
-                            color="primary"
-                            size="sm"
-                            variant="light"
                             as={Link}
+                            color="primary"
                             href={`/maestro/cursos/${id}/areas/${area_id}/tareas/actualizar/${tarea.id}`}
+                            size="sm"
                             startContent={<Edit3 size={14} />}
+                            variant="light"
                           >
                             Editar
                           </Button>
                           <Button
                             color="danger"
                             size="sm"
+                            startContent={<Trash2 size={14} />}
                             variant="light"
                             onPress={() => handleEliminarTarea(tarea.id)}
-                            startContent={<Trash2 size={14} />}
                           >
                             Eliminar
                           </Button>
@@ -605,7 +722,7 @@ export default function CursoPage() {
               })
             ) : (
               <div className="text-center py-12">
-                <FileText size={48} className="text-gray-400 mx-auto mb-4" />
+                <FileText className="text-gray-400 mx-auto mb-4" size={48} />
                 <h3 className="text-lg font-medium text-gray-600 mb-2">
                   No hay tareas asignadas
                 </h3>
@@ -613,8 +730,8 @@ export default function CursoPage() {
                   Comienza creando una nueva tarea para tus estudiantes
                 </p>
                 <Button
-                  color="primary"
                   as={Link}
+                  color="primary"
                   href={`/maestro/cursos/${id}/areas/${area_id}/tareas/agregar`}
                   startContent={<Plus size={16} />}
                 >
@@ -635,10 +752,10 @@ export default function CursoPage() {
               Actividades Recientes
             </h2>
             <Button
-              color="primary"
-              size="sm"
               as={Link}
+              color="primary"
               href={`/maestro/cursos/${id}/areas/${area_id}/actividades/agregar`}
+              size="sm"
               startContent={<Plus size={16} />}
             >
               Nueva Actividad
@@ -650,7 +767,10 @@ export default function CursoPage() {
           <div className="space-y-4">
             {actividades.length > 0 ? (
               actividades.map((actividad) => (
-                <Card key={actividad.id} className="shadow-sm border hover:shadow-md transition-shadow">
+                <Card
+                  key={actividad.id}
+                  className="shadow-sm border hover:shadow-md transition-shadow"
+                >
                   <CardBody className="p-6">
                     <div className="space-y-4">
                       {/* Header de la actividad */}
@@ -670,7 +790,7 @@ export default function CursoPage() {
                             </div>
                           </div>
                         </div>
-                        <Chip size="sm" color="success" variant="flat">
+                        <Chip color="success" size="sm" variant="flat">
                           Completada
                         </Chip>
                       </div>
@@ -679,32 +799,51 @@ export default function CursoPage() {
                       <p className="text-gray-700">{actividad.descripcion}</p>
 
                       {/* Archivos adjuntos */}
-                      {(actividad.fotos?.length > 0 || actividad.pdfs?.length > 0) && (
+                      {(actividad.fotos?.length > 0 ||
+                        actividad.pdfs?.length > 0) && (
                         <div>
                           <p className="font-medium text-gray-700 mb-3 flex items-center gap-2">
-                            {actividad.fotos?.length > 0 && <Camera size={16} />}
-                            {actividad.pdfs?.length > 0 && <FileDown size={16} />}
-                            Archivos adjuntos ({(actividad.fotos?.length || 0) + (actividad.pdfs?.length || 0)})
+                            {actividad.fotos?.length > 0 && (
+                              <Camera size={16} />
+                            )}
+                            {actividad.pdfs?.length > 0 && (
+                              <FileDown size={16} />
+                            )}
+                            Archivos adjuntos (
+                            {(actividad.fotos?.length || 0) +
+                              (actividad.pdfs?.length || 0)}
+                            )
                           </p>
                           <div className="relative group">
                             <div className="flex overflow-x-auto gap-4 pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
                               {/* Fotos */}
                               {actividad.fotos?.map((foto, index) => (
-                                <div key={`foto-${index}`} className="flex-none">
-                                  <div className="w-24 h-24 md:w-32 md:h-32 rounded-lg overflow-hidden border-2 border-gray-200 hover:border-gray-300 transition-colors cursor-pointer"
-                                    onClick={() => mostrarImagen(actividad.fotos, index)}>
-                                    <img
-                                      src={`${foto}?${process.env.NEXT_PUBLIC_AZURE_KEY}`}
+                                <div
+                                  key={`foto-${index}`}
+                                  className="flex-none"
+                                >
+                                  <div
+                                    className="w-24 h-24 md:w-32 md:h-32 rounded-lg overflow-hidden border-2 border-gray-200 hover:border-gray-300 transition-colors cursor-pointer"
+                                    role="button"
+                                    onClick={() =>
+                                      mostrarImagen(actividad.fotos, index)
+                                    }
+                                  >
+                                    <Image
                                       alt={`Foto ${index + 1}`}
                                       className="w-full h-full object-cover hover:scale-105 transition-transform"
+                                      src={`${foto}?${process.env.NEXT_PUBLIC_AZURE_KEY}`}
                                     />
                                   </div>
                                 </div>
                               ))}
                               {/* PDFs */}
                               {actividad.pdfs?.map((pdfUrl, index) => (
-                                <div key={`pdf-${index}`} className="flex-none w-24 h-24 md:w-32 md:h-32">
-                                  <PDFThumbnail url={pdfUrl} index={index} />
+                                <div
+                                  key={`pdf-${index}`}
+                                  className="flex-none w-24 h-24 md:w-32 md:h-32"
+                                >
+                                  <PDFThumbnail index={index} url={pdfUrl} />
                                 </div>
                               ))}
                             </div>
@@ -716,21 +855,21 @@ export default function CursoPage() {
                       <Divider />
                       <div className="flex gap-2 justify-end">
                         <Button
-                          color="primary"
-                          size="sm"
-                          variant="light"
                           as={Link}
+                          color="primary"
                           href={`/maestro/cursos/${id}/areas/${area_id}/actividades/actualizar/${actividad.id}`}
+                          size="sm"
                           startContent={<Edit3 size={14} />}
+                          variant="light"
                         >
                           Editar
                         </Button>
                         <Button
                           color="danger"
                           size="sm"
+                          startContent={<Trash2 size={14} />}
                           variant="light"
                           onPress={() => handleEliminarActividad(actividad.id)}
-                          startContent={<Trash2 size={14} />}
                         >
                           Eliminar
                         </Button>
@@ -741,7 +880,7 @@ export default function CursoPage() {
               ))
             ) : (
               <div className="text-center py-12">
-                <BookOpen size={48} className="text-gray-400 mx-auto mb-4" />
+                <BookOpen className="text-gray-400 mx-auto mb-4" size={48} />
                 <h3 className="text-lg font-medium text-gray-600 mb-2">
                   No hay actividades registradas
                 </h3>
@@ -749,8 +888,8 @@ export default function CursoPage() {
                   Documenta las actividades realizadas en clase
                 </p>
                 <Button
-                  color="primary"
                   as={Link}
+                  color="primary"
                   href={`/maestro/cursos/${id}/areas/${area_id}/actividades/agregar`}
                   startContent={<Plus size={16} />}
                 >
@@ -764,12 +903,12 @@ export default function CursoPage() {
 
       {/* Modal de imagen mejorado */}
       <ImagenModal
+        contador={`${indiceImagen + 1} / ${fotosGaleria.length}`}
+        imagen={imagenActual}
         isOpen={modalVisible}
         onClose={ocultarImagen}
-        imagen={imagenActual}
-        onPrev={imagenAnterior}
         onNext={imagenSiguiente}
-        contador={`${indiceImagen + 1} / ${fotosGaleria.length}`}
+        onPrev={imagenAnterior}
       />
     </div>
   );

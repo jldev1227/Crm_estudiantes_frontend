@@ -1,22 +1,31 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { useAuth } from "./AuthContext";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import { useQuery, useLazyQuery } from "@apollo/client";
+import { addToast } from "@heroui/toast";
+
 import { OBTENER_AREAS_POR_GRADO } from "../graphql/queries/obtenerAreasPorGrado";
 import { OBTENER_ACTIVIDADES_POR_AREA } from "../graphql/queries/obtenerActividadesPorArea";
-import socketService from "@/services/socketService";
-import { addToast } from "@heroui/toast";
 import { OBTENER_CALIFICACIONES_ESTUDIANTE } from "../graphql/queries/obtenerCalificacionesEstudiante";
+
+import { useAuth } from "./AuthContext";
+
+import socketService from "@/services/socketService";
 
 // Definir los tipos
 interface Area {
   id: string;
   nombre: string;
   maestro: {
-    id: string,
-    nombre_completo: string
-  }
+    id: string;
+    nombre_completo: string;
+  };
 }
 
 interface Actividad {
@@ -40,7 +49,7 @@ interface EstudianteErrorEvent {
 }
 
 interface EstudiantePensionActualizadaResponse {
-  estado_pension: boolean
+  estado_pension: boolean;
 }
 
 interface EstudianteContextType {
@@ -54,9 +63,7 @@ interface EstudianteContextType {
   errorActividades: any;
   erroCalificaciones: any;
   obtenerActividades: (areaId: string) => void;
-  obtenerCalificaciones: (
-    area_id: string,
-    periodo: number) => void;
+  obtenerCalificaciones: (area_id: string, periodo: number) => void;
   obtenerActividadesPorFecha: (fecha: string) => void;
   filtrarActividades: (texto: string) => void;
   actividadesFiltradas: Actividad[];
@@ -129,8 +136,13 @@ export const EstudianteProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Actualizar calificaciones cuando se carguen los datos
   useEffect(() => {
-    if (dataCalificaciones && dataCalificaciones.obtenerCalificacionEstudiante) {
-      setCalificaciones(dataCalificaciones.obtenerCalificacionEstudiante);
+    if (
+      dataCalificaciones &&
+      dataCalificaciones.obtenerCalificacionesEstudiante
+    ) {
+      setCalificaciones(
+        dataCalificaciones.obtenerCalificacionesEstudiante.calificaciones,
+      );
     }
   }, [dataCalificaciones]);
 
@@ -140,6 +152,7 @@ export const EstudianteProvider: React.FC<{ children: React.ReactNode }> = ({
       const actividadesOrdenadas = [...dataActividades.obtenerActividades].sort(
         (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime(),
       );
+
       setActividades(actividadesOrdenadas);
       setActividadesFiltradas(actividadesOrdenadas);
     }
@@ -160,7 +173,8 @@ export const EstudianteProvider: React.FC<{ children: React.ReactNode }> = ({
   const obtenerCalificaciones = async (area_id: string, periodo: number) => {
     try {
       if (!usuario?.id || !usuario?.grado_id) {
-        console.warn('Faltan datos del usuario para obtener calificaciones');
+        console.warn("Faltan datos del usuario para obtener calificaciones");
+
         return null;
       }
 
@@ -173,9 +187,9 @@ export const EstudianteProvider: React.FC<{ children: React.ReactNode }> = ({
         },
       });
 
-      return data?.obtenerCalificacionEstudiante || null;
+      return data?.obtenerCalificacionesEstudiante.calificaciones || null;
     } catch (error) {
-      console.error('Error obteniendo calificaciones:', error);
+      console.error("Error obteniendo calificaciones:", error);
       throw error;
     }
   };
@@ -190,6 +204,7 @@ export const EstudianteProvider: React.FC<{ children: React.ReactNode }> = ({
       const actividadFecha = new Date(actividad.fecha)
         .toISOString()
         .split("T")[0];
+
       return actividadFecha === fechaISO;
     });
 
@@ -200,6 +215,7 @@ export const EstudianteProvider: React.FC<{ children: React.ReactNode }> = ({
   const filtrarActividades = (texto: string) => {
     if (!texto.trim()) {
       setActividadesFiltradas(actividades);
+
       return;
     }
 
@@ -244,7 +260,9 @@ export const EstudianteProvider: React.FC<{ children: React.ReactNode }> = ({
       };
 
       // Manejadores para eventos de servicios
-      const handlePensionActualizada = (data: EstudiantePensionActualizadaResponse) => {
+      const handlePensionActualizada = (
+        data: EstudiantePensionActualizadaResponse,
+      ) => {
         setSocketEventLogs((prev) => [
           ...prev,
           {
@@ -257,7 +275,8 @@ export const EstudianteProvider: React.FC<{ children: React.ReactNode }> = ({
         if (data.estado_pension) {
           addToast({
             title: "Acceso habilitado",
-            description: "Ya puedes acceder a la plataforma. Tu pensión ha sido renovada.",
+            description:
+              "Ya puedes acceder a la plataforma. Tu pensión ha sido renovada.",
             color: "success",
           });
         } else {
@@ -288,7 +307,10 @@ export const EstudianteProvider: React.FC<{ children: React.ReactNode }> = ({
       socketService.on("disconnect", handleDisconnect);
 
       // Registrar manejadores de eventos de estudiante
-      socketService.on("estudiante:pension-actualizada", handlePensionActualizada);
+      socketService.on(
+        "estudiante:pension-actualizada",
+        handlePensionActualizada,
+      );
 
       socketService.on("estudiante:error", handleEstudianteError);
 
@@ -340,10 +362,12 @@ export const EstudianteProvider: React.FC<{ children: React.ReactNode }> = ({
 // Hook personalizado para usar el contexto
 export const useEstudiante = () => {
   const context = useContext(EstudianteContext);
+
   if (context === undefined) {
     throw new Error(
       "useEstudiante debe ser usado dentro de un EstudianteProvider",
     );
   }
+
   return context;
 };

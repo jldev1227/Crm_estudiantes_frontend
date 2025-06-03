@@ -1,6 +1,7 @@
 "use client";
 
 import { Component, ReactNode } from "react";
+
 import ErrorComponent from "@/app/error"; // Ajusta la ruta según donde tengas tu componente error.tsx
 
 interface ErrorBoundaryProps {
@@ -12,12 +13,15 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+export class ErrorBoundary extends Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
-    this.state = { 
-      hasError: false, 
-      error: null 
+    this.state = {
+      hasError: false,
+      error: null,
     };
   }
 
@@ -31,7 +35,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     console.error("Error capturado por ErrorBoundary:", {
       error,
       componentStack: errorInfo.componentStack,
-      message: error.message
+      message: error.message,
     });
   }
 
@@ -39,9 +43,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     if (this.state.hasError && this.state.error) {
       // Usa el componente de error personalizado
       return (
-        <ErrorComponent 
-          error={this.state.error} 
-          reset={() => this.setState({ hasError: false, error: null })} 
+        <ErrorComponent
+          error={this.state.error}
+          reset={() => this.setState({ hasError: false, error: null })}
         />
       );
     }

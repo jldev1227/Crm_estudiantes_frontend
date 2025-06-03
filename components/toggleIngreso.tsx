@@ -23,6 +23,7 @@ export default function ToggleMaestroEstudiante({
   const handleToggle = () => {
     // Cambiamos al valor opuesto
     const newValue = !isMaestro;
+
     setIsMaestro(newValue);
 
     // Si el padre pasó onChange, lo llamamos
@@ -38,11 +39,11 @@ export default function ToggleMaestroEstudiante({
       <div className="relative">
         {/* Checkbox “invisible” para controlar el estado */}
         <input
-          type="checkbox"
-          className="sr-only peer"
           checked={isMaestro}
-          onChange={handleToggle}
+          className="sr-only peer"
           id={id} // Add this line
+          type="checkbox"
+          onChange={handleToggle}
         />
 
         {/* Fondo del switch */}

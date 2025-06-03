@@ -5,11 +5,13 @@ import { Input } from "@heroui/input";
 import { Textarea } from "@heroui/input";
 import { useMutation } from "@apollo/client";
 import { useParams, useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+import Image from "next/image";
+
 import DropzoneActividad from "@/components/dropzoneActividad";
 import { CREAR_ACTIVIDAD } from "@/app/graphql/mutation/crearActividad";
 import { formatearFechaColombiaParaInput } from "@/helpers/formatearFechaColombiaParaInput";
 import NextPDFPreview from "@/components/pdfPreview";
-import toast from "react-hot-toast";
 
 interface FormData {
   nombre: string;
@@ -31,7 +33,9 @@ export default function Page() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [uploadedFiles, setUploadedFiles] = useState<{ url: string; tipo: string; nombre: string }[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<
+    { url: string; tipo: string; nombre: string }[]
+  >([]);
   const [resetDropzone, setResetDropzone] = useState(false);
 
   // Estado del formulario
@@ -74,76 +78,96 @@ export default function Page() {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
+
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   // Esta función recibe las URLs, tipos y nombres de los archivos después de subirse
-  const handleFileUpload = useCallback((urls: string[], fileTypes: string[], fileNames: string[]) => {
-    const files = urls.map((url, index) => ({
-      url,
-      tipo: fileTypes[index],
-      nombre: fileNames[index]
-    }));
+  const handleFileUpload = useCallback(
+    (urls: string[], fileTypes: string[], fileNames: string[]) => {
+      const files = urls.map((url, index) => ({
+        url,
+        tipo: fileTypes[index],
+        nombre: fileNames[index],
+      }));
 
-    // Añadir los nuevos archivos a los existentes
-    const newFiles = [...uploadedFiles, ...files];
-    setUploadedFiles(newFiles);
-    setFormData((prev) => ({ ...prev, archivos: newFiles }));
+      // Añadir los nuevos archivos a los existentes
+      const newFiles = [...uploadedFiles, ...files];
 
-    // Mostrar advertencia si solo hay PDFs
-    const soloTienePdfs = newFiles.length > 0 && newFiles.every(file => file.tipo === 'application/pdf');
-    if (soloTienePdfs) {
-      setError("Advertencia: Has subido solo PDFs. Para una mejor experiencia, te recomendamos incluir al menos una imagen.");
-    } else {
-      setError("");
-    }
+      setUploadedFiles(newFiles);
+      setFormData((prev) => ({ ...prev, archivos: newFiles }));
 
-    // Restablecer el estado de reseteo para futuras operaciones
-    if (resetDropzone) {
-      setResetDropzone(false);
-    }
-  }, [uploadedFiles, resetDropzone]);
+      // Mostrar advertencia si solo hay PDFs
+      const soloTienePdfs =
+        newFiles.length > 0 &&
+        newFiles.every((file) => file.tipo === "application/pdf");
+
+      if (soloTienePdfs) {
+        setError(
+          "Advertencia: Has subido solo PDFs. Para una mejor experiencia, te recomendamos incluir al menos una imagen.",
+        );
+      } else {
+        setError("");
+      }
+
+      // Restablecer el estado de reseteo para futuras operaciones
+      if (resetDropzone) {
+        setResetDropzone(false);
+      }
+    },
+    [uploadedFiles, resetDropzone],
+  );
 
   // Eliminar un archivo específico
-  const removeFile = useCallback((index: number) => {
-    const newFiles = [...uploadedFiles];
-    newFiles.splice(index, 1);
-    setUploadedFiles(newFiles);
-    setFormData((prev) => ({ ...prev, archivos: newFiles }));
+  const removeFile = useCallback(
+    (index: number) => {
+      const newFiles = [...uploadedFiles];
 
-    // Actualizar advertencia si solo quedan PDFs
-    const soloTienePdfs = newFiles.length > 0 && newFiles.every(file => file.tipo === 'application/pdf');
-    if (soloTienePdfs) {
-      setError("Advertencia: Has subido solo PDFs. Para una mejor experiencia, te recomendamos incluir al menos una imagen.");
-    } else {
-      setError("");
-    }
+      newFiles.splice(index, 1);
+      setUploadedFiles(newFiles);
+      setFormData((prev) => ({ ...prev, archivos: newFiles }));
 
-    // Al eliminar un archivo, no es necesario resetear el dropzone, 
-    // ya que el componente detectará el espacio disponible mediante la prop filesCount
-  }, [uploadedFiles]);
+      // Actualizar advertencia si solo quedan PDFs
+      const soloTienePdfs =
+        newFiles.length > 0 &&
+        newFiles.every((file) => file.tipo === "application/pdf");
+
+      if (soloTienePdfs) {
+        setError(
+          "Advertencia: Has subido solo PDFs. Para una mejor experiencia, te recomendamos incluir al menos una imagen.",
+        );
+      } else {
+        setError("");
+      }
+
+      // Al eliminar un archivo, no es necesario resetear el dropzone,
+      // ya que el componente detectará el espacio disponible mediante la prop filesCount
+    },
+    [uploadedFiles],
+  );
 
   const handleSubmit = async () => {
     // Validación básica
     if (!formData.nombre.trim()) {
       setError("El nombre de la actividad es obligatorio");
       toast.error("El nombre de la actividad es obligatorio");
+
       return;
     }
 
     if (!formData.descripcion.trim()) {
       setError("La descripción es obligatoria");
       toast.error("La descripción es obligatoria");
+
       return;
     }
-
 
     if (!formData.hora) {
       setError("La hora es obligatoria");
       toast.error("La hora es obligatoria");
+
       return;
     }
-
 
     setLoading(true);
     setError("");
@@ -151,12 +175,12 @@ export default function Page() {
     try {
       // Separar imágenes y PDFs
       const imageFiles = formData.archivos
-        .filter(archivo => archivo.tipo.startsWith('image/'))
-        .map(archivo => archivo.url);
+        .filter((archivo) => archivo.tipo.startsWith("image/"))
+        .map((archivo) => archivo.url);
 
       const pdfFiles = formData.archivos
-        .filter(archivo => archivo.tipo === 'application/pdf')
-        .map(archivo => archivo.url);
+        .filter((archivo) => archivo.tipo === "application/pdf")
+        .map((archivo) => archivo.url);
 
       // Si tenemos PDFs, añadir información sobre ellos en la descripción
       let descripcionActualizada = formData.descripcion;
@@ -172,7 +196,7 @@ export default function Page() {
           pdfs: pdfFiles,
           grado_id,
           area_id,
-        }
+        },
       };
 
       await crearActividad({ variables });
@@ -190,9 +214,13 @@ export default function Page() {
       <div>
         {/* Mensaje de error o advertencia */}
         {error && (
-          <div className={`px-4 py-3 rounded mb-4 ${error.startsWith('Advertencia:')
-            ? 'bg-amber-100 border border-amber-400 text-amber-700'
-            : 'bg-red-100 border border-red-400 text-red-700'}`}>
+          <div
+            className={`px-4 py-3 rounded mb-4 ${
+              error.startsWith("Advertencia:")
+                ? "bg-amber-100 border border-amber-400 text-amber-700"
+                : "bg-red-100 border border-red-400 text-red-700"
+            }`}
+          >
             {error}
           </div>
         )}
@@ -204,88 +232,93 @@ export default function Page() {
             {/* Nombre de la actividad */}
             <div>
               <label
-                htmlFor="nombre"
                 className="block text-sm font-medium text-gray-700 mb-1"
+                htmlFor="nombre"
               >
                 Nombre de la actividad
               </label>
               <Input
+                required
                 id="nombre"
                 name="nombre"
+                placeholder="Ej: Taller de matemáticas"
                 value={formData.nombre}
                 onChange={handleChange}
-                placeholder="Ej: Taller de matemáticas"
-                required
               />
             </div>
 
             {/* Fecha */}
             <div>
               <label
-                htmlFor="fecha"
                 className="block text-sm font-medium text-gray-700 mb-1"
+                htmlFor="fecha"
               >
                 Fecha
               </label>
               <Input
-                type="date"
+                required
                 id="fecha"
                 name="fecha"
+                type="date"
                 value={formData.fecha}
                 onChange={handleChange}
-                required
               />
             </div>
 
             {/* hora */}
             <div>
               <label
-                htmlFor="hora"
                 className="block text-sm font-medium text-gray-700 mb-1"
+                htmlFor="hora"
               >
                 Hora
               </label>
               <Input
-                type="time"
+                required
                 id="hora"
                 name="hora"
+                type="time"
                 value={formData.hora}
                 onChange={handleChange}
-                required
               />
             </div>
 
             {/* Descripción */}
             <div>
               <label
-                htmlFor="descripcion"
                 className="block text-sm font-medium text-gray-700 mb-1"
+                htmlFor="descripcion"
               >
                 Descripción
               </label>
               <Textarea
+                required
                 id="descripcion"
                 name="descripcion"
+                placeholder="Describe la actividad..."
+                rows={4}
                 value={formData.descripcion}
                 onChange={handleChange}
-                rows={4}
-                placeholder="Describe la actividad..."
-                required
               />
             </div>
 
             {/* Carga de archivos */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                className="block text-sm font-medium text-gray-700 mb-1"
+                htmlFor="drop_files"
+              >
                 Archivos de la actividad
               </label>
               <DropzoneActividad
-                onFileUpload={handleFileUpload}
-                maxFiles={10}
                 filesCount={uploadedFiles.length}
+                maxFiles={10}
                 resetFiles={resetDropzone}
-              />              <p className="text-xs text-gray-500 mt-1">
-                Puedes subir imágenes y PDFs. Ambos tipos aparecerán en la actividad.
+                onFileUpload={handleFileUpload}
+              />{" "}
+              <p className="text-xs text-gray-500 mt-1">
+                Puedes subir imágenes y PDFs. Ambos tipos aparecerán en la
+                actividad.
               </p>
             </div>
           </div>
@@ -303,23 +336,23 @@ export default function Page() {
                     key={index}
                     className="border rounded-lg shadow-sm hover:shadow-md transition-shadow"
                   >
-                    {file.tipo === 'application/pdf' ? (
+                    {file.tipo === "application/pdf" ? (
                       <NextPDFPreview
-                        pdfUrl={file.url}
                         fileName={file.nombre}
+                        pdfUrl={file.url}
                         onRemove={() => removeFile(index)}
                       />
-                    ) : file.tipo.startsWith('image/') ? (
+                    ) : file.tipo.startsWith("image/") ? (
                       <div className="relative aspect-square">
-                        <img
-                          src={file.url}
+                        <Image
                           alt={`Imagen ${index + 1}: ${file.nombre}`}
                           className="w-full h-full object-cover rounded-t-lg"
+                          src={file.url}
                         />
                         <button
-                          onClick={() => removeFile(index)}
-                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5 shadow-md hover:bg-red-600 transition-colors"
                           aria-label="Eliminar archivo"
+                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5 shadow-md hover:bg-red-600 transition-colors"
+                          onClick={() => removeFile(index)}
                         >
                           <svg
                             className="w-4 h-4"
@@ -329,10 +362,10 @@ export default function Page() {
                             xmlns="http://www.w3.org/2000/svg"
                           >
                             <path
+                              d="M6 18L18 6M6 6l12 12"
                               strokeLinecap="round"
                               strokeLinejoin="round"
                               strokeWidth={2}
-                              d="M6 18L18 6M6 6l12 12"
                             />
                           </svg>
                         </button>
@@ -346,15 +379,15 @@ export default function Page() {
                           xmlns="http://www.w3.org/2000/svg"
                         >
                           <path
-                            fillRule="evenodd"
-                            d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
                             clipRule="evenodd"
+                            d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
+                            fillRule="evenodd"
                           />
                         </svg>
                         <button
-                          onClick={() => removeFile(index)}
-                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5 shadow-md hover:bg-red-600 transition-colors"
                           aria-label="Eliminar archivo"
+                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5 shadow-md hover:bg-red-600 transition-colors"
+                          onClick={() => removeFile(index)}
                         >
                           <svg
                             className="w-4 h-4"
@@ -364,21 +397,26 @@ export default function Page() {
                             xmlns="http://www.w3.org/2000/svg"
                           >
                             <path
+                              d="M6 18L18 6M6 6l12 12"
                               strokeLinecap="round"
                               strokeLinejoin="round"
                               strokeWidth={2}
-                              d="M6 18L18 6M6 6l12 12"
                             />
                           </svg>
                         </button>
                       </div>
                     )}
                     <div className="p-2 bg-gray-50 rounded-b-lg">
-                      <p className="text-xs text-gray-500 truncate" title={file.nombre}>
-                        {file.nombre.length > 18 ? `${file.nombre.substring(0, 15)}...` : file.nombre}
+                      <p
+                        className="text-xs text-gray-500 truncate"
+                        title={file.nombre}
+                      >
+                        {file.nombre.length > 18
+                          ? `${file.nombre.substring(0, 15)}...`
+                          : file.nombre}
                       </p>
                       <p className="text-xs text-gray-400">
-                        {file.tipo.startsWith('image/') ? 'Imagen' : 'PDF'}
+                        {file.tipo.startsWith("image/") ? "Imagen" : "PDF"}
                       </p>
                     </div>
                   </div>
@@ -394,10 +432,10 @@ export default function Page() {
                   xmlns="http://www.w3.org/2000/svg"
                 >
                   <path
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                   />
                 </svg>
                 <p className="text-sm text-gray-500">
@@ -414,17 +452,16 @@ export default function Page() {
       <div className="flex justify-end gap-5">
         <Button
           color="danger"
+          isDisabled={loading}
           variant="light"
           onPress={() => router.back()}
-          isDisabled={loading}
         >
           Cancelar
         </Button>
-        <Button color="primary" onPress={handleSubmit} isLoading={loading}>
+        <Button color="primary" isLoading={loading} onPress={handleSubmit}>
           {loading ? "Creando..." : "Crear actividad"}
         </Button>
       </div>
     </div>
   );
 }
-

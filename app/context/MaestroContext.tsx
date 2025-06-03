@@ -1,6 +1,13 @@
 "use client";
-import React, { createContext, useReducer, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useReducer,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { useApolloClient, useLazyQuery } from "@apollo/client";
+
 import { OBTENER_CURSOS_MAESTRO } from "../graphql/queries/obtenerCursosMaestro";
 import { OBTENER_CURSO } from "../graphql/queries/obtenerCurso";
 import { OBTENER_CALIFICACIONES } from "../graphql/queries/obtenerCalificaciones";
@@ -51,7 +58,9 @@ const MaestroContext = createContext<any>(initialState);
 // Proveedor del contexto
 export function MaestroProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(maestroReducer, initialState);
-  const [calificacionesEstudiante, setCalificacionesEstudiante] = useState<any[]>([]);
+  const [calificacionesEstudiante, setCalificacionesEstudiante] = useState<
+    any[]
+  >([]);
 
   // Obtenemos instancia de Apollo Client
   const client = useApolloClient();
@@ -109,7 +118,7 @@ export function MaestroProvider({ children }: { children: React.ReactNode }) {
         },
       });
 
-      console.log(data)
+      console.log(data);
 
       return data.obtenerCursoGeneral;
     } catch (error) {
@@ -118,12 +127,16 @@ export function MaestroProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Función para obtener calificaciones
-  const obtenerCalificaciones = async (grado_id: string, area_id: string, periodo: number) => {
+  const obtenerCalificaciones = async (
+    grado_id: string,
+    area_id: string,
+    periodo: number,
+  ) => {
     try {
       const { data } = await client.query({
         query: OBTENER_CALIFICACIONES,
         variables: { grado_id, area_id, periodo },
-        fetchPolicy: "network-only" // Para asegurar datos frescos
+        fetchPolicy: "network-only", // Para asegurar datos frescos
       });
 
       dispatch({
@@ -138,10 +151,11 @@ export function MaestroProvider({ children }: { children: React.ReactNode }) {
   };
 
   const obtenerCalificacionesEstudiante = async (estudianteId: string) => {
-    console.log("estudiante", estudianteId)
+    console.log("estudiante", estudianteId);
     try {
       if (!estudianteId) {
-        console.warn('Faltan datos del estudiante para obtener calificaciones');
+        console.warn("Faltan datos del estudiante para obtener calificaciones");
+
         return null;
       }
 
@@ -150,11 +164,12 @@ export function MaestroProvider({ children }: { children: React.ReactNode }) {
           estudiante_id: estudianteId,
         },
       });
-      console.log(data)
+
+      console.log(data);
 
       return data?.obtenerCalificacionEstudiante || null;
     } catch (error) {
-      console.error('Error obteniendo calificaciones:', error);
+      console.error("Error obteniendo calificaciones:", error);
       throw error;
     }
   };
@@ -179,8 +194,13 @@ export function MaestroProvider({ children }: { children: React.ReactNode }) {
 
   // Actualizar calificaciones cuando se carguen los datos
   useEffect(() => {
-    if (dataCalificacionesEstudiante && dataCalificacionesEstudiante.obtenerCalificacionEstudiante) {
-      setCalificacionesEstudiante(dataCalificacionesEstudiante.obtenerCalificacionEstudiante);
+    if (
+      dataCalificacionesEstudiante &&
+      dataCalificacionesEstudiante.obtenerCalificacionEstudiante
+    ) {
+      setCalificacionesEstudiante(
+        dataCalificacionesEstudiante.obtenerCalificacionEstudiante,
+      );
     }
   }, [dataCalificacionesEstudiante]);
 

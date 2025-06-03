@@ -5,17 +5,18 @@ export type IconSvgProps = SVGProps<SVGSVGElement> & {
 };
 
 export type Estudiante = {
-  id: string;
+  id: number;
   tipo_documento: string;
   numero_identificacion: string;
   fecha_nacimiento: string;
   nombre_completo: string;
   celular_padres: string;
+  grado_id: string;
   pension_activa?: boolean;
 };
 
 export type Maestro = {
-  id: string;
+  id: number;
   nombre_completo: string;
   email: string;
   celular: string;
@@ -24,9 +25,9 @@ export type Maestro = {
 };
 
 export type Curso = {
-  id: string
-  nombre: string
-  areas: Area[]
+  id: string;
+  nombre: string;
+  areas: Area[];
   grado: Grado;
   director: Maestro;
   estudiantes: Estudiante[];
@@ -35,10 +36,32 @@ export type Curso = {
 export type Area = {
   id: string;
   nombre: string;
-}
+};
 
 export type Grado = {
   id: string;
   nombre: string;
-  director?: Maestro
-}
+  director?: Maestro;
+};
+
+export type Nota = {
+  id: string;
+  nombre: string;
+  valor: number;
+  porcentaje: number;
+  completada?: boolean;
+  actividad_id: string;
+};
+
+export type Calificacion = {
+  id: string;
+  estudiante: Estudiante;
+  grado: Curso;
+  area: Area;
+  notas: Nota[];
+  grado_id?: string;
+  area_id?: string;
+  estudiante_id?: number;
+  periodo: number;
+  notaFinal: number;
+};

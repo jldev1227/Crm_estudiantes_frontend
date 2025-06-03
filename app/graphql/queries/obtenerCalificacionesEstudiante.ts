@@ -1,5 +1,5 @@
 // graphql/queries/obtenerCalificacionesEstudiante.js
-import { gql } from '@apollo/client';
+import { gql } from "@apollo/client";
 
 export const OBTENER_CALIFICACIONES_ESTUDIANTE = gql`
   query ObtenerCalificacionesEstudiante(
@@ -14,39 +14,40 @@ export const OBTENER_CALIFICACIONES_ESTUDIANTE = gql`
       area_id: $area_id
       periodo: $periodo
     ) {
-      id
-      estudiante_id
-      grado_id
-      area_id
-      periodo
-      notaFinal
-      createdAt
-      updatedAt
-      notas {
-        id
-        nombre
-        valor
-        porcentaje
-        actividad_id
-      }
       estudiante {
         id
-        tipo_documento
-        numero_identificacion
-        fecha_nacimiento
         nombre_completo
+        numero_identificacion
+        tipo_documento
         celular_padres
-        grado_id
-        pension_activa
+        grado {
+          id
+          nombre
+          director_id
+          director {
+            id
+            nombre_completo
+            email
+          }
+        }
       }
-      grado {
+      calificaciones {
         id
-        nombre
-        director_id
-      }
-      area {
-        id
-        nombre
+        periodo
+        notaFinal
+        createdAt
+        updatedAt
+        notas {
+          id
+          nombre
+          valor
+          porcentaje
+          actividad_id
+        }
+        area {
+          id
+          nombre
+        }
       }
     }
   }

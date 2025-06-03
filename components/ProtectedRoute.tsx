@@ -1,8 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/app/context/AuthContext";
 import { toast } from "react-toastify";
+
+import { useAuth } from "@/app/context/AuthContext";
 import "react-toastify/dist/ReactToastify.css";
 
 interface ProtectedRouteProps {
@@ -12,7 +13,7 @@ interface ProtectedRouteProps {
 
 export default function ProtectedRoute({
   children,
-  allowedRoles = []
+  allowedRoles = [],
 }: ProtectedRouteProps) {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const router = useRouter();
@@ -26,8 +27,10 @@ export default function ProtectedRoute({
 
     // Verificar si hay token
     const token = localStorage.getItem("token");
+
     if (!token) {
       router.push("/ingreso");
+
       return;
     }
 
@@ -37,6 +40,7 @@ export default function ProtectedRoute({
       logout();
       toast.error("Sesión expirada. Por favor inicia sesión nuevamente.");
       router.push("/ingreso");
+
       return;
     }
 
@@ -47,18 +51,19 @@ export default function ProtectedRoute({
       if (!hasAllowedRole) {
         // Redirigir según el rol del usuario
         switch (usuario.rol) {
-          case 'maestro':
+          case "maestro":
             router.push("/maestro");
             break;
-          case 'estudiante':
+          case "estudiante":
             router.push("/estudiante");
             break;
-          case 'admin':
+          case "admin":
             router.push("/admin");
             break;
           default:
             router.push("/ingreso");
         }
+
         return;
       }
 
@@ -73,7 +78,7 @@ export default function ProtectedRoute({
   if (estaCargando) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500" />
       </div>
     );
   }

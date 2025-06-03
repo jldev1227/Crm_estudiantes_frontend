@@ -7,7 +7,8 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint . --ext .ts,.tsx -c .eslintrc.json --fix"
+    "lint": "eslint . --ext .ts,.tsx -c .eslintrc.json --fix",
+    "lint:fix": "prettier --write . && eslint . --ext .ts,.tsx --fix"
   },
   "dependencies": {
     "@apollo/client": "^3.13.4",
@@ -58,7 +59,6 @@
     "socket.io-client": "^4.8.1",
     "yet-another-react-lightbox": "^3.21.7",
     "tailwindcss-animated": "^2.0.0"
-
   },
   "devDependencies": {
     "@next/eslint-plugin-next": "15.0.4",

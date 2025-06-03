@@ -2,12 +2,14 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@apollo/client";
+import Image from "next/image";
+
 import { useAuth } from "../../context/AuthContext";
+
 import { OBTENER_AREAS_POR_GRADO } from "@/app/graphql/queries/obtenerAreasPorGrado";
 import { formatearFecha } from "@/helpers/formatearFecha";
 import { OBTENER_TAREAS_ESTUDIANTE } from "@/app/graphql/queries/obtenerTareasEstudiante";
 import PDFThumbnail from "@/components/PDFThumbnail";
-import formatearFechaParaInput from "@/helpers/formatearFechaParaInput";
 
 // Definir los tipos
 interface Area {
@@ -28,7 +30,14 @@ interface Tarea {
 }
 
 // Componente Modal simple para mostrar imágenes
-const ImagenModal = ({ isOpen, onClose, imagen, onPrev, onNext, contador }: {
+const ImagenModal = ({
+  isOpen,
+  onClose,
+  imagen,
+  onPrev,
+  onNext,
+  contador,
+}: {
   isOpen: boolean;
   onClose: () => void;
   imagen: string;
@@ -39,16 +48,34 @@ const ImagenModal = ({ isOpen, onClose, imagen, onPrev, onNext, contador }: {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
-      onClick={onClose}>
-      <div className="max-w-4xl max-h-[85vh] relative" onClick={e => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
+      role="button"
+      onClick={onClose}
+    >
+      <div
+        className="max-w-4xl max-h-[85vh] relative"
+        role="button"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Botón de cierre */}
         <button
           className="absolute top-2 right-2 z-10 text-white bg-black/50 rounded-full p-2 hover:bg-black/70"
           onClick={onClose}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          <svg
+            className="h-6 w-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M6 18L18 6M6 6l12 12"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+            />
           </svg>
         </button>
 
@@ -58,20 +85,34 @@ const ImagenModal = ({ isOpen, onClose, imagen, onPrev, onNext, contador }: {
         </div>
 
         {/* Imagen */}
-        <img
-          src={imagen}
+        <Image
           alt="Imagen ampliada"
           className="max-h-[80vh] max-w-full object-contain rounded-lg"
+          src={imagen}
         />
 
         {/* Controles */}
         <div className="absolute inset-y-0 left-0 flex items-center">
           <button
             className="bg-black/30 text-white p-2 rounded-full hover:bg-black/50 ml-2"
-            onClick={(e) => { e.stopPropagation(); onPrev(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onPrev();
+            }}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <svg
+              className="h-6 w-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M15 19l-7-7 7-7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+              />
             </svg>
           </button>
         </div>
@@ -79,10 +120,24 @@ const ImagenModal = ({ isOpen, onClose, imagen, onPrev, onNext, contador }: {
         <div className="absolute inset-y-0 right-0 flex items-center">
           <button
             className="bg-black/30 text-white p-2 rounded-full hover:bg-black/50 mr-2"
-            onClick={(e) => { e.stopPropagation(); onNext(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onNext();
+            }}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            <svg
+              className="h-6 w-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9 5l7 7-7 7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+              />
             </svg>
           </button>
         </div>
@@ -115,7 +170,10 @@ export default function TareasPage() {
 
   // Funciones para el modal
   const mostrarImagen = (fotos: string[], indice: number) => {
-    const fotosConKey = fotos.map(foto => `${foto}?${process.env.NEXT_PUBLIC_AZURE_KEY}`);
+    const fotosConKey = fotos.map(
+      (foto) => `${foto}?${process.env.NEXT_PUBLIC_AZURE_KEY}`,
+    );
+
     setFotosGaleria(fotosConKey);
     setIndiceImagen(indice);
     setImagenActual(fotosConKey[indice]);
@@ -127,13 +185,17 @@ export default function TareasPage() {
   };
 
   const imagenAnterior = () => {
-    const nuevoIndice = indiceImagen === 0 ? fotosGaleria.length - 1 : indiceImagen - 1;
+    const nuevoIndice =
+      indiceImagen === 0 ? fotosGaleria.length - 1 : indiceImagen - 1;
+
     setIndiceImagen(nuevoIndice);
     setImagenActual(fotosGaleria[nuevoIndice]);
   };
 
   const imagenSiguiente = () => {
-    const nuevoIndice = indiceImagen === fotosGaleria.length - 1 ? 0 : indiceImagen + 1;
+    const nuevoIndice =
+      indiceImagen === fotosGaleria.length - 1 ? 0 : indiceImagen + 1;
+
     setIndiceImagen(nuevoIndice);
     setImagenActual(fotosGaleria[nuevoIndice]);
   };
@@ -144,20 +206,21 @@ export default function TareasPage() {
       if (!modalVisible) return;
 
       switch (e.key) {
-        case 'ArrowLeft':
+        case "ArrowLeft":
           imagenAnterior();
           break;
-        case 'ArrowRight':
+        case "ArrowRight":
           imagenSiguiente();
           break;
-        case 'Escape':
+        case "Escape":
           ocultarImagen();
           break;
       }
     };
 
-    window.addEventListener('keydown', manejarTeclas);
-    return () => window.removeEventListener('keydown', manejarTeclas);
+    window.addEventListener("keydown", manejarTeclas);
+
+    return () => window.removeEventListener("keydown", manejarTeclas);
   }, [modalVisible, indiceImagen, fotosGaleria]);
 
   // Obtener áreas disponibles
@@ -183,9 +246,7 @@ export default function TareasPage() {
   });
 
   // Estado local para tareas filtradas
-  const [tareasFiltradas, setTareasFiltradas] = useState<
-    Tarea[] | []
-  >([]);
+  const [tareasFiltradas, setTareasFiltradas] = useState<Tarea[] | []>([]);
 
   // Aplicar filtros cuando cambian los datos o los criterios de filtrado
   useEffect(() => {
@@ -206,29 +267,37 @@ export default function TareasPage() {
         const nombreNormalizado = normalizarTexto(tarea.nombre);
         const descripcionNormalizada = normalizarTexto(tarea.descripcion);
 
-        return nombreNormalizado.includes(textoBusquedaNormalizado) ||
-          descripcionNormalizada.includes(textoBusquedaNormalizado);
+        return (
+          nombreNormalizado.includes(textoBusquedaNormalizado) ||
+          descripcionNormalizada.includes(textoBusquedaNormalizado)
+        );
       });
     }
 
     // Filtrar por fecha
     if (fechaFiltro) {
       const fechaObj = new Date(fechaFiltro);
+
       fechaObj.setHours(0, 0, 0, 0);
-    
+
       filtradas = filtradas.filter((tarea) => {
         // Convertir el string de timestamp a número
         const timestamp = Number(tarea.fechaEntrega);
         const tareaFechaObj = new Date(timestamp);
+
         tareaFechaObj.setHours(0, 0, 0, 0);
-        
+
         // Compara año, mes y día para evitar problemas con zonas horarias
-        return tareaFechaObj.getFullYear() === fechaObj.getFullYear() &&
-               tareaFechaObj.getMonth() === fechaObj.getMonth() &&
-               tareaFechaObj.getDate() === fechaObj.getDate();
+        return (
+          tareaFechaObj.getFullYear() === fechaObj.getFullYear() &&
+          tareaFechaObj.getMonth() === fechaObj.getMonth() &&
+          tareaFechaObj.getDate() === fechaObj.getDate()
+        );
       });
     }
-    setTareasFiltradas(filtradas.sort((a, b) => Number(b.fechaEntrega) - Number(a.fechaEntrega)));
+    setTareasFiltradas(
+      filtradas.sort((a, b) => Number(b.fechaEntrega) - Number(a.fechaEntrega)),
+    );
   }, [busqueda, fechaFiltro, areaId, tareasData]);
 
   // Manejar cambio de área
@@ -240,7 +309,7 @@ export default function TareasPage() {
   if (areasLoading || tareasLoading) {
     return (
       <div className="flex justify-center items-center min-h-[70vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary" />
       </div>
     );
   }
@@ -260,14 +329,14 @@ export default function TareasPage() {
   // Obtener color según el estado de la tarea
   const obtenerColorEstado = (estado: string) => {
     switch (estado) {
-      case 'activa':
-        return 'text-green-600 bg-green-100';
-      case 'vencida':
-        return 'text-red-600 bg-red-100';
-      case 'cancelada':
-        return 'text-gray-600 bg-gray-100';
+      case "activa":
+        return "text-green-600 bg-green-100";
+      case "vencida":
+        return "text-red-600 bg-red-100";
+      case "cancelada":
+        return "text-gray-600 bg-gray-100";
       default:
-        return 'text-gray-600 bg-gray-100';
+        return "text-gray-600 bg-gray-100";
     }
   };
 
@@ -282,16 +351,16 @@ export default function TareasPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label
-              htmlFor="area"
               className="block text-sm font-medium text-gray-700 mb-1"
+              htmlFor="area"
             >
               Materia
             </label>
             <select
+              className="w-full p-2 border border-gray-300 rounded-md"
               id="area"
               value={areaId}
               onChange={handleAreaChange}
-              className="w-full p-2 border border-gray-300 rounded-md"
             >
               <option value="">Todas las materias</option>
               {areas.map((area: Area) => (
@@ -304,34 +373,34 @@ export default function TareasPage() {
 
           <div>
             <label
-              htmlFor="busqueda"
               className="block text-sm font-medium text-gray-700 mb-1"
+              htmlFor="busqueda"
             >
               Buscar
             </label>
             <input
-              type="text"
+              className="w-full p-2 border border-gray-300 rounded-md"
               id="busqueda"
+              placeholder="Buscar tareas..."
+              type="text"
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md"
-              placeholder="Buscar tareas..."
             />
           </div>
 
           <div>
             <label
-              htmlFor="fecha"
               className="block text-sm font-medium text-gray-700 mb-1"
+              htmlFor="fecha"
             >
               Fecha de entrega
             </label>
             <input
-              type="date"
+              className="w-full p-2 border border-gray-300 rounded-md"
               id="fecha"
+              type="date"
               value={fechaFiltro}
               onChange={(e) => setFechaFiltro(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md"
             />
           </div>
         </div>
@@ -363,9 +432,14 @@ export default function TareasPage() {
                     </p>
                   </div>
                   <div>
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${obtenerColorEstado(tarea.estado)}`}>
-                      {tarea.estado === 'activa' ? 'Activa' :
-                        tarea.estado === 'vencida' ? 'Vencida' : 'Cancelada'}
+                    <span
+                      className={`px-3 py-1 rounded-full text-sm font-medium ${obtenerColorEstado(tarea.estado)}`}
+                    >
+                      {tarea.estado === "activa"
+                        ? "Activa"
+                        : tarea.estado === "vencida"
+                          ? "Vencida"
+                          : "Cancelada"}
                     </span>
                   </div>
                 </div>
@@ -392,29 +466,52 @@ export default function TareasPage() {
                         className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-1 shadow-md z-10 opacity-0 group-hover:opacity-100 transition-opacity"
                         onClick={(e) => {
                           e.preventDefault();
-                          const container = e.currentTarget.nextElementSibling as HTMLElement;
+                          const container = e.currentTarget
+                            .nextElementSibling as HTMLElement;
+
                           if (container) {
-                            container.scrollBy({ left: -200, behavior: 'smooth' });
+                            container.scrollBy({
+                              left: -200,
+                              behavior: "smooth",
+                            });
                           }
                         }}
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        <svg
+                          className="h-4 w-4 text-gray-500"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M15 19l-7-7 7-7"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                          />
                         </svg>
                       </button>
 
                       {/* Contenedor con scroll horizontal */}
                       <div
                         className="flex overflow-x-auto px-2 pb-4 gap-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 snap-x overflow-y-hidden"
-                        style={{ scrollbarWidth: 'thin', msOverflowStyle: 'none', scrollSnapType: 'x mandatory' }}
+                        style={{
+                          scrollbarWidth: "thin",
+                          msOverflowStyle: "none",
+                          scrollSnapType: "x mandatory",
+                        }}
                       >
                         {/* Renderizar fotos */}
                         {tarea.fotos?.map((foto, index) => (
-                          <div key={`foto-${index}`} className="flex-none w-24 h-24 md:w-32 md:h-32 snap-start">
-                            <img
-                              src={`${foto}?${process.env.NEXT_PUBLIC_AZURE_KEY}`}
+                          <div
+                            key={`foto-${index}`}
+                            className="flex-none w-24 h-24 md:w-32 md:h-32 snap-start"
+                          >
+                            <Image
                               alt={`Foto ${index + 1}`}
                               className="h-full w-full bg-gray-50 p-2 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
+                              src={`${foto}?${process.env.NEXT_PUBLIC_AZURE_KEY}`}
                               onClick={() => mostrarImagen(tarea.fotos, index)}
                             />
                           </div>
@@ -422,11 +519,11 @@ export default function TareasPage() {
 
                         {/* Renderizar PDFs */}
                         {tarea.pdfs?.map((pdfUrl, index) => (
-                          <div key={`pdf-${index}`} className="flex-none w-24 h-24 md:w-32 md:h-32 snap-start">
-                            <PDFThumbnail
-                              url={pdfUrl}
-                              index={index}
-                            />
+                          <div
+                            key={`pdf-${index}`}
+                            className="flex-none w-24 h-24 md:w-32 md:h-32 snap-start"
+                          >
+                            <PDFThumbnail index={index} url={pdfUrl} />
                           </div>
                         ))}
                       </div>
@@ -436,14 +533,30 @@ export default function TareasPage() {
                         className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-1 shadow-md z-10 opacity-0 group-hover:opacity-100 transition-opacity"
                         onClick={(e) => {
                           e.preventDefault();
-                          const container = e.currentTarget.previousElementSibling as HTMLElement;
+                          const container = e.currentTarget
+                            .previousElementSibling as HTMLElement;
+
                           if (container) {
-                            container.scrollBy({ left: 200, behavior: 'smooth' });
+                            container.scrollBy({
+                              left: 200,
+                              behavior: "smooth",
+                            });
                           }
                         }}
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        <svg
+                          className="h-4 w-4 text-gray-500"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M9 5l7 7-7 7"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                          />
                         </svg>
                       </button>
                     </div>
@@ -457,12 +570,12 @@ export default function TareasPage() {
 
       {/* Modal de imagen */}
       <ImagenModal
+        contador={`${indiceImagen + 1} / ${fotosGaleria.length}`}
+        imagen={imagenActual}
         isOpen={modalVisible}
         onClose={ocultarImagen}
-        imagen={imagenActual}
-        onPrev={imagenAnterior}
         onNext={imagenSiguiente}
-        contador={`${indiceImagen + 1} / ${fotosGaleria.length}`}
+        onPrev={imagenAnterior}
       />
     </div>
   );

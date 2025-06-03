@@ -1,14 +1,15 @@
 "use client";
 
-import { Maestro } from "@/types";
 import { Button } from "@heroui/button";
 import { Pagination } from "@heroui/pagination";
 import { EditIcon, EyeIcon } from "lucide-react";
 import React from "react";
 
+import { Maestro } from "@/types";
+
 // Definimos interfaces para ordenamiento
-type SortField = 'nombre_completo' | 'numero_identificacion' | 'tipo_documento';
-type SortDirection = 'asc' | 'desc';
+type SortField = "nombre_completo" | "numero_identificacion" | "tipo_documento";
+type SortDirection = "asc" | "desc";
 
 interface TablaEstudiantesProps {
   maestros: Maestro[];
@@ -20,12 +21,13 @@ interface TablaEstudiantesProps {
 
 export default function TablaMaestros({
   maestros,
-  sortField = 'nombre_completo',
-  sortDirection = 'asc',
-  onSortChange
+  sortField = "nombre_completo",
+  sortDirection = "asc",
+  onSortChange,
 }: TablaEstudiantesProps) {
   const [page, setPage] = React.useState(1);
-  const [estudiantesState, setEstudiantesState] = React.useState<Maestro[]>(maestros);
+  const [estudiantesState, setEstudiantesState] =
+    React.useState<Maestro[]>(maestros);
   const rowsPerPage = 10;
 
   // Actualizar estudiantesState cuando cambie el prop maestros
@@ -38,37 +40,37 @@ export default function TablaMaestros({
       {
         key: "index",
         label: "#",
-        sortable: false
+        sortable: false,
       },
       {
         key: "tipo_documento",
         label: "TIPO DOCUMENTO",
-        sortable: true
+        sortable: true,
       },
       {
         key: "numero_identificacion",
         label: "NÚMERO IDENTIFICACIÓN",
-        sortable: true
+        sortable: true,
       },
       {
         key: "nombre_completo",
         label: "NOMBRE COMPLETO",
-        sortable: true
+        sortable: true,
       },
       {
         key: "email",
         label: "EMAIL",
-        sortable: false
+        sortable: false,
       },
       {
         key: "celular",
         label: "CELULAR",
-        sortable: false
+        sortable: false,
       },
       {
         key: "acciones",
         label: "ACCIONES",
-        sortable: false
+        sortable: false,
       },
     ];
 
@@ -80,28 +82,56 @@ export default function TablaMaestros({
   const items = React.useMemo(() => {
     const start = (page - 1) * rowsPerPage;
     const end = start + rowsPerPage;
+
     return estudiantesState.slice(start, end);
   }, [page, estudiantesState]);
 
   // Función para manejar el ordenamiento de columnas
   const handleSort = (key: string) => {
-    if (!onSortChange || key === 'index' || key === 'celular_padres') return;
+    if (!onSortChange || key === "index" || key === "celular_padres") return;
     onSortChange(key as SortField);
   };
 
   // Función para renderizar flechas de ordenamiento
   const renderSortArrow = (key: string) => {
-    if (key !== sortField as string || key === 'index' || key === 'celular_padres') return null;
+    if (
+      key !== (sortField as string) ||
+      key === "index" ||
+      key === "celular_padres"
+    )
+      return null;
 
     return (
       <span className="ml-1">
-        {sortDirection === 'asc' ? (
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 inline">
-            <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 15.75 7.5-7.5 7.5 7.5" />
+        {sortDirection === "asc" ? (
+          <svg
+            className="w-4 h-4 inline"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.5}
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m4.5 15.75 7.5-7.5 7.5 7.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         ) : (
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 inline">
-            <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+          <svg
+            className="w-4 h-4 inline"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={1.5}
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="m19.5 8.25-7.5 7.5-7.5-7.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         )}
       </span>
@@ -119,9 +149,11 @@ export default function TablaMaestros({
               {columns.map((column) => (
                 <th
                   key={column.key}
+                  className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${column.sortable && onSortChange ? "cursor-pointer hover:bg-gray-100" : ""}`}
                   scope="col"
-                  className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${column.sortable && onSortChange ? 'cursor-pointer hover:bg-gray-100' : ''}`}
-                  onClick={() => column.sortable ? handleSort(column.key) : null}
+                  onClick={() =>
+                    column.sortable ? handleSort(column.key) : null
+                  }
                 >
                   <div className="flex items-center">
                     {column.label}
@@ -158,16 +190,10 @@ export default function TablaMaestros({
                   {item.celular}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 space-x-2">
-                  <Button
-                    isIconOnly
-                    color="primary"
-                  >
+                  <Button isIconOnly color="primary">
                     <EyeIcon />
                   </Button>
-                  <Button
-                    isIconOnly
-                    color="warning"
-                  >
+                  <Button isIconOnly color="warning">
                     <EditIcon />
                   </Button>
                 </td>
@@ -181,9 +207,9 @@ export default function TablaMaestros({
       {pages > 0 && (
         <div className="flex justify-center mt-4">
           <Pagination
-            total={pages}
             initialPage={1}
             page={page}
+            total={pages}
             onChange={(p) => setPage(p)}
           />
         </div>

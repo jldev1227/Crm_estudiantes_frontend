@@ -2,12 +2,14 @@
 
 import React, { createContext, useContext, useReducer } from "react";
 import { useApolloClient } from "@apollo/client";
+
 import { OBTENER_CURSOS } from "../graphql/queries/obtenerCursos";
 import { OBTENER_CURSO_GENERAL } from "../graphql/queries/obtenerCursoGeneral";
-import { Curso, Estudiante, Maestro } from "@/types";
 import { ACTUALIZAR_PENSION } from "../graphql/mutation/actualizarPension";
 import { OBTENER_MAESTROS } from "../graphql/queries/obtenerMaestros";
 import { OBTENER_CALIFICACIONES } from "../graphql/queries/obtenerCalificaciones";
+
+import { Curso, Estudiante, Maestro, Nota } from "@/types";
 
 // Types para calificaciones
 interface CalificacionesGradoCompletoResponse {
@@ -21,8 +23,10 @@ interface CalificacionesGradoCompletoResponse {
       nombre_completo: string;
     };
   };
-  areas: AreaConCalificaciones[];
-  estadisticas_generales: EstadisticasGeneralesGrado;
+  estudiantes: EstudianteConCalificacionesArea[];
+  area: AreaConCalificaciones;
+  estadisticas: EstadisticasGeneralesGrado;
+  actividades: ActividadCalificacion[];
 }
 
 interface AreaConCalificaciones {
@@ -45,7 +49,10 @@ interface EstudianteConCalificacionesArea {
   celular_padres?: string;
   calificacion_id?: string;
   nota_final_area: number;
+  nota_final: number;
+  estado: string;
   estado_area: string;
+  notas: Nota[];
   notas_area: NotaEstudiante[];
 }
 
@@ -82,6 +89,19 @@ interface EstadisticasGeneralesGrado {
   promedio_general: number;
   estudiantes_aprobados_todas_areas: number;
   porcentaje_aprobacion_general: number;
+  promedio_area: number;
+  aprobados: number;
+  reprobados: number;
+  calificados: number;
+  porcentaje_aprobacion: number;
+  sin_calificar: number;
+  distribucion_notas: {
+    excelente: number;
+    sobresaliente: number;
+    aceptable: number;
+    insuficiente: number;
+    deficiente: number;
+  };
 }
 
 interface AdminContextType {
@@ -94,7 +114,10 @@ interface AdminContextType {
   error: string | null;
   obtenerCursos: () => void;
   obtenerMaestros: () => void;
-  obtenerCalificaciones: (grado_id: string, periodo: number) => Promise<CalificacionesGradoCompletoResponse | void>;
+  obtenerCalificaciones: (
+    grado_id: string,
+    periodo: number,
+  ) => Promise<CalificacionesGradoCompletoResponse | void>;
   obtenerCurso: (id: string) => void;
   actualizarPension: (id: string) => void;
   establecerPeriodo: (periodo: number) => void;
@@ -172,9 +195,9 @@ const adminReducer = (state: any, action: any) => {
           estudiantes: state.curso.estudiantes.map((estudiante: Estudiante) =>
             estudiante.id === action.payload.id
               ? { ...estudiante, pension_activa: !estudiante.pension_activa }
-              : estudiante
-          )
-        }
+              : estudiante,
+          ),
+        },
       };
     case "ESTABLECER_PERIODO":
       return {
@@ -195,9 +218,7 @@ const adminReducer = (state: any, action: any) => {
 };
 
 // Crear el contexto
-const AdminContext = createContext<AdminContextType | undefined>(
-  undefined,
-);
+const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
 // Provider Component
 export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -223,9 +244,9 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
       });
     } catch (error) {
       console.error("Error obteniendo cursos:", error);
-      dispatch({ 
-        type: "SET_ERROR", 
-        payload: "Error al cargar los cursos" 
+      dispatch({
+        type: "SET_ERROR",
+        payload: "Error al cargar los cursos",
       });
     }
   };
@@ -246,9 +267,9 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
       });
     } catch (error) {
       console.error("Error obteniendo curso:", error);
-      dispatch({ 
-        type: "SET_ERROR", 
-        payload: "Error al cargar el curso" 
+      dispatch({
+        type: "SET_ERROR",
+        payload: "Error al cargar el curso",
       });
     }
   };
@@ -260,7 +281,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       const { data } = await client.mutate({
         mutation: ACTUALIZAR_PENSION,
-        variables: { id }
+        variables: { id },
       });
 
       dispatch({
@@ -269,9 +290,9 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
       });
     } catch (error) {
       console.error("Error actualizando pensión:", error);
-      dispatch({ 
-        type: "SET_ERROR", 
-        payload: "Error al actualizar la pensión" 
+      dispatch({
+        type: "SET_ERROR",
+        payload: "Error al actualizar la pensión",
       });
     }
   };
@@ -282,7 +303,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
 
     try {
       const { data } = await client.query({
-        query: OBTENER_MAESTROS
+        query: OBTENER_MAESTROS,
       });
 
       dispatch({
@@ -291,20 +312,25 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
       });
     } catch (error) {
       console.error("Error obteniendo maestros:", error);
-      dispatch({ 
-        type: "SET_ERROR", 
-        payload: "Error al cargar los maestros" 
+      dispatch({
+        type: "SET_ERROR",
+        payload: "Error al cargar los maestros",
       });
     }
   };
 
   // Función principal: obtener calificaciones completas del grado
   const obtenerCalificaciones = async (
-    grado_id: string, 
-    periodo: number
+    grado_id: string,
+    periodo: number,
   ): Promise<CalificacionesGradoCompletoResponse | void> => {
-    console.log('Obteniendo calificaciones para grado:', grado_id, 'periodo:', periodo);
-    
+    console.log(
+      "Obteniendo calificaciones para grado:",
+      grado_id,
+      "periodo:",
+      periodo,
+    );
+
     dispatch({ type: "SET_LOADING", payload: true });
 
     try {
@@ -312,10 +338,10 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
         query: OBTENER_CALIFICACIONES,
         variables: { grado_id, periodo },
         fetchPolicy: "network-only", // Para asegurar datos frescos
-        errorPolicy: "all"
+        errorPolicy: "all",
       });
 
-      console.log('Data recibida:', data);
+      console.log("Data recibida:", data);
 
       if (data?.obtenerCalificaciones) {
         dispatch({
@@ -325,13 +351,13 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
 
         return data.obtenerCalificaciones;
       } else {
-        throw new Error('No se recibieron datos de calificaciones');
+        throw new Error("No se recibieron datos de calificaciones");
       }
     } catch (error) {
       console.error("Error obteniendo calificaciones del grado:", error);
-      dispatch({ 
-        type: "SET_ERROR", 
-        payload: "Error al cargar las calificaciones del grado" 
+      dispatch({
+        type: "SET_ERROR",
+        payload: "Error al cargar las calificaciones del grado",
       });
       throw error; // Re-lanzar el error para manejarlo en el componente
     }
@@ -339,7 +365,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Función para establecer el periodo
   const establecerPeriodo = (periodo: number) => {
-    console.log('Estableciendo período:', periodo);
+    console.log("Estableciendo período:", periodo);
     dispatch({
       type: "ESTABLECER_PERIODO",
       payload: periodo,
@@ -361,7 +387,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
     calificacionesGrado: state.calificacionesGrado, // Calificaciones completas del grado
     periodoSeleccionado: state.periodoSeleccionado,
     error: state.error,
-    
+
     // Funciones
     obtenerCursos,
     obtenerCurso,
@@ -382,10 +408,10 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
 // Hook personalizado para usar el contexto
 export const useAdmin = () => {
   const context = useContext(AdminContext);
+
   if (context === undefined) {
-    throw new Error(
-      "useAdmin debe ser usado dentro de un AdminProvider",
-    );
+    throw new Error("useAdmin debe ser usado dentro de un AdminProvider");
   }
+
   return context;
 };

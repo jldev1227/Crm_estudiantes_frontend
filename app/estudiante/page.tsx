@@ -1,7 +1,14 @@
 "use client";
-import React from 'react';
-import { useRouter } from 'next/navigation';
-import { BookOpen, CheckSquare, ChevronRight, Clock, Award } from 'lucide-react';
+import React from "react";
+import { useRouter } from "next/navigation";
+import {
+  BookOpen,
+  CheckSquare,
+  ChevronRight,
+  Clock,
+  Award,
+} from "lucide-react";
+
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 export default function EstudiantePage() {
@@ -31,18 +38,20 @@ export default function EstudiantePage() {
             Bienvenido, Estudiante
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Consulta las actividades realizadas por área y gestiona tu progreso académico
+            Consulta las actividades realizadas por área y gestiona tu progreso
+            académico
           </p>
         </div>
 
         <div className="w-full max-w-md space-y-6">
           {/* Card de Materias Asignadas */}
-          <div 
-            onClick={navigateToMaterias}
+          <div
             className="bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-2xl px-5 py-8 sm:p-8 shadow-lg flex flex-col sm:flex-row items-center sm:space-x-6 gap-5 cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-xl"
+            role="button"
+            onClick={navigateToMaterias}
           >
             <div className="bg-white bg-opacity-20 rounded-full p-4">
-              <BookOpen size={48} className="text-white" />
+              <BookOpen className="text-white" size={48} />
             </div>
             <div className="flex-grow text-center">
               <h2 className="text-2xl font-bold mb-2">Materias Asignadas</h2>
@@ -50,58 +59,67 @@ export default function EstudiantePage() {
                 Explora tus materias y contenidos
               </p>
             </div>
-            <ChevronRight size={32} className="text-white" />
+            <ChevronRight className="text-white" size={32} />
           </div>
 
           {/* Card de Actividades */}
-          <div 
-            onClick={navigateToActividades}
+          <div
             className="bg-gray-100 rounded-2xl p-6 shadow-lg flex flex-col sm:flex-row items-center sm:space-x-6 gap-5 cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-xl"
+            role="button"
+            onClick={navigateToActividades}
           >
-            <div className="bg-gradient-to-r from-primary-500 to-primary-600 bg-opacity-20 rounded-full p-4">
-              <CheckSquare size={48} className="text-primary-500" />
+            <div className="bg-gray-500 bg-opacity-20 rounded-full p-4">
+              <CheckSquare className="text-gray-500" size={48} />
             </div>
             <div className="flex-grow text-center">
-              <h2 className="text-2xl font-bold mb-2 text-gray-800">Actividades</h2>
+              <h2 className="text-2xl font-bold mb-2 text-gray-800">
+                Actividades
+              </h2>
               <p className="text-gray-600">
                 Consulta y realiza tus actvidiades diarias
               </p>
             </div>
-            <ChevronRight size={32} className="text-gray-500" />
+            <ChevronRight className="text-gray-500" size={32} />
           </div>
 
           {/* Card de Tareas Pendientes */}
-          <div 
-            onClick={navigateToTareasPendientes}
+          <div
             className="bg-amber-50 rounded-2xl p-6 shadow-lg flex flex-col sm:flex-row items-center sm:space-x-6 gap-5 cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-xl"
+            role="button"
+            onClick={navigateToTareasPendientes}
           >
             <div className="bg-amber-500 bg-opacity-20 rounded-full p-4">
-              <Clock size={48} className="text-amber-600" />
+              <Clock className="text-amber-600" size={48} />
             </div>
             <div className="flex-grow text-center">
-              <h2 className="text-2xl font-bold mb-2 text-gray-800">Tareas Pendientes</h2>
+              <h2 className="text-2xl font-bold mb-2 text-gray-800">
+                Tareas Pendientes
+              </h2>
               <p className="text-gray-600">
                 Revisa y organiza tus entregas próximas
               </p>
             </div>
-            <ChevronRight size={32} className="text-gray-500" />
+            <ChevronRight className="text-gray-500" size={32} />
           </div>
 
           {/* Card de Calificaciones */}
-          <div 
-            onClick={navigateToCalificaciones}
+          <div
             className="bg-green-50 rounded-2xl p-6 shadow-lg flex flex-col sm:flex-row items-center sm:space-x-6 gap-5 cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-xl"
+            role="button"
+            onClick={navigateToCalificaciones}
           >
             <div className="bg-green-500 bg-opacity-20 rounded-full p-4">
-              <Award size={48} className="text-green-600" />
+              <Award className="text-green-600" size={48} />
             </div>
             <div className="flex-grow text-center">
-              <h2 className="text-2xl font-bold mb-2 text-gray-800">Calificaciones</h2>
+              <h2 className="text-2xl font-bold mb-2 text-gray-800">
+                Calificaciones
+              </h2>
               <p className="text-gray-600">
                 Consulta tus notas y rendimiento académico
               </p>
             </div>
-            <ChevronRight size={32} className="text-gray-500" />
+            <ChevronRight className="text-gray-500" size={32} />
           </div>
         </div>
 

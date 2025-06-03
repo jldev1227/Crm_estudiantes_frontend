@@ -1,12 +1,19 @@
 "use client";
-import { createContext, useReducer, useContext, useEffect, useMemo } from "react";
+import {
+  createContext,
+  useReducer,
+  useContext,
+  useEffect,
+  useMemo,
+} from "react";
 import { useQuery, useLazyQuery } from "@apollo/client";
-import { OBTENER_TAREAS_ESTUDIANTE } from "@/app/graphql/queries/obtenerTareasEstudiante";
 import { toast, ToastContainer } from "react-toastify";
 import { Toaster } from "react-hot-toast";
+
 import { OBTENER_PERFIL } from "../graphql/queries/obtenerPerfil";
 import { OBTENER_PERFIL_USUARIO } from "../graphql/queries/obtenerPerfilUsuario";
-import { useRouter } from "next/navigation";
+
+import { OBTENER_TAREAS_ESTUDIANTE } from "@/app/graphql/queries/obtenerTareasEstudiante";
 
 // 🔹 Tipos e Interfaces
 interface Usuario {
@@ -77,10 +84,12 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
       if (action.payload.token) {
         localStorage.setItem("token", action.payload.token);
         // Guardar rol temporalmente para la próxima carga (solo para saber qué query ejecutar)
-        localStorage.setItem("usuario", JSON.stringify({ rol: action.payload.rol }));
+        localStorage.setItem(
+          "usuario",
+          JSON.stringify({ rol: action.payload.rol }),
+        );
       }
 
-      
       return {
         ...state,
         usuario: action.payload,
@@ -91,6 +100,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
     case "LOGOUT":
       localStorage.removeItem("token");
       localStorage.removeItem("usuario");
+
       return {
         ...state,
         usuario: null,
@@ -99,12 +109,19 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
       };
 
     case "ACTUALIZAR_USUARIO":
-      const usuarioActualizado = { ...state.usuario, ...action.payload } as Usuario;
+      const usuarioActualizado = {
+        ...state.usuario,
+        ...action.payload,
+      } as Usuario;
+
       // Solo actualizar rol en localStorage si es necesario
       if (action.payload.rol) {
-        localStorage.setItem("usuario", JSON.stringify({ rol: action.payload.rol }));
+        localStorage.setItem(
+          "usuario",
+          JSON.stringify({ rol: action.payload.rol }),
+        );
       }
-      
+
       return {
         ...state,
         usuario: usuarioActualizado,
@@ -124,7 +141,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
 
 // 🔹 Utilidades de fecha simplificadas
 const getTodayString = (): string => {
-  return new Date().toISOString().split('T')[0];
+  return new Date().toISOString().split("T")[0];
 };
 
 const parseDate = (dateInput: string): Date => {
@@ -132,6 +149,7 @@ const parseDate = (dateInput: string): Date => {
   if (/^\d+$/.test(dateInput)) {
     return new Date(parseInt(dateInput, 10));
   }
+
   // Formato estándar
   return new Date(dateInput);
 };
@@ -140,6 +158,7 @@ const getDaysDifference = (futureDate: string, currentDate: string): number => {
   const future = new Date(futureDate);
   const current = new Date(currentDate);
   const diffTime = future.getTime() - current.getTime();
+
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 };
 
@@ -149,20 +168,20 @@ const AuthContext = createContext<AuthContextType | null>(null);
 // 🔹 Provider Principal
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, initialState);
-  const router = useRouter();
 
   // 🔹 Valores computados
   const pensionActiva = useMemo(() => {
     if (!state.usuario || state.usuario.rol !== "estudiante") return true;
+
     return state.usuario.pension_activa !== false;
   }, [state.usuario]);
 
   const puedeRealizarOperaciones = useMemo(() => {
     if (!state.usuario || state.usuario.rol !== "estudiante") return true;
+
     return pensionActiva;
   }, [state.usuario, pensionActiva]);
 
-  const isAdmin = state.usuario?.rol === "admin";
   const isEstudiante = state.usuario?.rol === "estudiante";
 
   // 🔹 Inicialización solo con token (datos frescos del servidor)
@@ -170,6 +189,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initializeAuth = () => {
       try {
         const token = localStorage.getItem("token");
+
         if (token) {
           // Solo verificamos que hay token, los datos se obtienen del servidor
           dispatch({ type: "SET_LOADING", payload: true });
@@ -180,7 +200,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         console.error("Error al verificar token:", error);
-        dispatch({ type: "SET_ERROR", payload: "Error al verificar autenticación" });
+        dispatch({
+          type: "SET_ERROR",
+          payload: "Error al verificar autenticación",
+        });
         dispatch({ type: "SET_LOADING", payload: false });
       }
     };
@@ -196,9 +219,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (
       isEstudiante &&
       !pensionActiva &&
-      !rutasPermitidas.some(ruta => pathname.includes(ruta))
+      !rutasPermitidas.some((ruta) => pathname.includes(ruta))
     ) {
       const error = new Error("Pensión inactiva");
+
       throw error;
     }
   }, [pensionActiva, isEstudiante]);
@@ -210,40 +234,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (data?.obtenerPerfil) {
         const usuario = data.obtenerPerfil;
         const updatedUser = usuario.grado
-          ? { ...usuario, grado_id: usuario.grado.id, grado_nombre: usuario.grado.nombre, rol: "estudiante" }
+          ? {
+              ...usuario,
+              grado_id: usuario.grado.id,
+              grado_nombre: usuario.grado.nombre,
+              rol: "estudiante",
+            }
           : { ...usuario, rol: "maestro" };
-        
+
         dispatch({ type: "LOGIN", payload: updatedUser });
       }
     },
     onError: (error) => {
       console.error("Error al obtener perfil:", error);
       dispatch({ type: "SET_ERROR", payload: "Error al cargar perfil" });
-    }
+    },
   });
 
   const [obtenerPerfilUsuario] = useLazyQuery(OBTENER_PERFIL_USUARIO, {
     fetchPolicy: "network-only",
     onCompleted: (data) => {
       if (data?.obtenerPerfilUsuario?.rol === "admin") {
-        dispatch({ type: "LOGIN", payload: { ...data.obtenerPerfilUsuario, rol: "admin" } });
+        dispatch({
+          type: "LOGIN",
+          payload: { ...data.obtenerPerfilUsuario, rol: "admin" },
+        });
       }
     },
     onError: (error) => {
       console.error("Error al obtener perfil admin:", error);
-      dispatch({ type: "SET_ERROR", payload: "Error al cargar perfil de administrador" });
-    }
+      dispatch({
+        type: "SET_ERROR",
+        payload: "Error al cargar perfil de administrador",
+      });
+    },
   });
 
   // 🔹 Ejecutar consultas automáticamente si hay token
   useEffect(() => {
     const token = localStorage.getItem("token");
-    
+
     if (token) {
       // Obtener datos frescos del servidor basado en el token
       const savedUser = localStorage.getItem("usuario");
-      const isAdminFromStorage = savedUser ? JSON.parse(savedUser).rol === "admin" : false;
-      
+      const isAdminFromStorage = savedUser
+        ? JSON.parse(savedUser).rol === "admin"
+        : false;
+
       if (isAdminFromStorage) {
         obtenerPerfilUsuario();
       } else {
@@ -256,7 +293,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { data: tareasData } = useQuery(OBTENER_TAREAS_ESTUDIANTE, {
     variables: {
       gradoId: state.usuario?.grado_id || "",
-      areaId: null
+      areaId: null,
     },
     skip: !isEstudiante || !puedeRealizarOperaciones,
     fetchPolicy: "network-only",
@@ -265,28 +302,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error("Error al obtener tareas:", error);
         dispatch({ type: "SET_ERROR", payload: "Error al cargar tareas" });
       }
-    }
+    },
   });
 
   // 🔹 Notificaciones de tareas
   useEffect(() => {
-    if (!isEstudiante || !puedeRealizarOperaciones || !tareasData?.obtenerTareasEstudiante) {
+    if (
+      !isEstudiante ||
+      !puedeRealizarOperaciones ||
+      !tareasData?.obtenerTareasEstudiante
+    ) {
       return;
     }
 
     const tareas = tareasData.obtenerTareasEstudiante as Tarea[];
     const hoy = getTodayString();
-    
+
     // Filtrar tareas pendientes por días
     const tareasPorDias: Record<number, Tarea[]> = {};
-    
+
     tareas
-      .filter(tarea => tarea.estado !== "ENTREGADA")
-      .forEach(tarea => {
+      .filter((tarea) => tarea.estado !== "ENTREGADA")
+      .forEach((tarea) => {
         try {
-          const fechaEntrega = parseDate(tarea.fechaEntrega).toISOString().split('T')[0];
+          const fechaEntrega = parseDate(tarea.fechaEntrega)
+            .toISOString()
+            .split("T")[0];
           const dias = getDaysDifference(fechaEntrega, hoy);
-          
+
           if (dias >= 0 && dias <= 3) {
             if (!tareasPorDias[dias]) tareasPorDias[dias] = [];
             tareasPorDias[dias].push(tarea);
@@ -300,22 +343,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     Object.entries(tareasPorDias).forEach(([dias, tareas]) => {
       const numDias = parseInt(dias);
       const esHoy = numDias === 0;
-      const mensaje = esHoy 
-        ? `¡Tienes ${tareas.length} tarea${tareas.length > 1 ? 's' : ''} para entregar HOY!`
-        : `Tienes ${tareas.length} tarea${tareas.length > 1 ? 's' : ''} para entregar en ${numDias} día${numDias > 1 ? 's' : ''}`;
+      const mensaje = esHoy
+        ? `¡Tienes ${tareas.length} tarea${tareas.length > 1 ? "s" : ""} para entregar HOY!`
+        : `Tienes ${tareas.length} tarea${tareas.length > 1 ? "s" : ""} para entregar en ${numDias} día${numDias > 1 ? "s" : ""}`;
 
       const toastType = esHoy ? toast.error : toast.info;
-      
+
       toastType(
         <div>
           <strong>{mensaje}</strong>
           <ul className="mt-2 list-disc pl-4">
-            {tareas.map(tarea => (
-              <li key={tarea.id}>{tarea.nombre} - {tarea.area.nombre}</li>
+            {tareas.map((tarea) => (
+              <li key={tarea.id}>
+                {tarea.nombre} - {tarea.area.nombre}
+              </li>
             ))}
           </ul>
         </div>,
-        { autoClose: 12000, closeOnClick: false }
+        { autoClose: 12000, closeOnClick: false },
       );
     });
   }, [tareasData, isEstudiante, puedeRealizarOperaciones]);
@@ -327,7 +372,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     puedeRealizarOperaciones,
     login: (user) => dispatch({ type: "LOGIN", payload: user }),
     logout: () => dispatch({ type: "LOGOUT" }),
-    actualizarUsuario: (datos) => dispatch({ type: "ACTUALIZAR_USUARIO", payload: datos }),
+    actualizarUsuario: (datos) =>
+      dispatch({ type: "ACTUALIZAR_USUARIO", payload: datos }),
   };
 
   return (
@@ -337,15 +383,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       </AuthContext.Provider>
       <Toaster position="top-right" />
       <ToastContainer
-        position="top-right"
+        closeOnClick
+        draggable
+        newestOnTop
+        pauseOnFocusLoss
+        pauseOnHover
         autoClose={12000}
         hideProgressBar={false}
-        newestOnTop
-        closeOnClick
+        position="top-right"
         rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
         theme="colored"
       />
     </>
@@ -355,33 +401,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 // 🔹 Hooks y HOCs
 export const useAuth = () => {
   const context = useContext(AuthContext);
+
   if (!context) {
     throw new Error("useAuth debe usarse dentro de AuthProvider");
   }
+
   return context;
-};
-
-export const withPensionRestriction = (Component: React.ComponentType<any>) => {
-  return (props: any) => {
-    const { usuario, pensionActiva, estaCargando } = useAuth();
-    const router = useRouter();
-
-    if (estaCargando) {
-      return <div className="flex justify-center p-8">Cargando...</div>;
-    }
-
-    if (usuario?.rol === 'estudiante' && !pensionActiva) {
-      router.push('/pension-inactiva');
-      return null;
-    }
-
-    return <Component {...props} />;
-  };
 };
 
 export const useConditionedQuery = (query: any, options: any = {}) => {
   const { usuario, puedeRealizarOperaciones } = useAuth();
-  const shouldSkip = usuario?.rol === 'estudiante' && !puedeRealizarOperaciones;
+  const shouldSkip = usuario?.rol === "estudiante" && !puedeRealizarOperaciones;
 
   return useQuery(query, {
     ...options,

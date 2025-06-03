@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React from "react";
 import {
   Table,
   TableHeader,
@@ -11,8 +11,9 @@ import {
 } from "@heroui/table";
 import { Button } from "@heroui/button";
 import { useRouter } from "next/navigation";
-import { useEstudiante } from "@/app/context/EstudianteContext";
 import { useMediaQuery } from "react-responsive";
+
+import { useEstudiante } from "@/app/context/EstudianteContext";
 
 export default function Page() {
   const route = useRouter();
@@ -49,28 +50,28 @@ export default function Page() {
                   <TableCell>{area.maestro?.nombre_completo}</TableCell>
                   <TableCell>
                     <Button
-                      color="primary"
+                      color="warning"
                       onPress={() =>
                         route.push(`/estudiante/tareas?area=${area.id}`)
                       }
                     >
                       <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth={1.5}
-                        stroke="currentColor"
                         className="size-6"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={1.5}
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
                       >
                         <path
+                          d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"
                         />
                         <path
+                          d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
                         />
                       </svg>
                       <p>Ver Tareas</p>
@@ -80,26 +81,28 @@ export default function Page() {
                     <Button
                       color="primary"
                       onPress={() =>
-                        route.push(`/estudiante/materias/actividades?area=${area.id}`)
+                        route.push(
+                          `/estudiante/materias/actividades?area=${area.id}`,
+                        )
                       }
                     >
                       <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth={1.5}
-                        stroke="currentColor"
                         className="size-6"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={1.5}
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
                       >
                         <path
+                          d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"
                         />
                         <path
+                          d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
                           strokeLinecap="round"
                           strokeLinejoin="round"
-                          d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
                         />
                       </svg>
                       <p>Ver Actividades</p>
@@ -126,60 +129,64 @@ export default function Page() {
                 <h2 className="text-xl font-semibold text-gray-800">
                   {area.nombre}
                 </h2>
-                <h3 className="text-gray-500">{area.maestro.nombre_completo}</h3>
+                <h3 className="text-gray-500">
+                  {area.maestro.nombre_completo}
+                </h3>
                 <div className="mt-4 flex justify-between">
                   <Button
+                    className="flex items-center gap-2"
+                    color="warning"
                     onPress={() =>
                       route.push(`/estudiante/tareas?area=${area.id}`)
                     }
-                    color="warning"
-                    className="flex items-center gap-2"
                   >
                     <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth={1.5}
-                      stroke="currentColor"
                       className="size-5"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={1.5}
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
                     >
                       <path
+                        d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"
                       />
                       <path
+                        d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
                       />
                     </svg>
                     Ver Tareas
                   </Button>
                   <Button
-                    onPress={() =>
-                      route.push(`/estudiante/materias/actividades?area=${area.id}`)
-                    }
-                    color="primary"
                     className="flex items-center gap-2"
+                    color="primary"
+                    onPress={() =>
+                      route.push(
+                        `/estudiante/materias/actividades?area=${area.id}`,
+                      )
+                    }
                   >
                     <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth={1.5}
-                      stroke="currentColor"
                       className="size-5"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={1.5}
+                      viewBox="0 0 24 24"
+                      xmlns="http://www.w3.org/2000/svg"
                     >
                       <path
+                        d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"
                       />
                       <path
+                        d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
                       />
                     </svg>
                     Ver Actividades

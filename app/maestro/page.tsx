@@ -1,7 +1,7 @@
 "use client";
-import React from 'react';
-import { useRouter } from 'next/navigation';
-import { GraduationCap, BookOpen, Users } from 'lucide-react';
+import React from "react";
+import { useRouter } from "next/navigation";
+import { GraduationCap, BookOpen, Users } from "lucide-react";
 
 export default function CourseManagementWelcome() {
   const router = useRouter();
@@ -13,21 +13,21 @@ export default function CourseManagementWelcome() {
   return (
     <div className="bg-white flex flex-col items-center justify-center p-4">
       <div className="max-w-4xl w-full text-center mb-8">
-        <h1 className="text-4xl font-bold text-gray-800 mb-6">
-          Bienvenido
-        </h1>
+        <h1 className="text-4xl font-bold text-gray-800 mb-6">Bienvenido</h1>
         <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-          Gestiona tus cursos asignados, crea actividades y consulta tus estudiantes por área
+          Gestiona tus cursos asignados, crea actividades y consulta tus
+          estudiantes por área
         </p>
       </div>
 
-      <div 
-        onClick={handleCourseNavigation}
+      <div
         className="w-full max-w-xl cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-xl"
+        role="button"
+        onClick={handleCourseNavigation}
       >
         <div className="bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-2xl px-5 py-8 sm:p-8 shadow-lg flex flex-col sm:flex-row max-sm:text-center items-center sm:space-x-6 gap-5">
           <div className="bg-white bg-opacity-20 rounded-full p-4">
-            <GraduationCap size={64} className="text-white" />
+            <GraduationCap className="text-white" size={64} />
           </div>
           <div className="md:flex-grow">
             <h2 className="text-2xl font-bold mb-2">Mis Cursos</h2>
@@ -35,7 +35,7 @@ export default function CourseManagementWelcome() {
               Administra tus cursos y actividades
             </p>
           </div>
-          <BookOpen size={32} className="text-white" />
+          <BookOpen className="text-white" size={32} />
         </div>
       </div>
 
