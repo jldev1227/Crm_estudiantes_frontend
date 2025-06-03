@@ -17,7 +17,11 @@ import {
 
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useEstudiante } from "@/app/context/EstudianteContext";
-import { Calificacion } from "@/types";
+import { Calificacion, Nota } from "@/types";
+
+interface MapaCalificaciones {
+  [key: string]: Calificacion;
+}
 
 export default function CalificacionesPage() {
   const periodos = [1, 2, 3, 4];
@@ -28,14 +32,16 @@ export default function CalificacionesPage() {
   // Estados principales
   const [periodoSeleccionado, setPeriodoSeleccionado] = useState(1);
   const [areaSeleccionada, setAreaSeleccionada] = useState("todas");
-  const [todasCalificaciones, setTodasCalificaciones] = useState([]);
+  const [todasCalificaciones, setTodasCalificaciones] = useState<
+    Calificacion[] | null
+  >(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [mostrarFiltros, setMostrarFiltros] = useState(false);
   const [inicializado, setInicializado] = useState(false);
 
   // Función para cargar todas las calificaciones iniciales
-  const cargarTodasCalificaciones = async () => {
+  const cargarTodasCalificaciones = async (): Promise<void> => {
     try {
       setLoading(true);
       setError(null);
@@ -48,88 +54,50 @@ export default function CalificacionesPage() {
 
       console.log("Cargando todas las calificaciones...");
 
-      // Crear un mapa para almacenar todas las calificaciones
-      const mapaCalificaciones = {};
+      // ✅ Tipado correcto del mapa
+      const mapaCalificaciones: MapaCalificaciones = {};
 
       // Cargar calificaciones para todos los períodos y todas las áreas
       for (const periodo of periodos) {
         for (const area of areas) {
           try {
+            // ✅ ASEGURAR QUE obtenerCalificaciones RETORNE DATOS
+            // Si obtenerCalificaciones no retorna nada, necesitas modificarla o usar otra función
             const calificacionArea = await obtenerCalificaciones(
               area.id,
               periodo,
             );
 
-            // ✅ CORRECCIÓN: Verificar si es array y tomar el primer elemento
-            if (
-              calificacionArea &&
-              Array.isArray(calificacionArea) &&
-              calificacionArea.length > 0
-            ) {
-              const calificacion = calificacionArea[0]; // Tomar el primer elemento del array
-
-              if (calificacion.notaFinal !== undefined) {
-                const key = `${area.id}-${periodo}`;
-
-                mapaCalificaciones[key] = {
-                  ...calificacion,
-                  area: {
-                    id: area.id,
-                    nombre: area.nombre,
-                  },
-                  periodo: periodo,
-                };
-              }
+            // ✅ VERIFICACIÓN ROBUSTA DEL RESULTADO
+            if (!calificacionArea) {
+              console.log(
+                `No se obtuvieron calificaciones para área ${area.nombre}, período ${periodo}`,
+              );
+              continue;
             }
-            // ✅ ALTERNATIVA: Si a veces viene como objeto único
-            else if (
-              calificacionArea &&
-              !Array.isArray(calificacionArea) &&
-              calificacionArea.notaFinal !== undefined
-            ) {
-              const key = `${area.id}-${periodo}`;
-
-              mapaCalificaciones[key] = {
-                ...calificacionArea,
-                area: {
-                  id: area.id,
-                  nombre: area.nombre,
-                },
-                periodo: periodo,
-              };
-            }
-          } catch (areaError) {
-            console.error(
-              `Error obteniendo calificaciones para área ${area.nombre}, período ${periodo}:`,
-              areaError,
-            );
-          }
-        }
-      }
-
-      // ✅ VERSIÓN MÁS ROBUSTA - Maneja múltiples calificaciones por área/período
-      for (const [periodoIndex, periodo] of periodos.entries()) {
-        for (const [areaIndex, area] of areas.entries()) {
-          try {
-            const calificacionArea = await obtenerCalificaciones(
-              area.id,
-              periodo,
-            );
 
             // Convertir siempre a array para manejo consistente
-            const calificaciones = Array.isArray(calificacionArea)
+            const calificaciones: Calificacion[] = Array.isArray(
+              calificacionArea,
+            )
               ? calificacionArea
               : [calificacionArea];
 
-            // Procesar cada calificación (normalmente debería ser solo una por área/período)
+            // Procesar cada calificación válida
             calificaciones.forEach((calificacion, index) => {
-              if (calificacion && calificacion.notaFinal !== undefined) {
-                // Si hay múltiples calificaciones, agregar índice al key
+              if (
+                calificacion &&
+                typeof calificacion === "object" &&
+                calificacion.notaFinal !== undefined &&
+                calificacion.notaFinal !== null
+              ) {
+                // Crear key único
                 const key =
                   calificaciones.length > 1
                     ? `${area.id}-${periodo}-${index}`
                     : `${area.id}-${periodo}`;
 
+                // ✅ Tipado correcto al asignar
                 mapaCalificaciones[key] = {
                   ...calificacion,
                   area: {
@@ -137,7 +105,7 @@ export default function CalificacionesPage() {
                     nombre: area.nombre,
                   },
                   periodo: periodo,
-                };
+                } as Calificacion;
               }
             });
           } catch (areaError) {
@@ -149,45 +117,13 @@ export default function CalificacionesPage() {
         }
       }
 
-      // ✅ VERSIÓN SIMPLIFICADA - Si sabes que siempre viene un array con un elemento
-      for (const [periodoIndex, periodo] of periodos.entries()) {
-        for (const [areaIndex, area] of areas.entries()) {
-          try {
-            const calificacionArea = await obtenerCalificaciones(
-              area.id,
-              periodo,
-            );
-
-            // Tomar el primer elemento si es array, o usar el objeto directamente
-            const calificacion = Array.isArray(calificacionArea)
-              ? calificacionArea[0]
-              : calificacionArea;
-
-            if (calificacion && calificacion.notaFinal !== undefined) {
-              const key = `${area.id}-${periodo}`;
-
-              mapaCalificaciones[key] = {
-                ...calificacion,
-                area: {
-                  id: area.id,
-                  nombre: area.nombre,
-                },
-                periodo: periodo,
-              };
-            }
-          } catch (areaError) {
-            console.error(
-              `Error obteniendo calificaciones para área ${area.nombre}, período ${periodo}:`,
-              areaError,
-            );
-          }
-        }
-      }
-
-      // Convertir el mapa a array
-      const calificacionesArray = Object.values(mapaCalificaciones);
+      // ✅ Convertir el mapa a array con tipado correcto
+      const calificacionesArray: Calificacion[] =
+        Object.values(mapaCalificaciones);
 
       console.log("Todas las calificaciones cargadas:", calificacionesArray);
+
+      // ✅ ASEGURAR QUE setTodasCalificaciones ACEPTE EL TIPO CORRECTO
       setTodasCalificaciones(calificacionesArray);
       setInicializado(true);
     } catch (err) {
@@ -227,7 +163,7 @@ export default function CalificacionesPage() {
   }, [todasCalificaciones, periodoSeleccionado, areaSeleccionada]);
 
   // Funciones auxiliares
-  const calcularNotaFinal = (notas) => {
+  const calcularNotaFinal = (notas: Nota[]) => {
     if (!notas || notas.length === 0) return 0;
 
     // Verificar que los porcentajes sumen 100%
@@ -249,7 +185,7 @@ export default function CalificacionesPage() {
     return parseFloat(notaPonderada.toFixed(2));
   };
 
-  const getColorByGrade = (nota) => {
+  const getColorByGrade = (nota: number) => {
     if (nota >= 4.0) return "text-green-600 bg-green-50";
     if (nota >= 3.0) return "text-blue-600 bg-blue-50";
     if (nota >= 2.0) return "text-yellow-600 bg-yellow-50";
@@ -257,7 +193,7 @@ export default function CalificacionesPage() {
     return "text-red-600 bg-red-50";
   };
 
-  const getIconByGrade = (nota) => {
+  const getIconByGrade = (nota: number) => {
     if (nota >= 4.0) return <Star className="w-5 h-5" />;
     if (nota >= 3.0) return <TrendingUp className="w-5 h-5" />;
 
@@ -267,7 +203,7 @@ export default function CalificacionesPage() {
   const calcularPromedio = () => {
     if (calificacionesFiltradas.length === 0) return "0.0";
 
-    const suma = calificacionesFiltradas.reduce((acc, cal) => {
+    const suma = calificacionesFiltradas.reduce((acc, cal: Calificacion) => {
       const notaFinal = calcularNotaFinal(cal.notas);
 
       return acc + notaFinal;
@@ -283,15 +219,15 @@ export default function CalificacionesPage() {
 
     return {
       excelente: calificacionesFiltradas.filter(
-        (c) => calcularNotaFinal(c.notas) >= 4.0,
+        (c: Calificacion) => calcularNotaFinal(c.notas) >= 4.0,
       ).length,
-      bueno: calificacionesFiltradas.filter((c) => {
+      bueno: calificacionesFiltradas.filter((c: Calificacion) => {
         const nota = calcularNotaFinal(c.notas);
 
         return nota >= 3.0 && nota < 4.0;
       }).length,
       porMejorar: calificacionesFiltradas.filter(
-        (c) => calcularNotaFinal(c.notas) < 3.0,
+        (c: Calificacion) => calcularNotaFinal(c.notas) < 3.0,
       ).length,
     };
   };
@@ -301,13 +237,13 @@ export default function CalificacionesPage() {
     setPeriodoSeleccionado(1);
   };
 
-  const handlePeriodoChange = (e) => {
+  const handlePeriodoChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const nuevoPeriodo = Number(e.target.value);
 
     setPeriodoSeleccionado(nuevoPeriodo);
   };
 
-  const handleAreaChange = (e) => {
+  const handleAreaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const nuevaArea = e.target.value;
 
     setAreaSeleccionada(nuevaArea);
@@ -510,7 +446,7 @@ export default function CalificacionesPage() {
               </p>
             </div>
           ) : (
-            calificacionesFiltradas.map((calificacion) => {
+            calificacionesFiltradas.map((calificacion: Calificacion) => {
               const notaFinalCalculada = calcularNotaFinal(calificacion.notas);
 
               return (

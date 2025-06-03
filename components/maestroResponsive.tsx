@@ -27,7 +27,7 @@ export default function MaestrosResponsive({
   handlePension,
 }: {
   maestros: Maestro[];
-  handlePension?: (id: string) => void;
+  handlePension?: (id: number) => void;
 }) {
   const isDesktop = useMediaQuery({ minWidth: 992 });
 

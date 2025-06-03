@@ -17,6 +17,7 @@ import { OBTENER_CALIFICACIONES_ESTUDIANTE } from "../graphql/queries/obtenerCal
 import { useAuth } from "./AuthContext";
 
 import socketService from "@/services/socketService";
+import { Calificacion } from "@/types";
 
 // Definir los tipos
 interface Area {
@@ -63,7 +64,10 @@ interface EstudianteContextType {
   errorActividades: any;
   erroCalificaciones: any;
   obtenerActividades: (areaId: string) => void;
-  obtenerCalificaciones: (area_id: string, periodo: number) => void;
+  obtenerCalificaciones: (
+    area_id: string,
+    periodo: number,
+  ) => Promise<Calificacion[] | null>;
   obtenerActividadesPorFecha: (fecha: string) => void;
   filtrarActividades: (texto: string) => void;
   actividadesFiltradas: Actividad[];
@@ -170,7 +174,10 @@ export const EstudianteProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Función para obtener actividades de un área específica
   // ✅ VERSIÓN CORREGIDA - OPCIÓN 1 (Async/Await):
-  const obtenerCalificaciones = async (area_id: string, periodo: number) => {
+  const obtenerCalificaciones = async (
+    area_id: string,
+    periodo: number,
+  ): Promise<Calificacion[] | null> => {
     try {
       if (!usuario?.id || !usuario?.grado_id) {
         console.warn("Faltan datos del usuario para obtener calificaciones");

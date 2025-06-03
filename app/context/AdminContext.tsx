@@ -115,11 +115,11 @@ interface AdminContextType {
   obtenerCursos: () => void;
   obtenerMaestros: () => void;
   obtenerCalificaciones: (
-    grado_id: string,
+    grado_id: number,
     periodo: number,
   ) => Promise<CalificacionesGradoCompletoResponse | void>;
-  obtenerCurso: (id: string) => void;
-  actualizarPension: (id: string) => void;
+  obtenerCurso: (id: number) => void;
+  actualizarPension: (id: number) => void;
   establecerPeriodo: (periodo: number) => void;
   limpiarError: () => void;
 }
@@ -252,7 +252,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   // Función que ejecuta la query y despacha la acción para obtener un curso específico
-  const obtenerCurso = async (id: string) => {
+  const obtenerCurso = async (id: number) => {
     dispatch({ type: "SET_LOADING", payload: true });
 
     try {
@@ -275,7 +275,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   // Función que ejecuta la mutation y despacha la acción para actualizar la pension del estudiante
-  const actualizarPension = async (id: string) => {
+  const actualizarPension = async (id: number) => {
     dispatch({ type: "SET_LOADING", payload: true });
 
     try {
@@ -321,7 +321,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Función principal: obtener calificaciones completas del grado
   const obtenerCalificaciones = async (
-    grado_id: string,
+    grado_id: number,
     periodo: number,
   ): Promise<CalificacionesGradoCompletoResponse | void> => {
     console.log(

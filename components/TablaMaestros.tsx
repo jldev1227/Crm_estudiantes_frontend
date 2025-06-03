@@ -13,7 +13,7 @@ type SortDirection = "asc" | "desc";
 
 interface TablaEstudiantesProps {
   maestros: Maestro[];
-  onPensionChange?: (estudianteId: string) => void;
+  onPensionChange?: (estudianteId: number) => void;
   sortField?: SortField;
   sortDirection?: SortDirection;
   onSortChange?: (campo: SortField) => void;

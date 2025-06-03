@@ -5,7 +5,7 @@ import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 import { Tabs, Tab } from "@heroui/tabs";
 import Image from "next/image";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { LOGIN_ESTUDIANTE } from "../graphql/mutation/loginEstudiante";
@@ -15,7 +15,37 @@ import { useAuth } from "../context/AuthContext";
 
 import LoaderIngreso from "@/components/loaderIngreso";
 
-export default function Page() {
+// ✅ Componente de carga para Suspense
+function LoginFormSkeleton() {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 min-h-screen">
+      {/* Columna Izquierda */}
+      <div className="hidden md:relative md:col-span-2 md:block">
+        <div className="h-full w-full bg-gray-300 animate-pulse" />
+      </div>
+      
+      {/* Columna Derecha */}
+      <div className="bg-blue-100 md:shadow-md col-span-1 flex flex-col">
+        {/* Logo skeleton */}
+        <div className="mx-auto mt-8 w-[300px] h-[300px] bg-gray-300 animate-pulse rounded" />
+        
+        {/* Contenido skeleton */}
+        <div className="bg-white p-6 flex flex-col space-y-6 flex-1">
+          <div className="h-8 bg-gray-300 animate-pulse rounded" />
+          <div className="space-y-4">
+            <div className="h-12 bg-gray-300 animate-pulse rounded" />
+            <div className="h-12 bg-gray-300 animate-pulse rounded" />
+            <div className="h-12 bg-gray-300 animate-pulse rounded" />
+          </div>
+          <div className="h-14 bg-gray-300 animate-pulse rounded" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ✅ Componente interno que usa useSearchParams
+function LoginForm() {
   const searchParams = useSearchParams();
   const initialTab = searchParams.get("tab") || "estudiante";
 
@@ -39,11 +69,8 @@ export default function Page() {
 
     // Update URL params to persist tab selection
     const params = new URLSearchParams(window.location.search);
-
     params.set("tab", key as string);
-
     const newUrl = `${window.location.pathname}?${params.toString()}`;
-
     window.history.pushState({}, "", newUrl);
 
     // Reset form states when changing tabs
@@ -356,5 +383,14 @@ export default function Page() {
         </div>
       </form>
     </div>
+  );
+}
+
+// ✅ Componente principal que exporta por defecto con Suspense
+export default function Page() {
+  return (
+    <Suspense fallback={<LoginFormSkeleton />}>
+      <LoginForm />
+    </Suspense>
   );
 }

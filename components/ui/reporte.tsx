@@ -282,6 +282,11 @@ const styles = StyleSheet.create({
   },
 });
 
+interface AreaConPromedio {
+  area: Area;
+  promedio: number;
+}
+
 // Interfaz para los datos del reporte por área
 interface ReporteEstudianteProps {
   estudiante: {
@@ -291,8 +296,7 @@ interface ReporteEstudianteProps {
     año: string;
   };
   director: Maestro;
-  promedioGeneral: number;
-  areas: Area[];
+  areas: AreaConPromedio[];
   promedio: number;
 }
 
@@ -301,8 +305,21 @@ const safeValue = (value: any, defaultValue: any = "") => {
   return value !== undefined && value !== null ? value : defaultValue;
 };
 
-// Función para obtener el estilo según el desempeño
-const getDesempenoStyle = (desempeño: string) => {
+const getDesempenoStyle = (promedio: number) => {
+  // Determinar el desempeño basado en el promedio numérico
+  let desempeño: string;
+
+  if (promedio >= 4.6) {
+    desempeño = "Superior";
+  } else if (promedio >= 4.0) {
+    desempeño = "Alto";
+  } else if (promedio >= 3.0) {
+    desempeño = "Básico";
+  } else {
+    desempeño = "Bajo";
+  }
+
+  // Retornar el estilo basado en el desempeño
   switch (desempeño) {
     case "Superior":
       return styles.superiorValue;
@@ -322,7 +339,7 @@ export const ReporteEstudiantePDF = ({
 }: {
   datos: ReporteEstudianteProps;
 }) => {
-  const { estudiante, director, areas, promedioGeneral } = datos;
+  const { estudiante, director, areas } = datos;
 
   if (!datos) {
     return (
@@ -475,46 +492,38 @@ export const ReporteEstudiantePDF = ({
           </View>
 
           {/* Mapear todas las áreas */}
-          {areas.map(
-            (
-              areaData: {
-                area: Area;
-                promedio: number;
-              },
-              index,
-            ) => {
-              const { area, promedio } = areaData;
-              const desempeño = getDesempenoTexto(promedio);
-              const isLast = index === areas.length - 1;
+          {areas.map((areaData: AreaConPromedio, index) => {
+            const { area, promedio } = areaData;
+            const desempeño = getDesempenoTexto(promedio);
+            const isLast = index === areas.length - 1;
 
-              return (
-                <View
-                  key={area.id}
-                  style={[
-                    isLast ? styles.tableRowLast : styles.tableRow,
-                    styles.flex,
-                  ]}
-                >
-                  <View style={{ flex: 2 }}>
-                    <Text style={styles.labelText}>
-                      {area.nombre.toLowerCase()}
-                    </Text>
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={getDesempenoStyle(promedio)}>
-                      {promedio.toFixed(1)}
-                    </Text>
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={getDesempenoStyle(promedio)}>{desempeño}</Text>
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.valueText} />
-                  </View>
+            return (
+              <View
+                key={area.id}
+                style={[
+                  isLast ? styles.tableRowLast : styles.tableRow,
+                  styles.flex,
+                ]}
+              >
+                <View style={{ flex: 2 }}>
+                  <Text style={styles.labelText}>
+                    {area.nombre.toLowerCase()}
+                  </Text>
                 </View>
-              );
-            },
-          )}
+                <View style={{ flex: 1 }}>
+                  <Text style={getDesempenoStyle(promedio)}>
+                    {promedio.toFixed(1)}
+                  </Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={getDesempenoStyle(promedio)}>{desempeño}</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.valueText} />
+                </View>
+              </View>
+            );
+          })}
         </View>
 
         {/* Footer */}
@@ -571,7 +580,7 @@ export const procesarDatosEstudiante = (
   };
 
   // ✅ Procesar calificaciones (puede estar vacío)
-  let areas: Area[] = [];
+  let areas: AreaConPromedio[] = [];
   let promedioGeneral = 0;
 
   if (
@@ -645,14 +654,12 @@ export const handleGenerateEstudiantePDF = async (
     console.log("- Director:", director);
     console.log("- Período:", periodo);
 
-    // ✅ Validar que al menos tengamos estudiante
     if (!infoEstudiante) {
       alert("No se encontró información del estudiante");
 
       return;
     }
 
-    // ✅ Procesar los datos (funciona con o sin calificaciones)
     const datosReporte = procesarDatosEstudiante(
       calificaciones,
       infoEstudiante,
@@ -665,18 +672,31 @@ export const handleGenerateEstudiantePDF = async (
       return;
     }
 
-    // ✅ Validar director (opcional, usar datos por defecto si no existe)
-    const directorData = director || {
-      id: "default",
+    // ✅ Crear director completo
+    const directorData: Maestro = director || {
+      id: 10101,
       nombre_completo: "Director no asignado",
       email: "sin-email@ejemplo.com",
+      celular: "Sin teléfono",
+      tipo_documento: "CC",
+      numero_identificacion: "00000000",
     };
 
-    // ✅ Generar el PDF
+    // ✅ Crear el objeto completo que cumple con ReporteEstudianteProps
+    const datosCompletos: ReporteEstudianteProps = {
+      estudiante: {
+        nombre: datosReporte.estudiante.nombre,
+        grado: datosReporte.estudiante.grado,
+        periodo: String(datosReporte.estudiante.periodo), // Convertir a string si es necesario
+        año: datosReporte.estudiante.año,
+      },
+      director: directorData,
+      areas: datosReporte.areas,
+      promedio: datosReporte.promedioGeneral, // ✅ Usar promedioGeneral como promedio
+    };
+
     const blob = await pdf(
-      <ReporteEstudiantePDF
-        datos={{ ...datosReporte, director: directorData }}
-      />,
+      <ReporteEstudiantePDF datos={datosCompletos} />,
     ).toBlob();
 
     // ✅ Crear el nombre del archivo

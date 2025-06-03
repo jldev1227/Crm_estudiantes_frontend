@@ -72,23 +72,6 @@ const PlusIcon = () => (
   </svg>
 );
 
-const ChartIcon = () => (
-  <svg
-    className="size-4"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={1.5}
-    viewBox="0 0 24 24"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
-
 const UserGroupIcon = () => (
   <svg
     className="size-4"
@@ -115,8 +98,6 @@ export default function CursoDashboard() {
 
   const { obtenerCurso, curso, actualizarPension } = useAdmin();
 
-  console.log(curso);
-
   // Efecto para cargar datos del curso usando el contexto
   useEffect(() => {
     const fetchData = async () => {
@@ -125,7 +106,7 @@ export default function CursoDashboard() {
 
       try {
         if (id) {
-          await obtenerCurso(id);
+          await obtenerCurso(Number(id));
         }
         setLoading(false);
       } catch (err) {
@@ -209,7 +190,7 @@ export default function CursoDashboard() {
     router.push(`/admin/cursos/${curso?.id}/areas/${areaId}`);
   };
 
-  const verMaestro = (maestroId: string) => {
+  const verMaestro = (maestroId: number) => {
     router.push(`/admin/maestros/${maestroId}/perfil`);
   };
 

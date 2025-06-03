@@ -18,7 +18,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import { ACTUALIZAR_CONTACTO_ESTUDIANTE } from "@/app/graphql/mutation/actualizarContactoEstudiante";
 
 interface Usuario {
-  id: string;
+  id: number;
   nombre_completo?: string;
   celular?: string;
   direccion?: string;

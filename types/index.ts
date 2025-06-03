@@ -13,6 +13,7 @@ export type Estudiante = {
   celular_padres: string;
   grado_id: string;
   pension_activa?: boolean;
+  grado: Grado;
 };
 
 export type Maestro = {
@@ -64,4 +65,5 @@ export type Calificacion = {
   estudiante_id?: number;
   periodo: number;
   notaFinal: number;
+  [key: string]: any; // Para otras propiedades que pueda tener
 };

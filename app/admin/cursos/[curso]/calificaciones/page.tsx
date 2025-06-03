@@ -57,7 +57,7 @@ export default function Page() {
 
     try {
       // Cargar calificacionesGrado de todas las áreas del grado
-      await obtenerCalificaciones(grado_id, periodoSeleccionado);
+      await obtenerCalificaciones(Number(grado_id), periodoSeleccionado);
       console.log("Calificaciones del grado completo:", calificacionesGrado);
     } catch (err) {
       setError("Error al cargar los datos del grado");

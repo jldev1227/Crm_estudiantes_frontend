@@ -6,7 +6,7 @@ import { useAuth } from "@/app/context/AuthContext";
 import { Curso } from "@/types";
 
 // Solución 1: Hook que retorna si debe mostrar contenido
-export const useValidateCourseAccess = (curso: Curso) => {
+export const useValidateCourseAccess = (curso: Curso | null) => {
   const { usuario } = useAuth();
   const router = useRouter();
   const [shouldRender, setShouldRender] = useState(true); // Siempre inicia en true

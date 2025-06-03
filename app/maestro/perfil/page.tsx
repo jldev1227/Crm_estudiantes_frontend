@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   User,
   Mail,
@@ -18,23 +18,20 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import { ACTUALIZAR_CONTACTO_MAESTRO } from "@/app/graphql/mutation/actualizarContactoMaestro";
 
 interface Usuario {
-  id: string;
+  id: number;
   nombre_completo?: string;
   celular?: string;
   direccion?: string;
   email?: string;
-  [key: string]: any; // Para permitir acceso dinámico a propiedades
+  [key: string]: any;
 }
 
-// Tipo para los campos editables
 type EditableField = keyof Omit<Usuario, "id">;
 
-// Tipo para el estado de modo edición
 interface EditMode {
   [field: string]: boolean;
 }
 
-// Tipo para los valores del formulario
 interface FormValues {
   [field: string]: string;
 }
@@ -50,9 +47,26 @@ export default function PerfilMaestroPage() {
 
   // Estados para los valores temporales de edición
   const [formValues, setFormValues] = useState<FormValues>({
-    email: usuario?.email || "",
-    celular: usuario?.celular || "",
+    email: "",
+    celular: "",
   });
+
+  // Estado para controlar si los datos están inicializados
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Verificación principal de usuario y inicialización de datos
+  useEffect(() => {
+    if (usuario?.id) {
+      // Inicializar formValues cuando el usuario esté disponible
+      setFormValues({
+        email: usuario.email || "",
+        celular: usuario.celular || "",
+      });
+      setIsInitialized(true);
+    } else {
+      setIsInitialized(false);
+    }
+  }, [usuario]);
 
   // Configurar la mutación de GraphQL
   const [actualizarContactoMaestro, { loading }] = useMutation(
@@ -62,7 +76,6 @@ export default function PerfilMaestroPage() {
         if (data.actualizarContactoMaestro.success) {
           toast.success(data.actualizarContactoMaestro.mensaje);
 
-          // Actualizar el contexto de autenticación con los nuevos datos
           if (data.actualizarContactoMaestro.maestro) {
             actualizarUsuario({
               ...usuario,
@@ -80,7 +93,37 @@ export default function PerfilMaestroPage() {
     },
   );
 
-  // Updated handleChange and related functions with improved type handling
+  // Verificación temprana - Si no hay usuario, mostrar loading o redirect
+  if (!usuario || !usuario.id) {
+    return (
+      <ProtectedRoute>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4" />
+            <p className="text-gray-600">Cargando datos del usuario...</p>
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
+  // Verificación adicional para datos críticos
+  if (!isInitialized) {
+    return (
+      <ProtectedRoute>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <div className="animate-pulse">
+              <div className="h-4 bg-gray-300 rounded w-48 mx-auto mb-2" />
+              <div className="h-4 bg-gray-300 rounded w-32 mx-auto" />
+            </div>
+            <p className="text-gray-600 mt-4">Inicializando perfil...</p>
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
 
@@ -90,20 +133,24 @@ export default function PerfilMaestroPage() {
     });
   };
 
-  // Improved type-safe function for getting field values
   const getFieldValue = (
     usuario: Usuario | null,
     field: keyof Usuario,
   ): string => {
     if (!usuario || !(field in usuario)) return "";
-
     const value = usuario[field];
 
     return value !== undefined ? String(value) : "";
   };
 
-  // Modify startEditing and cancelEditing to use the new getFieldValue function
   const startEditing = (field: EditableField): void => {
+    // Verificación adicional antes de editar
+    if (!usuario?.id) {
+      toast.error("Usuario no disponible para edición");
+
+      return;
+    }
+
     setEditMode({ ...editMode, [field]: true });
     const fieldValue = getFieldValue(usuario, field);
 
@@ -111,22 +158,58 @@ export default function PerfilMaestroPage() {
   };
 
   const cancelEditing = (field: EditableField): void => {
+    if (!usuario) return;
+
     setEditMode({ ...editMode, [field]: false });
     const fieldValue = getFieldValue(usuario, field);
 
     setFormValues({ ...formValues, [field]: fieldValue });
   };
 
-  // Guardar cambios
   const saveChanges = async (field: EditableField): Promise<void> => {
     try {
-      if (!usuario?.id) {
+      // Verificaciones múltiples antes de guardar
+      if (!usuario) {
+        toast.error("Usuario no disponible");
+
+        return;
+      }
+
+      if (!usuario.id) {
         toast.error("ID de usuario no disponible");
 
         return;
       }
 
-      // Llamar a la mutación GraphQL
+      // Verificar que el valor no esté vacío para campos requeridos
+      if (field === "email" && !formValues[field].trim()) {
+        toast.error("El email no puede estar vacío");
+
+        return;
+      }
+
+      // Validación básica de email
+      if (field === "email" && formValues[field]) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (!emailRegex.test(formValues[field])) {
+          toast.error("Por favor ingresa un email válido");
+
+          return;
+        }
+      }
+
+      // Validación básica de celular
+      if (field === "celular" && formValues[field]) {
+        const phoneRegex = /^[\d\s\-\+\(\)]+$/;
+
+        if (!phoneRegex.test(formValues[field])) {
+          toast.error("Por favor ingresa un número de celular válido");
+
+          return;
+        }
+      }
+
       await actualizarContactoMaestro({
         variables: {
           id: usuario.id,
@@ -136,14 +219,11 @@ export default function PerfilMaestroPage() {
         },
       });
 
-      // Actualizar el usuario localmente después de una actualización exitosa
-      // Usar actualizarUsuario del contexto en lugar de setUsuario que no existe
       actualizarUsuario({
         ...usuario,
         [field]: formValues[field],
       });
 
-      // Desactivar modo edición
       setEditMode({ ...editMode, [field]: false });
     } catch (error) {
       console.error("Error al actualizar datos:", error);
