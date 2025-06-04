@@ -136,6 +136,10 @@ export default function EstudiantePage() {
             <Clock size={20} />
             <span>Recordatorios</span>
           </div>
+          <div className="flex items-center space-x-2 text-gray-600">
+            <Award size={20} />
+            <span>Calificaciones</span>
+          </div>
         </div>
       </div>
     </ProtectedRoute>

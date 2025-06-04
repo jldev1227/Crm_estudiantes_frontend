@@ -259,7 +259,7 @@ export default function Page() {
               >
                 <CardBody className="p-0">
                   {/* Header de la card */}
-                  <div className="h-20 bg-gradient-to-r from-primary-300 to-primary-600 flex items-center justify-center relative overflow-hidden">
+                  <div className="h-20 bg-gradient-to-r from-primary-400 to-primary-600 flex items-center justify-center relative overflow-hidden">
                     <div className="absolute inset-0 bg-black/10" />
                     <div className="relative z-10 text-white">
                       {getAreaIcon(area.nombre)}
