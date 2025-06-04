@@ -303,20 +303,22 @@ export default function CalificacionesPage() {
       <div className="bg-white min-h-screen p-4">
         {/* Header */}
         <div className="max-w-4xl mx-auto mb-6">
-          <div className="flex items-center gap-4 mb-6">
-            <button
-              className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-              onClick={goBack}
-            >
-              <ArrowLeft className="text-gray-600" size={24} />
-            </button>
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold text-gray-800">
-                Mis Calificaciones
-              </h1>
-              <p className="text-gray-600">
-                Consulta tu rendimiento académico por área
-              </p>
+          <div className="flex flex-col items-center gap-4 mb-6">
+            <div className="flex items-center gap-4">
+              <button
+                className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+                onClick={goBack}
+              >
+                <ArrowLeft className="text-gray-600" size={24} />
+              </button>
+              <div className="flex-1">
+                <h1 className="text-3xl font-bold text-gray-800">
+                  Mis Calificaciones
+                </h1>
+                <p className="text-gray-600">
+                  Consulta tu rendimiento académico por área
+                </p>
+              </div>
             </div>
             <button
               className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-xl hover:bg-primary-600 transition-colors"
