@@ -6,7 +6,6 @@ import { Textarea } from "@heroui/input";
 import { useMutation, useQuery } from "@apollo/client";
 import { useParams, useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import Image from "next/image";
 
 import DropzoneActividad from "@/components/dropzoneActividad";
 import { formatearFechaColombiaParaInput } from "@/helpers/formatearFechaColombiaParaInput";
@@ -442,7 +441,7 @@ export default function ActualizarActividadPage() {
     } else if (esSVG || esImagen || intentarComoImagen) {
       return (
         <div className="relative aspect-square">
-          <Image
+          <img
             alt={`Archivo ${index + 1}: ${archivo.nombre}`}
             className={`w-full h-full ${esSVG ? "object-contain p-2" : "object-cover"} rounded-t-lg`}
             src={urlCompleta}

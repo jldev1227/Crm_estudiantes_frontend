@@ -1,7 +1,23 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useQuery } from "@apollo/client";
-import Image from "next/image";
+import { Card, CardBody, CardHeader } from "@heroui/card";
+import { Chip } from "@heroui/chip";
+import { Divider } from "@heroui/divider";
+import { Button } from "@heroui/button";
+import {
+  BookOpen,
+  Search,
+  Filter,
+  Calendar as CalendarIcon,
+  Clock,
+  Activity,
+  Star,
+  XCircle,
+  ArrowLeft,
+  Camera,
+  FileDown,
+} from "lucide-react";
 
 import { useAuth } from "../../context/AuthContext";
 
@@ -29,7 +45,7 @@ interface Actividad {
   area: Area;
 }
 
-// Componente Modal simple para mostrar imágenes
+// Componente Modal mejorado para mostrar imágenes
 const ImagenModal = ({
   isOpen,
   onClose,
@@ -49,7 +65,7 @@ const ImagenModal = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
+      className="!mt-0 fixed inset-0 z-50 bg-black/90 flex items-center justify-center backdrop-blur-sm"
       role="button"
       onClick={onClose}
     >
@@ -60,85 +76,46 @@ const ImagenModal = ({
       >
         {/* Botón de cierre */}
         <button
-          className="absolute top-2 right-2 z-10 text-white bg-black/50 rounded-full p-2 hover:bg-black/70"
+          className="absolute top-4 right-4 z-10 text-white bg-black/50 rounded-full p-3 hover:bg-black/70 transition-colors"
           onClick={onClose}
         >
-          <svg
-            className="h-6 w-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M6 18L18 6M6 6l12 12"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-            />
-          </svg>
+          <XCircle size={20} />
         </button>
 
         {/* Contador */}
-        <div className="absolute top-2 left-2 text-white bg-black/50 px-3 py-1 rounded-md">
+        <div className="absolute top-4 left-4 text-white bg-black/50 px-4 py-2 rounded-lg font-medium">
           {contador}
         </div>
 
         {/* Imagen */}
-        <Image
+        <img
           alt="Imagen ampliada"
-          className="max-h-[80vh] max-w-full object-contain rounded-lg"
+          className="max-h-[80vh] max-w-full object-contain rounded-xl shadow-2xl"
           src={imagen}
         />
 
         {/* Controles */}
         <div className="absolute inset-y-0 left-0 flex items-center">
           <button
-            className="bg-black/30 text-white p-2 rounded-full hover:bg-black/50 ml-2"
+            className="bg-black/50 text-white p-3 rounded-full hover:bg-black/70 ml-4 transition-colors"
             onClick={(e) => {
               e.stopPropagation();
               onPrev();
             }}
           >
-            <svg
-              className="h-6 w-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M15 19l-7-7 7-7"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-              />
-            </svg>
+            <ArrowLeft size={20} />
           </button>
         </div>
 
         <div className="absolute inset-y-0 right-0 flex items-center">
           <button
-            className="bg-black/30 text-white p-2 rounded-full hover:bg-black/50 mr-2"
+            className="bg-black/50 text-white p-3 rounded-full hover:bg-black/70 mr-4 transition-colors"
             onClick={(e) => {
               e.stopPropagation();
               onNext();
             }}
           >
-            <svg
-              className="h-6 w-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M9 5l7 7-7 7"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-              />
-            </svg>
+            <ArrowLeft className="rotate-180" size={20} />
           </button>
         </div>
       </div>
@@ -163,6 +140,37 @@ export default function ActividadesPage() {
   const [imagenActual, setImagenActual] = useState("");
   const [fotosGaleria, setFotosGaleria] = useState<string[]>([]);
   const [indiceImagen, setIndiceImagen] = useState(0);
+
+  // Función para obtener color del área
+  const getColorArea = (areaNombre: string) => {
+    const colores: { [key: string]: any } = {
+      ARTES: "secondary",
+      CIENCIAS: "success",
+      CORPORAL: "warning",
+      DANZAS: "secondary",
+      "DIMENSIÓN COGNITIVA": "primary",
+      "DIMENSIÓN ÉTICA": "danger",
+      "EDUCACIÓN FÍSICA": "warning",
+      EMPRENDIMIENTO: "success",
+      "ESTIMULACIÓN LENGUAJE": "secondary",
+      "ESTIMULACIÓN SENSORIAL": "primary",
+      ÉTICA: "danger",
+      FRANCÉS: "secondary",
+      HABILMENTE: "primary",
+      INGLÉS: "danger",
+      LENGUAJE: "secondary",
+      MATEMÁTICAS: "primary",
+      MÚSICA: "secondary",
+      "PLAN LECTOR": "secondary",
+      RELIGIÓN: "warning",
+      SCIENCE: "success",
+      SOCIAL: "warning",
+      SOCIOAFECTIVA: "danger",
+      TECNOLOGÍA: "primary",
+    };
+
+    return colores[areaNombre.toUpperCase()] || "default";
+  };
 
   // Funciones para el modal
   const mostrarImagen = (fotos: string[], indice: number) => {
@@ -279,7 +287,7 @@ export default function ActividadesPage() {
         const fechaB = parseInt(b.fecha);
 
         if (fechaA !== fechaB) {
-          return fechaB - fechaA; // Orden ascendente por fecha
+          return fechaB - fechaA; // Orden descendente por fecha
         }
 
         // Si las fechas son iguales, ordenar por hora y minuto
@@ -290,7 +298,7 @@ export default function ActividadesPage() {
         const minutostotalesA = horasA * 60 + minutosA;
         const minutostotalesB = horasB * 60 + minutosB;
 
-        return minutostotalesB - minutostotalesA; // Orden ascendente por hora
+        return minutostotalesB - minutostotalesA; // Orden descendente por hora
       }),
     );
   }, [busqueda, areaId, actividadesData]);
@@ -300,11 +308,20 @@ export default function ActividadesPage() {
     setAreaId(e.target.value);
   };
 
+  // Limpiar filtros
+  const limpiarFiltros = () => {
+    setAreaId("");
+    setBusqueda("");
+  };
+
   // Mostrar spinner durante la carga
   if (areasLoading || actividadesLoading) {
     return (
-      <div className="flex justify-center items-center min-h-[70vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary" />
+      <div className="flex items-center justify-center min-h-96">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4" />
+          <p className="text-gray-600">Cargando actividades...</p>
+        </div>
       </div>
     );
   }
@@ -312,8 +329,20 @@ export default function ActividadesPage() {
   // Mostrar error si existe
   if (actividadesError) {
     return (
-      <div className="bg-red-100 border border-red-400 text-red-700 p-4 rounded">
-        <p>Error al cargar las actividades. Por favor, intenta de nuevo.</p>
+      <div className="p-4 md:p-6">
+        <Card className="shadow-sm">
+          <CardBody className="text-center py-12">
+            <div className="text-red-500 mb-4">
+              <Activity className="mx-auto" size={48} />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">
+              Error al cargar
+            </h3>
+            <p className="text-gray-600">
+              Error al cargar las actividades. Por favor, intenta de nuevo.
+            </p>
+          </CardBody>
+        </Card>
       </div>
     );
   }
@@ -321,208 +350,381 @@ export default function ActividadesPage() {
   // Obtener la lista de áreas
   const areas = areasData?.obtenerAreasPorGrado || [];
 
+  // Calcular estadísticas
+  const estadisticas = {
+    total: actividadesFiltradas.length,
+    materias: new Set(actividadesFiltradas.map((a) => a.area.id)).size,
+    fotos: actividadesFiltradas.reduce(
+      (acc, act) => acc + (act.fotos?.length || 0),
+      0,
+    ),
+    documentos: actividadesFiltradas.reduce(
+      (acc, act) => acc + (act.pdfs?.length || 0),
+      0,
+    ),
+  };
+
+  // Agrupar actividades por fecha
+  const actividadesPorFecha = actividadesFiltradas.reduce(
+    (grupos: { [key: string]: Actividad[] }, actividad) => {
+      const fecha = formatearFecha(actividad.fecha);
+
+      if (!grupos[fecha]) {
+        grupos[fecha] = [];
+      }
+      grupos[fecha].push(actividad);
+
+      return grupos;
+    },
+    {},
+  );
+
   return (
-    <div className="container mx-auto">
-      <h1 className="text-2xl md:text-3xl font-bold mb-6 text-primary">
-        Actividades diarias
-      </h1>
-
-      {/* Filtros */}
-      <div className="bg-white p-4 rounded-lg shadow mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label
-              className="block text-sm font-medium text-gray-700 mb-1"
-              htmlFor="area"
-            >
-              Materia
-            </label>
-            <select
-              className="w-full p-2 border border-gray-300 rounded-md"
-              id="area"
-              value={areaId}
-              onChange={handleAreaChange}
-            >
-              <option value="">Todas las materias</option>
-              {areas.map((area: Area) => (
-                <option key={area.id} value={area.id}>
-                  {area.nombre}
-                </option>
-              ))}
-            </select>
+    <div className="space-y-6 p-4 md:p-6">
+      {/* Header */}
+      <Card className="shadow-sm">
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-indigo-100 rounded-lg">
+              <Star className="text-indigo-600" size={28} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">
+                Actividades Diarias
+              </h1>
+              <p className="text-gray-600">
+                Revisa las actividades realizadas día a día en cada materia
+              </p>
+            </div>
           </div>
+        </CardHeader>
+      </Card>
 
-          <div>
-            <label
-              className="block text-sm font-medium text-gray-700 mb-1"
-              htmlFor="busqueda"
-            >
-              Buscar
-            </label>
-            <input
-              className="w-full p-2 border border-gray-300 rounded-md"
-              id="busqueda"
-              placeholder="Buscar actividades..."
-              type="text"
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-            />
+      {/* Estadísticas rápidas */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
+          <div className="flex items-center gap-3">
+            <Star className="text-indigo-600" size={20} />
+            <div>
+              <div className="text-xl font-bold text-indigo-600">
+                {estadisticas.total}
+              </div>
+              <div className="text-xs text-indigo-600">Actividades</div>
+            </div>
+          </div>
+        </div>
+        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+          <div className="flex items-center gap-3">
+            <BookOpen className="text-blue-600" size={20} />
+            <div>
+              <div className="text-xl font-bold text-blue-600">
+                {estadisticas.materias}
+              </div>
+              <div className="text-xs text-blue-600">Materias</div>
+            </div>
+          </div>
+        </div>
+        <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+          <div className="flex items-center gap-3">
+            <Camera className="text-green-600" size={20} />
+            <div>
+              <div className="text-xl font-bold text-green-600">
+                {estadisticas.fotos}
+              </div>
+              <div className="text-xs text-green-600">Fotos</div>
+            </div>
+          </div>
+        </div>
+        <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+          <div className="flex items-center gap-3">
+            <FileDown className="text-orange-600" size={20} />
+            <div>
+              <div className="text-xl font-bold text-orange-600">
+                {estadisticas.documentos}
+              </div>
+              <div className="text-xs text-orange-600">Documentos</div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Lista de actividades */}
-      {actividadesFiltradas.length === 0 ? (
-        <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 p-4 rounded text-center">
-          <p>No se encontraron actividades con los filtros seleccionados.</p>
-        </div>
+      {/* Filtros mejorados */}
+      <Card className="shadow-sm">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between w-full">
+            <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+              <Filter size={20} />
+              Filtros de Búsqueda
+            </h2>
+            <Button
+              color="danger"
+              size="sm"
+              startContent={<XCircle size={16} />}
+              variant="light"
+              onPress={limpiarFiltros}
+            >
+              Limpiar
+            </Button>
+          </div>
+        </CardHeader>
+        <Divider />
+        <CardBody className="pt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label
+                className="block text-sm font-medium text-gray-700 mb-2"
+                htmlFor="area"
+              >
+                <BookOpen className="inline mr-2" size={16} />
+                Materia
+              </label>
+              <select
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                id="area"
+                value={areaId}
+                onChange={handleAreaChange}
+              >
+                <option value="">Todas las materias</option>
+                {areas.map((area: Area) => (
+                  <option key={area.id} value={area.id}>
+                    {area.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label
+                className="block text-sm font-medium text-gray-700 mb-2"
+                htmlFor="busqueda"
+              >
+                <Search className="inline mr-2" size={16} />
+                Buscar
+              </label>
+              <input
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                id="busqueda"
+                placeholder="Buscar actividades..."
+                type="text"
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+              />
+            </div>
+          </div>
+        </CardBody>
+      </Card>
+
+      {/* Lista de actividades agrupadas por fecha */}
+      {Object.keys(actividadesPorFecha).length === 0 ? (
+        <Card className="shadow-sm">
+          <CardBody className="text-center py-12">
+            <Star className="text-gray-300 mx-auto mb-4" size={64} />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No se encontraron actividades
+            </h3>
+            <p className="text-sm text-gray-600">
+              No hay actividades que coincidan con los filtros seleccionados.
+            </p>
+          </CardBody>
+        </Card>
       ) : (
         <div className="space-y-6">
-          {actividadesFiltradas.map((actividad) => (
-            <div
-              key={actividad.id}
-              className="bg-white rounded-lg shadow overflow-hidden"
-            >
-              <div className="p-5">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h2 className="text-xl font-semibold text-gray-800">
-                      {actividad.nombre}
-                    </h2>
-                    <p className="text-sm text-gray-500 mt-1">
-                      {formatearFechaCompleta(formatearFecha(actividad.fecha))}{" "}
-                      <span>{convertirA12Horas(actividad.hora)}</span>
-                    </p>
-                    <p className="text-sm font-medium text-green-600 mt-1">
-                      {actividad.area?.nombre}
-                    </p>
-                  </div>
-                </div>
+          <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+            <CalendarIcon size={20} />
+            Actividades por Fecha ({actividadesFiltradas.length} total)
+          </h2>
 
-                <div className="mt-4">
-                  <p className="text-gray-700 break-words">
-                    {actividad.descripcion}
-                  </p>
-                </div>
-
-                {/* Galería con scroll horizontal y flechas de navegación */}
-                {(actividad.fotos?.length > 0 ||
-                  actividad.pdfs?.length > 0) && (
-                  <div className="mt-4">
-                    <p className="font-medium text-gray-700 mb-2">
-                      {actividad.fotos?.length > 0 && actividad.pdfs?.length > 0
-                        ? "Archivos adjuntos:"
-                        : actividad.fotos?.length > 0
-                          ? "Fotos:"
-                          : "Documentos:"}
-                    </p>
-                    <div className="relative group">
-                      {/* Flecha izquierda */}
-                      <button
-                        className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-1 shadow-md z-10 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          const container = e.currentTarget
-                            .nextElementSibling as HTMLElement;
-
-                          if (container) {
-                            container.scrollBy({
-                              left: -200,
-                              behavior: "smooth",
-                            });
-                          }
-                        }}
-                      >
-                        <svg
-                          className="h-4 w-4 text-gray-500"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            d="M15 19l-7-7 7-7"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                          />
-                        </svg>
-                      </button>
-
-                      {/* Contenedor con scroll horizontal */}
-                      <div
-                        className="flex overflow-x-auto px-2 pb-4 gap-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 snap-x overflow-y-hidden"
-                        style={{
-                          scrollbarWidth: "thin",
-                          msOverflowStyle: "none",
-                          scrollSnapType: "x mandatory",
-                        }}
-                      >
-                        {/* Renderizar fotos */}
-                        {actividad.fotos?.map((foto, index) => (
-                          <div
-                            key={`foto-${index}`}
-                            className="flex-none w-24 h-24 md:w-32 md:h-32 snap-start"
-                          >
-                            <Image
-                              alt={`Foto ${index + 1}`}
-                              className="h-full w-full bg-gray-50 p-2 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
-                              src={`${foto}?${process.env.NEXT_PUBLIC_AZURE_KEY}`}
-                              onClick={() =>
-                                mostrarImagen(actividad.fotos, index)
-                              }
-                            />
-                          </div>
-                        ))}
-
-                        {/* Renderizar PDFs */}
-                        {actividad.pdfs?.map((pdfUrl, index) => (
-                          <div
-                            key={`pdf-${index}`}
-                            className="flex-none w-24 h-24 md:w-32 md:h-32 snap-start"
-                          >
-                            <PDFThumbnail index={index} url={pdfUrl} />
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Flecha derecha */}
-                      <button
-                        className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-1 shadow-md z-10 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          const container = e.currentTarget
-                            .previousElementSibling as HTMLElement;
-
-                          if (container) {
-                            container.scrollBy({
-                              left: 200,
-                              behavior: "smooth",
-                            });
-                          }
-                        }}
-                      >
-                        <svg
-                          className="h-4 w-4 text-gray-500"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            d="M9 5l7 7-7 7"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                          />
-                        </svg>
-                      </button>
+          {Object.entries(actividadesPorFecha)
+            .sort(([a], [b]) => new Date(b).getTime() - new Date(a).getTime())
+            .map(([fecha, actividades]) => (
+              <Card key={fecha} className="shadow-sm">
+                <CardHeader className="pb-3 bg-gray-50">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-primary-100 rounded-lg">
+                      <CalendarIcon className="text-primary-600" size={20} />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-800">
+                        {formatearFechaCompleta(fecha)}
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        {actividades.length} actividad
+                        {actividades.length !== 1 ? "es" : ""} registrada
+                        {actividades.length !== 1 ? "s" : ""}
+                      </p>
                     </div>
                   </div>
-                )}
-              </div>
-            </div>
-          ))}
+                </CardHeader>
+                <Divider />
+                <CardBody className="p-0">
+                  <div className="divide-y divide-gray-100">
+                    {actividades.map((actividad, index) => (
+                      <div
+                        key={actividad.id}
+                        className="p-6 hover:bg-gray-50/50 transition-colors"
+                      >
+                        {/* Header de la actividad */}
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start gap-3">
+                              <div className="p-2 bg-primary-100 rounded-lg flex-shrink-0 mt-1">
+                                <Activity
+                                  className="text-primary-600"
+                                  size={16}
+                                />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h4 className="text-lg font-semibold text-gray-900 mb-2 leading-tight">
+                                  {actividad.nombre}
+                                </h4>
+                                <div className="flex flex-wrap items-center gap-3 mb-3">
+                                  <div className="flex items-center gap-1 text-sm text-gray-600">
+                                    <Clock
+                                      className="flex-shrink-0"
+                                      size={14}
+                                    />
+                                    <span className="font-medium">
+                                      {convertirA12Horas(actividad.hora)}
+                                    </span>
+                                  </div>
+                                  <Chip
+                                    className="font-medium"
+                                    color={getColorArea(actividad.area?.nombre)}
+                                    size="sm"
+                                    startContent={<BookOpen size={12} />}
+                                    variant="flat"
+                                  >
+                                    {actividad.area?.nombre}
+                                  </Chip>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Indicador de archivos */}
+                          {(actividad.fotos?.length > 0 ||
+                            actividad.pdfs?.length > 0) && (
+                            <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full ml-4 flex-shrink-0">
+                              <div className="flex items-center gap-1">
+                                {actividad.fotos?.length > 0 && (
+                                  <div className="flex items-center gap-1">
+                                    <Camera size={12} />
+                                    <span>{actividad.fotos.length}</span>
+                                  </div>
+                                )}
+                                {actividad.pdfs?.length > 0 && (
+                                  <div className="flex items-center gap-1">
+                                    <FileDown size={12} />
+                                    <span>{actividad.pdfs.length}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Descripción */}
+                        <div className="mb-4">
+                          <p className="text-gray-700 leading-relaxed text-sm lg:text-base">
+                            {actividad.descripcion}
+                          </p>
+                        </div>
+
+                        {/* Archivos adjuntos */}
+                        {(actividad.fotos?.length > 0 ||
+                          actividad.pdfs?.length > 0) && (
+                          <div className="border-t border-gray-100 pt-4">
+                            <div className="mb-3">
+                              <h5 className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                                {actividad.fotos?.length > 0 &&
+                                actividad.pdfs?.length > 0 ? (
+                                  <>
+                                    <div className="flex items-center gap-1">
+                                      <Camera size={14} />
+                                      <FileDown size={14} />
+                                    </div>
+                                    <span>Material Adjunto</span>
+                                  </>
+                                ) : actividad.fotos?.length > 0 ? (
+                                  <>
+                                    <Camera size={14} />
+                                    <span>Fotos de la Actividad</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <FileDown size={14} />
+                                    <span>Documentos Adjuntos</span>
+                                  </>
+                                )}
+                                <span className="text-xs text-gray-500 ml-auto">
+                                  {(actividad.fotos?.length || 0) +
+                                    (actividad.pdfs?.length || 0)}{" "}
+                                  archivo
+                                  {(actividad.fotos?.length || 0) +
+                                    (actividad.pdfs?.length || 0) !==
+                                  1
+                                    ? "s"
+                                    : ""}
+                                </span>
+                              </h5>
+                            </div>
+
+                            <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
+                              {/* Fotos */}
+                              {actividad.fotos?.map((foto, fotoIndex) => (
+                                <div
+                                  key={`foto-${fotoIndex}`}
+                                  className="aspect-square"
+                                >
+                                  <div
+                                    aria-label={`Ver foto ${fotoIndex + 1} en tamaño completo`}
+                                    className="w-full h-full rounded-lg overflow-hidden border-2 border-gray-200 hover:border-primary-300 transition-all cursor-pointer hover:shadow-md group"
+                                    role="button"
+                                    tabIndex={0}
+                                    onClick={() =>
+                                      mostrarImagen(actividad.fotos, fotoIndex)
+                                    }
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter" || e.key === " ") {
+                                        mostrarImagen(
+                                          actividad.fotos,
+                                          fotoIndex,
+                                        );
+                                      }
+                                    }}
+                                  >
+                                    <img
+                                      alt={`Foto ${fotoIndex + 1}`}
+                                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                      src={`${foto}?${process.env.NEXT_PUBLIC_AZURE_KEY}`}
+                                    />
+                                  </div>
+                                </div>
+                              ))}
+
+                              {/* PDFs */}
+                              {actividad.pdfs?.map((pdfUrl, pdfIndex) => (
+                                <div
+                                  key={`pdf-${pdfIndex}`}
+                                  className="aspect-square"
+                                >
+                                  <div className="w-full h-full rounded-lg overflow-hidden border-2 border-gray-200 hover:border-primary-300 transition-colors">
+                                    <PDFThumbnail
+                                      index={pdfIndex}
+                                      url={pdfUrl}
+                                    />
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </CardBody>
+              </Card>
+            ))}
         </div>
       )}
 

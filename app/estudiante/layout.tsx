@@ -1,11 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import { Divider } from "@heroui/divider";
 import Link from "next/link";
 import { useMediaQuery } from "react-responsive";
 import { Button } from "@heroui/button";
 import { useRouter } from "next/navigation";
+import { Award } from "lucide-react";
 
 import { EstudianteProvider } from "../context/EstudianteContext";
 import { useAuth } from "../context/AuthContext";
@@ -50,7 +50,7 @@ export default function EstudianteLayout({
             <div className="bg-gradient-to-r from-primary-500 to-primary-600 col-span-1 border-r-2 text-white">
               <div className="sticky top-0">
                 <div className="bg-white">
-                  <Image
+                  <img
                     alt="Logo"
                     className="mx-auto"
                     height={200}
@@ -144,6 +144,13 @@ export default function EstudianteLayout({
                         />
                       </svg>
                       <p>Actividades diarias</p>
+                    </Link>
+                    <Link
+                      className="flex items-center gap-5 hover:bg-white/10 rounded-md p-2 transition-colors ease-in-out"
+                      href={"/estudiante/calificaciones"}
+                    >
+                      <Award />
+                      <p>Calificaciones</p>
                     </Link>
                     <Link
                       className="flex items-center gap-5 hover:bg-white/10 rounded-md p-2 transition-colors ease-in-out"

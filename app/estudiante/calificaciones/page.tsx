@@ -209,7 +209,7 @@ export default function CalificacionesPage() {
       return acc + notaFinal;
     }, 0);
 
-    return (suma / calificacionesFiltradas.length).toFixed(1);
+    return (suma / calificacionesFiltradas.length).toFixed(2);
   };
 
   const obtenerEstadisticas = () => {
@@ -475,7 +475,7 @@ export default function CalificacionesPage() {
                       >
                         {getIconByGrade(notaFinalCalculada)}
                         <span className="font-bold text-lg">
-                          {notaFinalCalculada.toFixed(1)}
+                          {notaFinalCalculada.toFixed(2)}
                         </span>
                       </div>
                     </div>
@@ -503,7 +503,7 @@ export default function CalificacionesPage() {
                           <div
                             className={`px-3 py-1 rounded-full text-sm font-semibold ${getColorByGrade(nota.valor)}`}
                           >
-                            {nota.valor?.toFixed(1)}
+                            {nota.valor?.toFixed(2)}
                           </div>
                         </div>
                       ))}
@@ -530,7 +530,7 @@ export default function CalificacionesPage() {
                           <div
                             className={`text-xl font-bold ${getColorByGrade(notaFinalCalculada).split(" ")[0]}`}
                           >
-                            {notaFinalCalculada.toFixed(1)}
+                            {notaFinalCalculada.toFixed(2)}
                           </div>
                         </div>
                       </div>

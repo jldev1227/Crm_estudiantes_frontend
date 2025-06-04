@@ -1364,7 +1364,7 @@ const SistemaCalificaciones = () => {
 
         <CardBody className="pt-4">
           {estudiantes.length > 0 ? (
-            <div className="overflow-x-auto -mx-4 px-4">
+            <div>
               <Table
                 isHeaderSticky
                 removeWrapper

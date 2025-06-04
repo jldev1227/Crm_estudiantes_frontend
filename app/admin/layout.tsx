@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { Divider } from "@heroui/divider";
 import Link from "next/link";
 import { useMediaQuery } from "react-responsive";
@@ -50,7 +49,7 @@ export default function MaestroLayout({
             <div className="bg-gradient-to-r from-primary-500 to-primary-600 col-span-1 border-r-2 text-white h-full">
               <div className="sticky top-0">
                 <div className="bg-white">
-                  <Image
+                  <img
                     alt="Logo"
                     className="mx-auto"
                     height={200}

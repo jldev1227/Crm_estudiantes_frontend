@@ -12,7 +12,6 @@ import { usePathname } from "next/navigation";
 import { Button } from "@heroui/button";
 import { Link } from "@heroui/link";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 
 import { useAuth } from "@/app/context/AuthContext";
 
@@ -20,7 +19,7 @@ import { useAuth } from "@/app/context/AuthContext";
 const GimnasioLogo = () => {
   return (
     <div className="flex items-center">
-      <Image
+      <img
         alt="Logo"
         className="mx-auto"
         height={42}

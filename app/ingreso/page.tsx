@@ -4,7 +4,6 @@ import { useMutation } from "@apollo/client";
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 import { Tabs, Tab } from "@heroui/tabs";
-import Image from "next/image";
 import React, { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -23,12 +22,12 @@ function LoginFormSkeleton() {
       <div className="hidden md:relative md:col-span-2 md:block">
         <div className="h-full w-full bg-gray-300 animate-pulse" />
       </div>
-      
+
       {/* Columna Derecha */}
       <div className="bg-blue-100 md:shadow-md col-span-1 flex flex-col">
         {/* Logo skeleton */}
         <div className="mx-auto mt-8 w-[300px] h-[300px] bg-gray-300 animate-pulse rounded" />
-        
+
         {/* Contenido skeleton */}
         <div className="bg-white p-6 flex flex-col space-y-6 flex-1">
           <div className="h-8 bg-gray-300 animate-pulse rounded" />
@@ -69,8 +68,10 @@ function LoginForm() {
 
     // Update URL params to persist tab selection
     const params = new URLSearchParams(window.location.search);
+
     params.set("tab", key as string);
     const newUrl = `${window.location.pathname}?${params.toString()}`;
+
     window.history.pushState({}, "", newUrl);
 
     // Reset form states when changing tabs
@@ -281,7 +282,7 @@ function LoginForm() {
         onSubmit={handleSubmit}
       >
         {/* Logo */}
-        <Image
+        <img
           alt="Logo"
           className="mx-auto mt-8"
           height={300}

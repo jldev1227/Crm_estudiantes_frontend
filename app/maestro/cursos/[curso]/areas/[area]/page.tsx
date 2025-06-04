@@ -25,7 +25,6 @@ import {
   Camera,
   FileDown,
 } from "lucide-react";
-import Image from "next/image";
 
 import { ELIMINAR_ACTIVIDAD } from "@/app/graphql/mutation/eliminarActividad";
 import { OBTENER_ACTIVIDADES_POR_AREA } from "@/app/graphql/queries/obtenerActividadesPorArea";
@@ -114,7 +113,7 @@ const ImagenModal = ({
         </div>
 
         {/* Imagen */}
-        <Image
+        <img
           alt="Imagen ampliada"
           className="max-h-[80vh] max-w-full object-contain rounded-lg"
           src={imagen}
@@ -670,7 +669,7 @@ export default function CursoPage() {
                                         mostrarImagen(tarea.fotos, index)
                                       }
                                     >
-                                      <Image
+                                      <img
                                         alt={`Foto ${index + 1}`}
                                         className="w-full h-full object-cover hover:scale-105 transition-transform"
                                         src={`${foto}?${process.env.NEXT_PUBLIC_AZURE_KEY}`}
@@ -829,7 +828,7 @@ export default function CursoPage() {
                                       mostrarImagen(actividad.fotos, index)
                                     }
                                   >
-                                    <Image
+                                    <img
                                       alt={`Foto ${index + 1}`}
                                       className="w-full h-full object-cover hover:scale-105 transition-transform"
                                       src={`${foto}?${process.env.NEXT_PUBLIC_AZURE_KEY}`}

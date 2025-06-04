@@ -6,7 +6,6 @@ import { Textarea } from "@heroui/input";
 import { useMutation } from "@apollo/client";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
-import Image from "next/image";
 
 import DropzoneActividad from "@/components/dropzoneActividad";
 import { formatearFechaColombiaParaInput } from "@/helpers/formatearFechaColombiaParaInput";
@@ -318,7 +317,7 @@ export default function CrearTareaPage() {
                       />
                     ) : file.tipo.startsWith("image/") ? (
                       <div className="relative aspect-square">
-                        <Image
+                        <img
                           alt={`Imagen ${index + 1}: ${file.nombre}`}
                           className="w-full h-full object-cover rounded-t-lg"
                           src={file.url}

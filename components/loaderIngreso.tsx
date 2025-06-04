@@ -1,4 +1,3 @@
-import Image from "next/image";
 import React, { useState, useEffect } from "react";
 
 export default function LoaderIngreso({
@@ -30,7 +29,7 @@ export default function LoaderIngreso({
       <div
         className={`absolute z-10 inset-0 flex flex-col items-center justify-center space-y-3`}
       >
-        <Image alt="Logo" height={100} src={"/LOGO.png"} width={100} />
+        <img alt="Logo" height={100} src={"/LOGO.png"} width={100} />
       </div>
 
       {/* Parte inferior (Rojo) */}
