@@ -17,9 +17,9 @@ export default function CourseManagementWelcome() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-4xl">
         <div
-          className="w-full max-w-xl cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-xl"
+          className="w-full cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-xl"
           role="button"
           onClick={() => router.push("/admin/cursos")}
         >
