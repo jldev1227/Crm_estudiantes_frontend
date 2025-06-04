@@ -224,8 +224,8 @@ const SistemaCalificaciones = () => {
           { nombre: string; porcentaje: number }
         >();
 
-        calificacionesPeriodoActual.forEach((calificacion: any) => {
-          calificacion.notas.forEach((nota: any) => {
+        calificacionesPeriodoActual.forEach((calificacion: Calificacion) => {
+          calificacion.notas.forEach((nota: Nota) => {
             actividadesExistentes.add(nota.actividad_id);
             actividadesInfo.set(nota.actividad_id, {
               nombre: nota.nombre,
