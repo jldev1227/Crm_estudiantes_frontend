@@ -66,12 +66,7 @@ export default function TablaMaestros({
         key: "celular",
         label: "CELULAR",
         sortable: false,
-      },
-      {
-        key: "acciones",
-        label: "ACCIONES",
-        sortable: false,
-      },
+      }
     ];
 
     return baseColumns;
@@ -188,14 +183,6 @@ export default function TablaMaestros({
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {item.celular}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 space-x-2">
-                  <Button isIconOnly color="primary">
-                    <EyeIcon />
-                  </Button>
-                  <Button isIconOnly color="warning">
-                    <EditIcon />
-                  </Button>
                 </td>
               </tr>
             ))}

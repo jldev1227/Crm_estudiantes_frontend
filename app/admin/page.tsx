@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { useRouter } from "next/navigation";
-import { GraduationCap, BookOpen, Users } from "lucide-react";
+import { GraduationCap, BookOpen, Users, User, ChevronRight, CheckSquare } from "lucide-react";
 
 export default function CourseManagementWelcome() {
   const router = useRouter();
@@ -19,37 +19,40 @@ export default function CourseManagementWelcome() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl">
         <div
-          className="cursor-pointer bg-primary-500 text-white rounded-2xl px-5 py-8 flex flex-col items-center transition-all duration-300 hover:scale-105 hover:shadow-xl"
+          className="w-full max-w-xl cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-xl"
           role="button"
           onClick={() => router.push("/admin/cursos")}
         >
-          <BookOpen className="mb-4" size={48} />
-          <h2 className="text-xl font-bold mb-2">Cursos</h2>
-          <p className="text-white text-opacity-80 text-center">
-            Gestiona todos los cursos disponibles.
-          </p>
+          <div className="bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-2xl px-5 py-8 sm:p-8 shadow-lg flex flex-col sm:flex-row max-sm:text-center items-center sm:space-x-6 gap-5">
+            <div className="bg-white bg-opacity-20 rounded-full p-4">
+              <GraduationCap className="text-white" size={64} />
+            </div>
+            <div className="md:flex-grow">
+              <h2 className="text-2xl font-bold mb-2">Cursos</h2>
+              <p className="text-white text-opacity-80">
+                Gestiona todos los cursos disponibles
+              </p>
+            </div>
+            <ChevronRight className="text-white" size={32} />
+          </div>
         </div>
         <div
-          className="cursor-pointer bg-primary-500 text-white rounded-2xl px-5 py-8 flex flex-col items-center transition-all duration-300 hover:scale-105 hover:shadow-xl"
+          className="bg-gray-100 rounded-2xl p-6 shadow-lg flex flex-col sm:flex-row items-center sm:space-x-6 gap-5 cursor-pointer transform transition-all duration-300 hover:scale-105 hover:shadow-xl"
           role="button"
           onClick={() => router.push("/admin/maestros")}
         >
-          <Users className="mb-4" size={48} />
-          <h2 className="text-xl font-bold mb-2">Maestros</h2>
-          <p className="text-white text-opacity-80 text-center">
-            Administra la información de los maestros.
-          </p>
-        </div>
-        <div
-          className="cursor-pointer bg-primary-500 text-white rounded-2xl px-5 py-8 flex flex-col items-center transition-all duration-300 hover:scale-105 hover:shadow-xl"
-          role="button"
-          onClick={() => router.push("/admin/calificaciones")}
-        >
-          <GraduationCap className="mb-4" size={48} />
-          <h2 className="text-xl font-bold mb-2">Calificaciones</h2>
-          <p className="text-white text-opacity-80 text-center">
-            Consulta y gestiona las calificaciones de los estudiantes.
-          </p>
+          <div className="bg-gray-500 bg-opacity-20 rounded-full p-4">
+            <User className="text-gray-500" size={48} />
+          </div>
+          <div className="flex-grow text-center">
+            <h2 className="text-2xl font-bold mb-2 text-gray-800">
+              Maestros
+            </h2>
+            <p className="text-gray-600">
+              Administra la informacion de los maestros
+            </p>
+          </div>
+          <ChevronRight className="text-gray-500" size={32} />
         </div>
       </div>
     </div>

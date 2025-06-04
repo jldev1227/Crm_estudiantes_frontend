@@ -427,14 +427,6 @@ export default function MaestrosResponsive({
                     {maestro.celular}
                   </p>
                 </div>
-                <div className="space-y-2">
-                  <Button fullWidth color="primary">
-                    <EyeIcon />
-                  </Button>
-                  <Button fullWidth color="warning">
-                    <EditIcon />
-                  </Button>
-                </div>
               </div>
             </div>
           </Card>
