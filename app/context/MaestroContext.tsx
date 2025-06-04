@@ -1,9 +1,18 @@
 "use client";
-import React, { createContext, useReducer, useContext } from "react";
-import { useApolloClient } from "@apollo/client";
+import React, {
+  createContext,
+  useReducer,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import { useApolloClient, useLazyQuery } from "@apollo/client";
+
 import { OBTENER_CURSOS_MAESTRO } from "../graphql/queries/obtenerCursosMaestro";
 import { OBTENER_CURSO } from "../graphql/queries/obtenerCurso";
 import { OBTENER_CALIFICACIONES } from "../graphql/queries/obtenerCalificaciones";
+import { OBTENER_CURSO_GENERAL } from "../graphql/queries/obtenerCursoGeneral";
+import { OBTENER_CALIFICACIONES_ESTUDIANTE } from "../graphql/queries/obtenerCalificacionesEstudiante";
 
 // Estado inicial
 const initialState = {
@@ -49,6 +58,9 @@ const MaestroContext = createContext<any>(initialState);
 // Proveedor del contexto
 export function MaestroProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(maestroReducer, initialState);
+  const [calificacionesEstudiante, setCalificacionesEstudiante] = useState<
+    any[]
+  >([]);
 
   // Obtenemos instancia de Apollo Client
   const client = useApolloClient();
@@ -71,8 +83,6 @@ export function MaestroProvider({ children }: { children: React.ReactNode }) {
 
   // Función para obtener un curso específico con su área
   const obtenerCurso = async (id: string, area_id: string) => {
-
-    console.log(id, area_id)
     try {
       const { data } = await client.query({
         query: OBTENER_CURSO,
@@ -93,13 +103,40 @@ export function MaestroProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Función para obtener un curso específico con su área
+  const obtenerCursoGeneral = async (id: string) => {
+    try {
+      const { data } = await client.query({
+        query: OBTENER_CURSO_GENERAL,
+        variables: { id },
+      });
+
+      dispatch({
+        type: "OBTENER_CURSO",
+        payload: {
+          curso: data.obtenerCursoGeneral,
+        },
+      });
+
+      console.log(data);
+
+      return data.obtenerCursoGeneral;
+    } catch (error) {
+      console.error("Error obteniendo curso:", error);
+    }
+  };
+
   // Función para obtener calificaciones
-  const obtenerCalificaciones = async (grado_id: string, area_id: string, periodo: number) => {
+  const obtenerCalificaciones = async (
+    grado_id: string,
+    area_id: string,
+    periodo: number,
+  ) => {
     try {
       const { data } = await client.query({
         query: OBTENER_CALIFICACIONES,
         variables: { grado_id, area_id, periodo },
-        fetchPolicy: "network-only" // Para asegurar datos frescos
+        fetchPolicy: "network-only", // Para asegurar datos frescos
       });
 
       dispatch({
@@ -113,6 +150,40 @@ export function MaestroProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const obtenerCalificacionesEstudiante = async (estudianteId: string) => {
+    console.log("estudiante", estudianteId);
+    try {
+      if (!estudianteId) {
+        console.warn("Faltan datos del estudiante para obtener calificaciones");
+
+        return null;
+      }
+
+      const { data } = await obtenerCalificacionesQuery({
+        variables: {
+          estudiante_id: estudianteId,
+        },
+      });
+
+      console.log(data);
+
+      return data?.obtenerCalificacionEstudiante || null;
+    } catch (error) {
+      console.error("Error obteniendo calificaciones:", error);
+      throw error;
+    }
+  };
+
+  // Query para obtener actividades (se ejecutará bajo demanda)
+  const [
+    obtenerCalificacionesQuery,
+    {
+      loading: cargandoCalificacionesEstudiante,
+      error: erroCalificacionesEstudiante,
+      data: dataCalificacionesEstudiante,
+    },
+  ] = useLazyQuery(OBTENER_CALIFICACIONES_ESTUDIANTE);
+
   // Función para establecer el periodo
   const establecerPeriodo = (periodo: number) => {
     dispatch({
@@ -121,6 +192,18 @@ export function MaestroProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  // Actualizar calificaciones cuando se carguen los datos
+  useEffect(() => {
+    if (
+      dataCalificacionesEstudiante &&
+      dataCalificacionesEstudiante.obtenerCalificacionEstudiante
+    ) {
+      setCalificacionesEstudiante(
+        dataCalificacionesEstudiante.obtenerCalificacionEstudiante,
+      );
+    }
+  }, [dataCalificacionesEstudiante]);
+
   return (
     <MaestroContext.Provider
       value={{
@@ -128,10 +211,14 @@ export function MaestroProvider({ children }: { children: React.ReactNode }) {
         curso: state.curso,
         area: state.area,
         calificaciones: state.calificaciones,
+        calificacionesEstudiante,
+        cargandoCalificacionesEstudiante,
         periodoSeleccionado: state.periodoSeleccionado,
         obtenerCursosMaestro,
         obtenerCurso,
+        obtenerCursoGeneral,
         obtenerCalificaciones,
+        obtenerCalificacionesEstudiante,
         establecerPeriodo,
       }}
     >

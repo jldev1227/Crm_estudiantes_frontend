@@ -3,10 +3,7 @@ import { gql } from "@apollo/client";
 
 export const OBTENER_TAREAS_ESTUDIANTE = gql`
   query ObtenerTareasEstudiante($gradoId: ID!, $areaId: ID) {
-    obtenerTareasEstudiante(
-      gradoId: $gradoId, 
-      areaId: $areaId
-    ) {
+    obtenerTareasEstudiante(gradoId: $gradoId, areaId: $areaId) {
       id
       nombre
       descripcion

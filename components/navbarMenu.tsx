@@ -8,24 +8,25 @@ import {
   NavbarMenuItem,
   NavbarBrand,
 } from "@heroui/navbar";
-import { useAuth } from "@/app/context/AuthContext";
 import { usePathname } from "next/navigation";
 import { Button } from "@heroui/button";
 import { Link } from "@heroui/link";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
+
+import { useAuth } from "@/app/context/AuthContext";
 
 // Logo del Gimnasio Vancouver
 const GimnasioLogo = () => {
   return (
     <div className="flex items-center">
-      <Image
+      <img
+        alt="Logo"
         className="mx-auto"
+        height={42}
         src={"/LOGO.png"}
         width={42}
-        height={42}
-        alt="Logo"
-      />      <span className="font-bold text-inherit">Gimnasio Vancouver</span>
+      />
+      <span className="font-bold text-inherit">Gimnasio Vancouver</span>
     </div>
   );
 };
@@ -47,7 +48,7 @@ export default function SideMenu() {
   useEffect(() => {
     setIsMenuOpen(false);
     // Si hay un modal abierto, ciérralo
-    if (typeof window !== 'undefined' && window.closeAnyOpenModal) {
+    if (typeof window !== "undefined" && window.closeAnyOpenModal) {
       window.closeAnyOpenModal();
     }
   }, [pathname]);
@@ -64,23 +65,43 @@ export default function SideMenu() {
     {
       label: "Tareas",
       href: "/estudiante/tareas",
-    }
+    },
+    {
+      label: "Calificaciones",
+      href: "/estudiante/calificaciones",
+    },
   ];
 
   const menuItemsMaestro = [
     {
       label: "Cursos",
       href: "/maestro/cursos",
-    }
+    },
   ];
 
   // Determinar qué menú mostrar basado en el rol
-  const menuItems = usuario?.rol === "maestro" ? menuItemsMaestro : menuItemsEstudiante;
+  const menuItemsAdmin = [
+    {
+      label: "Cursos",
+      href: "/admin/cursos",
+    },
+    {
+      label: "Maestros",
+      href: "/admin/maestros",
+    },
+  ];
+
+  const menuItems =
+    usuario?.rol === "admin"
+      ? menuItemsAdmin
+      : usuario?.rol === "maestro"
+        ? menuItemsMaestro
+        : menuItemsEstudiante;
 
   const handleLinkClick = () => {
     setIsMenuOpen(false);
     // Si hay un modal abierto, ciérralo
-    if (typeof window !== 'undefined' && window.closeAnyOpenModal) {
+    if (typeof window !== "undefined" && window.closeAnyOpenModal) {
       window.closeAnyOpenModal();
     }
   };
@@ -89,7 +110,7 @@ export default function SideMenu() {
   const handleLogoutClick = () => {
     // Primero cerrar el menú y los modales
     handleLinkClick();
-    
+
     // Usar setTimeout para asegurar que la navegación ocurra después de actualizar el estado
     setTimeout(() => {
       router.push("/cerrar-sesion");
@@ -99,30 +120,27 @@ export default function SideMenu() {
   return (
     <Navbar isBordered isMenuOpen={isMenuOpen} onMenuOpenChange={setIsMenuOpen}>
       {/* Menú móvil - Toggle */}
-      <NavbarContent className="sm:hidden" justify="start">
-        <NavbarMenuToggle aria-label={isMenuOpen ? "Cerrar menú" : "Abrir menú"} />
+      <NavbarContent className="md:hidden" justify="start">
+        <NavbarMenuToggle
+          aria-label={isMenuOpen ? "Cerrar menú" : "Abrir menú"}
+        />
       </NavbarContent>
 
       {/* Logo en móvil */}
-      <NavbarContent className="sm:hidden pr-3" justify="center">
+      <NavbarContent className="md:hidden pr-3" justify="center">
         <NavbarBrand>
           <GimnasioLogo />
         </NavbarBrand>
       </NavbarContent>
 
       {/* Menú desktop */}
-      <NavbarContent className="hidden sm:flex gap-4" justify="center">
+      <NavbarContent className="hidden md:flex gap-4" justify="center">
         <NavbarBrand>
           <GimnasioLogo />
         </NavbarBrand>
 
-        <NavbarItem
-        >
-          <Button
-            as={Link}
-            href={`/${usuario?.rol}`}
-            variant="light"
-          >
+        <NavbarItem>
+          <Button as={Link} href={`/${usuario?.rol}`} variant="light">
             Inicio
           </Button>
         </NavbarItem>
@@ -148,36 +166,47 @@ export default function SideMenu() {
       <NavbarContent justify="end">
         <NavbarItem>
           <Button
+            isIconOnly
             as={Link}
             color="primary"
-            variant="flat"
             href={`/${usuario?.rol}/perfil`}
-            isIconOnly
+            variant="flat"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+            <svg
+              className="size-6"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.5}
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </Button>
         </NavbarItem>
         <NavbarItem>
           <Button
+            isIconOnly
             color="danger"
             variant="flat"
             onPress={handleLogoutClick}
-            isIconOnly
           >
             <svg
-              xmlns="http://www.w3.org/2000/svg"
               className="h-6 w-6 text-red-600"
               fill="none"
-              viewBox="0 0 24 24"
               stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
             >
               <path
+                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
               />
             </svg>
           </Button>
@@ -189,11 +218,11 @@ export default function SideMenu() {
         <NavbarMenuItem>
           <Button
             as={Link}
-            href={`/${usuario?.rol}`}
             className="w-full justify-start"
             color="primary"
-            variant="light"
+            href={`/${usuario?.rol}`}
             size="lg"
+            variant="light"
           >
             Inicio
           </Button>
@@ -204,9 +233,9 @@ export default function SideMenu() {
               as={Link}
               className="w-full justify-start"
               href={item.href}
+              size="lg"
               variant="light"
               onPress={handleLinkClick}
-              size="lg"
             >
               {item.label}
             </Button>
@@ -217,14 +246,14 @@ export default function SideMenu() {
           <Button
             className="w-full justify-start"
             color="danger"
+            size="lg"
             variant="light"
             onPress={handleLogoutClick}
-            size="lg"
           >
             Cerrar Sesión
           </Button>
         </NavbarMenuItem>
       </NavbarMenu>
-    </Navbar >
+    </Navbar>
   );
 }

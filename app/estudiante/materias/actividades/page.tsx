@@ -2,7 +2,25 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@apollo/client";
+import { Card, CardBody, CardHeader } from "@heroui/card";
+import { Chip } from "@heroui/chip";
+import { Divider } from "@heroui/divider";
+import { Button } from "@heroui/button";
+import {
+  BookOpen,
+  Search,
+  Filter,
+  Calendar as CalendarIcon,
+  Clock,
+  Activity,
+  XCircle,
+  ArrowLeft,
+  Camera,
+  FileDown,
+} from "lucide-react";
+
 import { useAuth } from "../../../context/AuthContext";
+
 import { OBTENER_AREAS_POR_GRADO } from "@/app/graphql/queries/obtenerAreasPorGrado";
 import { formatearFecha } from "@/helpers/formatearFecha";
 import PDFThumbnail from "@/components/PDFThumbnail";
@@ -27,8 +45,15 @@ interface Actividad {
   area: Area;
 }
 
-// Componente Modal simple para mostrar imágenes
-const ImagenModal = ({ isOpen, onClose, imagen, onPrev, onNext, contador }: {
+// Componente Modal mejorado para mostrar imágenes
+const ImagenModal = ({
+  isOpen,
+  onClose,
+  imagen,
+  onPrev,
+  onNext,
+  contador,
+}: {
   isOpen: boolean;
   onClose: () => void;
   imagen: string;
@@ -39,51 +64,58 @@ const ImagenModal = ({ isOpen, onClose, imagen, onPrev, onNext, contador }: {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
-      onClick={onClose}>
-      <div className="max-w-4xl max-h-[85vh] relative" onClick={e => e.stopPropagation()}>
+    <div
+      className="!mt-0 fixed inset-0 z-50 bg-black/90 flex items-center justify-center backdrop-blur-sm"
+      role="button"
+      onClick={onClose}
+    >
+      <div
+        className="max-w-4xl max-h-[85vh] relative"
+        role="button"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Botón de cierre */}
         <button
-          className="absolute top-2 right-2 z-10 text-white bg-black/50 rounded-full p-2 hover:bg-black/70"
+          className="absolute top-4 right-4 z-10 text-white bg-black/50 rounded-full p-3 hover:bg-black/70 transition-colors"
           onClick={onClose}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <XCircle size={20} />
         </button>
 
         {/* Contador */}
-        <div className="absolute top-2 left-2 text-white bg-black/50 px-3 py-1 rounded-md">
+        <div className="absolute top-4 left-4 text-white bg-black/50 px-4 py-2 rounded-lg font-medium">
           {contador}
         </div>
 
         {/* Imagen */}
         <img
-          src={imagen}
           alt="Imagen ampliada"
-          className="max-h-[80vh] max-w-full object-contain rounded-lg"
+          className="max-h-[80vh] max-w-full object-contain rounded-xl shadow-2xl"
+          src={imagen}
         />
 
         {/* Controles */}
         <div className="absolute inset-y-0 left-0 flex items-center">
           <button
-            className="bg-black/30 text-white p-2 rounded-full hover:bg-black/50 ml-2"
-            onClick={(e) => { e.stopPropagation(); onPrev(); }}
+            className="bg-black/50 text-white p-3 rounded-full hover:bg-black/70 ml-4 transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              onPrev();
+            }}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
+            <ArrowLeft size={20} />
           </button>
         </div>
 
         <div className="absolute inset-y-0 right-0 flex items-center">
           <button
-            className="bg-black/30 text-white p-2 rounded-full hover:bg-black/50 mr-2"
-            onClick={(e) => { e.stopPropagation(); onNext(); }}
+            className="bg-black/50 text-white p-3 rounded-full hover:bg-black/70 mr-4 transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              onNext();
+            }}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
+            <ArrowLeft className="rotate-180" size={20} />
           </button>
         </div>
       </div>
@@ -113,9 +145,43 @@ export default function ActividadesPage() {
   const [fotosGaleria, setFotosGaleria] = useState<string[]>([]);
   const [indiceImagen, setIndiceImagen] = useState(0);
 
+  // Función para obtener color del área
+  const getColorArea = (areaNombre: string) => {
+    const colores: { [key: string]: any } = {
+      ARTES: "secondary",
+      CIENCIAS: "success",
+      CORPORAL: "warning",
+      DANZAS: "secondary",
+      "DIMENSIÓN COGNITIVA": "primary",
+      "DIMENSIÓN ÉTICA": "danger",
+      "EDUCACIÓN FÍSICA": "warning",
+      EMPRENDIMIENTO: "success",
+      "ESTIMULACIÓN LENGUAJE": "secondary",
+      "ESTIMULACIÓN SENSORIAL": "primary",
+      ÉTICA: "danger",
+      FRANCÉS: "secondary",
+      HABILMENTE: "primary",
+      INGLÉS: "danger",
+      LENGUAJE: "secondary",
+      MATEMÁTICAS: "primary",
+      MÚSICA: "secondary",
+      "PLAN LECTOR": "secondary",
+      RELIGIÓN: "warning",
+      SCIENCE: "success",
+      SOCIAL: "warning",
+      SOCIOAFECTIVA: "danger",
+      TECNOLOGÍA: "primary",
+    };
+
+    return colores[areaNombre.toUpperCase()] || "default";
+  };
+
   // Funciones para el modal
   const mostrarImagen = (fotos: string[], indice: number) => {
-    const fotosConKey = fotos.map(foto => `${foto}?${process.env.NEXT_PUBLIC_AZURE_KEY}`);
+    const fotosConKey = fotos.map(
+      (foto) => `${foto}?${process.env.NEXT_PUBLIC_AZURE_KEY}`,
+    );
+
     setFotosGaleria(fotosConKey);
     setIndiceImagen(indice);
     setImagenActual(fotosConKey[indice]);
@@ -127,13 +193,17 @@ export default function ActividadesPage() {
   };
 
   const imagenAnterior = () => {
-    const nuevoIndice = indiceImagen === 0 ? fotosGaleria.length - 1 : indiceImagen - 1;
+    const nuevoIndice =
+      indiceImagen === 0 ? fotosGaleria.length - 1 : indiceImagen - 1;
+
     setIndiceImagen(nuevoIndice);
     setImagenActual(fotosGaleria[nuevoIndice]);
   };
 
   const imagenSiguiente = () => {
-    const nuevoIndice = indiceImagen === fotosGaleria.length - 1 ? 0 : indiceImagen + 1;
+    const nuevoIndice =
+      indiceImagen === fotosGaleria.length - 1 ? 0 : indiceImagen + 1;
+
     setIndiceImagen(nuevoIndice);
     setImagenActual(fotosGaleria[nuevoIndice]);
   };
@@ -144,20 +214,21 @@ export default function ActividadesPage() {
       if (!modalVisible) return;
 
       switch (e.key) {
-        case 'ArrowLeft':
+        case "ArrowLeft":
           imagenAnterior();
           break;
-        case 'ArrowRight':
+        case "ArrowRight":
           imagenSiguiente();
           break;
-        case 'Escape':
+        case "Escape":
           ocultarImagen();
           break;
       }
     };
 
-    window.addEventListener('keydown', manejarTeclas);
-    return () => window.removeEventListener('keydown', manejarTeclas);
+    window.addEventListener("keydown", manejarTeclas);
+
+    return () => window.removeEventListener("keydown", manejarTeclas);
   }, [modalVisible, indiceImagen, fotosGaleria]);
 
   // Obtener áreas disponibles
@@ -206,59 +277,77 @@ export default function ActividadesPage() {
         const nombreNormalizado = normalizarTexto(actividad.nombre);
         const descripcionNormalizada = normalizarTexto(actividad.descripcion);
 
-        return nombreNormalizado.includes(textoBusquedaNormalizado) ||
-          descripcionNormalizada.includes(textoBusquedaNormalizado);
+        return (
+          nombreNormalizado.includes(textoBusquedaNormalizado) ||
+          descripcionNormalizada.includes(textoBusquedaNormalizado)
+        );
       });
     }
 
     if (fechaFiltro) {
       const fechaObj = new Date(fechaFiltro);
+
       fechaObj.setHours(0, 0, 0, 0);
 
       filtradas = filtradas.filter((actividad) => {
         // Convertir el string de timestamp a número
         const timestamp = Number(actividad.fecha);
         const actividadFechaObj = new Date(timestamp);
+
         actividadFechaObj.setHours(0, 0, 0, 0);
 
         // Compara año, mes y día para evitar problemas con zonas horarias
-        return actividadFechaObj.getFullYear() === fechaObj.getFullYear() &&
+        return (
+          actividadFechaObj.getFullYear() === fechaObj.getFullYear() &&
           actividadFechaObj.getMonth() === fechaObj.getMonth() &&
-          actividadFechaObj.getDate() === fechaObj.getDate();
+          actividadFechaObj.getDate() === fechaObj.getDate()
+        );
       });
     }
 
+    setActividadesFiltradas(
+      filtradas.sort((a, b) => {
+        // Primero ordenar por fecha (timestamp)
+        const fechaA = parseInt(a.fecha);
+        const fechaB = parseInt(b.fecha);
 
-    setActividadesFiltradas(filtradas.sort((a, b) => {
-      // Primero ordenar por fecha (timestamp)
-      const fechaA = parseInt(a.fecha);
-      const fechaB = parseInt(b.fecha);
-      
-      if (fechaA !== fechaB) {
-        return fechaB - fechaA; // Orden ascendente por fecha
-      }
-      
-      // Si las fechas son iguales, ordenar por hora y minuto
-      const [horasA, minutosA] = a.hora.split(':').map(Number);
-      const [horasB, minutosB] = b.hora.split(':').map(Number);
-      
-      // Convertir a minutos totales para facilitar la comparación
-      const minutostotalesA = horasA * 60 + minutosA;
-      const minutostotalesB = horasB * 60 + minutosB;
-      
-      return minutostotalesB - minutostotalesA; // Orden ascendente por hora
-    }));  }, [busqueda, fechaFiltro, areaId, actividadesData]);
+        if (fechaA !== fechaB) {
+          return fechaB - fechaA; // Orden ascendente por fecha
+        }
+
+        // Si las fechas son iguales, ordenar por hora y minuto
+        const [horasA, minutosA] = a.hora.split(":").map(Number);
+        const [horasB, minutosB] = b.hora.split(":").map(Number);
+
+        // Convertir a minutos totales para facilitar la comparación
+        const minutostotalesA = horasA * 60 + minutosA;
+        const minutostotalesB = horasB * 60 + minutosB;
+
+        return minutostotalesB - minutostotalesA; // Orden ascendente por hora
+      }),
+    );
+  }, [busqueda, fechaFiltro, areaId, actividadesData]);
 
   // Manejar cambio de área
   const handleAreaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setAreaId(e.target.value);
   };
 
+  // Limpiar filtros
+  const limpiarFiltros = () => {
+    setAreaId("");
+    setBusqueda("");
+    setFechaFiltro("");
+  };
+
   // Mostrar spinner durante la carga
   if (areasLoading || actividadesLoading) {
     return (
-      <div className="flex justify-center items-center min-h-[70vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center min-h-96">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4" />
+          <p className="text-gray-600">Cargando actividades...</p>
+        </div>
       </div>
     );
   }
@@ -266,8 +355,20 @@ export default function ActividadesPage() {
   // Mostrar error si existe
   if (actividadesError) {
     return (
-      <div className="bg-red-100 border border-red-400 text-red-700 p-4 rounded">
-        <p>Error al cargar las actividades. Por favor, intenta de nuevo.</p>
+      <div className="p-4 md:p-6">
+        <Card className="shadow-sm">
+          <CardBody className="text-center py-12">
+            <div className="text-red-500 mb-4">
+              <Activity className="mx-auto" size={48} />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">
+              Error al cargar
+            </h3>
+            <p className="text-gray-600">
+              Error al cargar las actividades. Por favor, intenta de nuevo.
+            </p>
+          </CardBody>
+        </Card>
       </div>
     );
   }
@@ -276,191 +377,286 @@ export default function ActividadesPage() {
   const areas = areasData?.obtenerAreasPorGrado || [];
 
   return (
-    <div className="container mx-auto">
-      <h1 className="text-2xl md:text-3xl font-bold mb-6 text-primary">
-        Actividades
-      </h1>
-
-      {/* Filtros */}
-      <div className="bg-white p-4 rounded-lg shadow mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label
-              htmlFor="area"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Materia
-            </label>
-            <select
-              id="area"
-              value={areaId}
-              onChange={handleAreaChange}
-              className="w-full p-2 border border-gray-300 rounded-md"
-            >
-              <option value="">Todas las materias</option>
-              {areas.map((area: Area) => (
-                <option key={area.id} value={area.id}>
-                  {area.nombre}
-                </option>
-              ))}
-            </select>
+    <div className="space-y-6 p-4 md:p-6">
+      {/* Header */}
+      <Card className="shadow-sm">
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-purple-100 rounded-lg">
+              <Activity className="text-purple-600" size={28} />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">
+                Actividades del Curso
+              </h1>
+              <p className="text-gray-600">
+                Revisa las actividades realizadas en cada materia
+              </p>
+            </div>
           </div>
+        </CardHeader>
+      </Card>
 
-          <div>
-            <label
-              htmlFor="busqueda"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Buscar
-            </label>
-            <input
-              type="text"
-              id="busqueda"
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md"
-              placeholder="Buscar actividades..."
-            />
+      {/* Estadísticas rápidas */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+          <div className="flex items-center gap-3">
+            <Activity className="text-purple-600" size={20} />
+            <div>
+              <div className="text-xl font-bold text-purple-600">
+                {actividadesFiltradas.length}
+              </div>
+              <div className="text-xs text-purple-600">Actividades</div>
+            </div>
           </div>
-
-          <div>
-            <label
-              htmlFor="fecha"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Fecha
-            </label>
-            <input
-              type="date"
-              id="fecha"
-              value={fechaFiltro}
-              onChange={(e) => setFechaFiltro(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md"
-            />
+        </div>
+        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+          <div className="flex items-center gap-3">
+            <BookOpen className="text-blue-600" size={20} />
+            <div>
+              <div className="text-xl font-bold text-blue-600">
+                {new Set(actividadesFiltradas.map((a) => a.area.id)).size}
+              </div>
+              <div className="text-xs text-blue-600">Materias</div>
+            </div>
+          </div>
+        </div>
+        <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+          <div className="flex items-center gap-3">
+            <Camera className="text-green-600" size={20} />
+            <div>
+              <div className="text-xl font-bold text-green-600">
+                {actividadesFiltradas.reduce(
+                  (acc, act) => acc + (act.fotos?.length || 0),
+                  0,
+                )}
+              </div>
+              <div className="text-xs text-green-600">Fotos</div>
+            </div>
+          </div>
+        </div>
+        <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+          <div className="flex items-center gap-3">
+            <FileDown className="text-orange-600" size={20} />
+            <div>
+              <div className="text-xl font-bold text-orange-600">
+                {actividadesFiltradas.reduce(
+                  (acc, act) => acc + (act.pdfs?.length || 0),
+                  0,
+                )}
+              </div>
+              <div className="text-xs text-orange-600">Documentos</div>
+            </div>
           </div>
         </div>
       </div>
 
+      {/* Filtros mejorados */}
+      <Card className="shadow-sm">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between w-full">
+            <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+              <Filter size={20} />
+              Filtros de Búsqueda
+            </h2>
+            <Button
+              color="danger"
+              size="sm"
+              startContent={<XCircle size={16} />}
+              variant="light"
+              onPress={limpiarFiltros}
+            >
+              Limpiar
+            </Button>
+          </div>
+        </CardHeader>
+        <Divider />
+        <CardBody className="pt-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label
+                className="block text-sm font-medium text-gray-700 mb-2"
+                htmlFor="area"
+              >
+                <BookOpen className="inline mr-2" size={16} />
+                Materia
+              </label>
+              <select
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                id="area"
+                value={areaId}
+                onChange={handleAreaChange}
+              >
+                <option value="">Todas las materias</option>
+                {areas.map((area: Area) => (
+                  <option key={area.id} value={area.id}>
+                    {area.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label
+                className="block text-sm font-medium text-gray-700 mb-2"
+                htmlFor="busqueda"
+              >
+                <Search className="inline mr-2" size={16} />
+                Buscar
+              </label>
+              <input
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                id="busqueda"
+                placeholder="Buscar actividades..."
+                type="text"
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label
+                className="block text-sm font-medium text-gray-700 mb-2"
+                htmlFor="fecha"
+              >
+                <CalendarIcon className="inline mr-2" size={16} />
+                Fecha
+              </label>
+              <input
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                id="fecha"
+                type="date"
+                value={fechaFiltro}
+                onChange={(e) => setFechaFiltro(e.target.value)}
+              />
+            </div>
+          </div>
+        </CardBody>
+      </Card>
+
       {/* Lista de actividades */}
       {actividadesFiltradas.length === 0 ? (
-        <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 p-4 rounded text-center">
-          <p>No se encontraron actividades con los filtros seleccionados.</p>
-        </div>
+        <Card className="shadow-sm">
+          <CardBody className="text-center py-12">
+            <Activity className="text-gray-300 mx-auto mb-4" size={64} />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No se encontraron actividades
+            </h3>
+            <p className="text-sm text-gray-600">
+              No hay actividades que coincidan con los filtros seleccionados.
+            </p>
+          </CardBody>
+        </Card>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+            <Activity size={20} />
+            Actividades Encontradas ({actividadesFiltradas.length})
+          </h2>
           {actividadesFiltradas.map((actividad) => (
-            <div
+            <Card
               key={actividad.id}
-              className="bg-white rounded-lg shadow overflow-hidden"
+              className="shadow-sm hover:shadow-md transition-shadow duration-300"
             >
-              <div className="p-5">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h2 className="text-xl font-semibold text-gray-800">
-                      {actividad.nombre}
-                    </h2>
-                    <p className="text-sm text-gray-500 mt-1">
-                      {formatearFechaCompleta(formatearFecha(actividad.fecha))}{" "}<span>{convertirA12Horas(actividad.hora)}</span>
-                    </p>
-                    <p className="text-sm font-medium text-green-600 mt-1">
-                      {actividad.area?.nombre}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-4">
-                  <p className="text-gray-700 break-words">
-                    {actividad.descripcion}
-                  </p>
-                </div>
-
-                {/* Galería con scroll horizontal y flechas de navegación */}
-                {(actividad.fotos?.length > 0 || actividad.pdfs?.length > 0) && (
-                  <div className="mt-4">
-                    <p className="font-medium text-gray-700 mb-2">
-                      {actividad.fotos?.length > 0 && actividad.pdfs?.length > 0
-                        ? "Archivos adjuntos:"
-                        : actividad.fotos?.length > 0
-                          ? "Fotos:"
-                          : "Documentos:"}
-                    </p>
-                    <div className="relative group">
-                      {/* Flecha izquierda */}
-                      <button
-                        className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-1 shadow-md z-10 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          const container = e.currentTarget.nextElementSibling as HTMLElement;
-                          if (container) {
-                            container.scrollBy({ left: -200, behavior: 'smooth' });
-                          }
-                        }}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
-                      </button>
-
-                      {/* Contenedor con scroll horizontal */}
-                      <div
-                        className="flex overflow-x-auto px-2 pb-4 gap-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 snap-x overflow-y-hidden"
-                        style={{ scrollbarWidth: 'thin', msOverflowStyle: 'none', scrollSnapType: 'x mandatory' }}
-                      >
-                        {/* Renderizar fotos */}
-                        {actividad.fotos?.map((foto, index) => (
-                          <div key={`foto-${index}`} className="flex-none w-24 h-24 md:w-32 md:h-32 snap-start">
-                            <img
-                              src={`${foto}?${process.env.NEXT_PUBLIC_AZURE_KEY}`}
-                              alt={`Foto ${index + 1}`}
-                              className="h-full w-full bg-gray-50 p-2 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity"
-                              onClick={() => mostrarImagen(actividad.fotos, index)}
-                            />
-                          </div>
-                        ))}
-
-                        {/* Renderizar PDFs */}
-                        {actividad.pdfs?.map((pdfUrl, index) => (
-                          <div key={`pdf-${index}`} className="flex-none w-24 h-24 md:w-32 md:h-32 snap-start">
-                            <PDFThumbnail
-                              url={pdfUrl}
-                              index={index}
-                            />
-                          </div>
-                        ))}
+              <CardBody className="p-6">
+                <div className="space-y-4">
+                  {/* Header de la actividad */}
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                        {actividad.nombre}
+                      </h3>
+                      <div className="flex items-center gap-4 text-sm text-gray-600 mb-2">
+                        <div className="flex items-center gap-1">
+                          <CalendarIcon size={14} />
+                          <span>
+                            {formatearFechaCompleta(
+                              formatearFecha(actividad.fecha),
+                            )}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Clock size={14} />
+                          <span>{convertirA12Horas(actividad.hora)}</span>
+                        </div>
                       </div>
-
-                      {/* Flecha derecha */}
-                      <button
-                        className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-1 shadow-md z-10 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          const container = e.currentTarget.previousElementSibling as HTMLElement;
-                          if (container) {
-                            container.scrollBy({ left: 200, behavior: 'smooth' });
-                          }
-                        }}
+                      <Chip
+                        className="font-medium"
+                        color={getColorArea(actividad.area?.nombre)}
+                        size="sm"
+                        variant="flat"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </button>
+                        {actividad.area?.nombre}
+                      </Chip>
                     </div>
                   </div>
-                )}
-              </div>
-            </div>
+
+                  {/* Descripción */}
+                  <div>
+                    <p className="text-gray-700">{actividad.descripcion}</p>
+                  </div>
+
+                  {/* Archivos adjuntos */}
+                  {(actividad.fotos?.length > 0 ||
+                    actividad.pdfs?.length > 0) && (
+                    <div>
+                      <p className="font-medium text-gray-700 mb-3 flex items-center gap-2">
+                        {actividad.fotos?.length > 0 && <Camera size={16} />}
+                        {actividad.pdfs?.length > 0 && <FileDown size={16} />}
+                        Archivos adjuntos (
+                        {(actividad.fotos?.length || 0) +
+                          (actividad.pdfs?.length || 0)}
+                        )
+                      </p>
+                      <div className="relative group">
+                        <div className="flex overflow-x-auto gap-4 pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                          {/* Fotos */}
+                          {actividad.fotos?.map((foto, index) => (
+                            <div key={`foto-${index}`} className="flex-none">
+                              <div
+                                className="w-24 h-24 md:w-32 md:h-32 rounded-lg overflow-hidden border-2 border-gray-200 hover:border-gray-300 transition-colors cursor-pointer"
+                                role="button"
+                                onClick={() =>
+                                  mostrarImagen(actividad.fotos, index)
+                                }
+                              >
+                                <img
+                                  alt={`Foto ${index + 1}`}
+                                  className="w-full h-full object-cover hover:scale-105 transition-transform"
+                                  src={`${foto}?${process.env.NEXT_PUBLIC_AZURE_KEY}`}
+                                />
+                              </div>
+                            </div>
+                          ))}
+
+                          {/* PDFs */}
+                          {actividad.pdfs?.map((pdfUrl, index) => (
+                            <div
+                              key={`pdf-${index}`}
+                              className="flex-none w-24 h-24 md:w-32 md:h-32"
+                            >
+                              <PDFThumbnail index={index} url={pdfUrl} />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardBody>
+            </Card>
           ))}
         </div>
       )}
 
       {/* Modal de imagen */}
       <ImagenModal
+        contador={`${indiceImagen + 1} / ${fotosGaleria.length}`}
+        imagen={imagenActual}
         isOpen={modalVisible}
         onClose={ocultarImagen}
-        imagen={imagenActual}
-        onPrev={imagenAnterior}
         onNext={imagenSiguiente}
-        contador={`${indiceImagen + 1} / ${fotosGaleria.length}`}
+        onPrev={imagenAnterior}
       />
     </div>
   );

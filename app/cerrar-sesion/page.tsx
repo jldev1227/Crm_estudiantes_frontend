@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+
 import { useAuth } from "@/app/context/AuthContext";
 
 export default function LogoutPage() {
@@ -14,19 +15,19 @@ export default function LogoutPage() {
 
     // Variable para rastrear si el componente está montado
     let isMounted = true;
-    
+
     // Configurar la cuenta regresiva
     const timer = setInterval(() => {
       if (isMounted) {
         setCountdown((prevCount) => {
           const newCount = prevCount - 1;
-          
+
           // Si la cuenta llegó a 0, limpiamos el intervalo
           // Pero NO hacemos la redirección aquí
           if (newCount <= 0 && isMounted) {
             clearInterval(timer);
           }
-          
+
           return newCount;
         });
       }
@@ -57,17 +58,17 @@ export default function LogoutPage() {
 
         <div className="w-16 h-16 mb-4 mx-auto rounded-full bg-blue-100 flex items-center justify-center">
           <svg
-            xmlns="http://www.w3.org/2000/svg"
             className="h-8 w-8 text-blue-600"
             fill="none"
-            viewBox="0 0 24 24"
             stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
           >
             <path
+              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
               strokeLinecap="round"
               strokeLinejoin="round"
               strokeWidth={2}
-              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
             />
           </svg>
         </div>

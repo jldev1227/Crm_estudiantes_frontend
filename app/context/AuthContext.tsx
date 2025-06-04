@@ -1,31 +1,39 @@
 "use client";
-import { createContext, useReducer, useContext, useEffect } from "react";
-import { useQuery } from "@apollo/client";
-import { OBTENER_TAREAS_ESTUDIANTE } from "@/app/graphql/queries/obtenerTareasEstudiante";
+import {
+  createContext,
+  useReducer,
+  useContext,
+  useEffect,
+  useMemo,
+} from "react";
+import { useQuery, useLazyQuery } from "@apollo/client";
 import { toast, ToastContainer } from "react-toastify";
 import { Toaster } from "react-hot-toast";
-import { OBTENER_PERFIL } from "../graphql/queries/obtenerPerfil";
 
-// 🔹 1. Definir el tipo de usuario
+import { OBTENER_PERFIL } from "../graphql/queries/obtenerPerfil";
+import { OBTENER_PERFIL_USUARIO } from "../graphql/queries/obtenerPerfilUsuario";
+
+import { OBTENER_TAREAS_ESTUDIANTE } from "@/app/graphql/queries/obtenerTareasEstudiante";
+
+// 🔹 Tipos e Interfaces
 interface Usuario {
-  id: string;
+  id: number;
   nombre_completo: string;
   numero_identificacion: string;
-  rol: "maestro" | "estudiante";
+  rol: "maestro" | "estudiante" | "admin";
   fecha_nacimiento?: Date | string;
   celular_padres?: string;
   token: string;
-  grado_id?: string
-  grado_nombre?: string
+  grado_id?: string;
+  grado_nombre?: string;
   tipo_documento?: string;
   email?: string;
   celular?: string;
-}
-
-// Interfaces para tareas
-interface Area {
-  id: string;
-  nombre: string;
+  activo?: boolean;
+  ultimo_login?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  pension_activa?: boolean;
 }
 
 interface Tarea {
@@ -33,342 +41,380 @@ interface Tarea {
   nombre: string;
   descripcion: string;
   fecha: string;
-  fechaEntrega: string; // Timestamp o formato ISO
+  fechaEntrega: string;
   estado: string;
   fotos: string[];
   pdfs: string[];
-  area: Area;
+  area: { id: string; nombre: string };
 }
 
-// 🔹 2. Estado inicial del AuthContext
 interface AuthState {
   usuario: Usuario | null;
-  login: (usuario: Usuario) => void;
-  logout: () => void;
-  actualizarUsuario: (datosActualizados: Partial<Usuario>) => void;
+  estaCargando: boolean;
+  error: string | null;
 }
 
+interface AuthContextType extends AuthState {
+  login: (usuario: Usuario) => void;
+  logout: () => void;
+  actualizarUsuario: (datos: Partial<Usuario>) => void;
+  pensionActiva: boolean;
+  puedeRealizarOperaciones: boolean;
+}
+
+// 🔹 Estados y Acciones
 const initialState: AuthState = {
   usuario: null,
-  login: () => { },
-  logout: () => { },
-  actualizarUsuario: () => { },
+  estaCargando: true,
+  error: null,
 };
 
-// 🔹 3. Crear el contexto
-const AuthContext = createContext<AuthState>(initialState);
-
-// Tipos para las acciones del reducer
 type AuthAction =
   | { type: "LOGIN"; payload: Usuario }
   | { type: "LOGOUT" }
-  | { type: "ACTUALIZAR_USUARIO"; payload: Partial<Usuario> };
+  | { type: "ACTUALIZAR_USUARIO"; payload: Partial<Usuario> }
+  | { type: "SET_LOADING"; payload: boolean }
+  | { type: "SET_ERROR"; payload: string | null };
 
-// 🔹 4. Reducer para manejar el estado de autenticación
+// 🔹 Reducer simplificado (solo guarda token, no usuario completo)
 const authReducer = (state: AuthState, action: AuthAction): AuthState => {
   switch (action.type) {
-
     case "LOGIN":
-      if(action.payload.token){
+      // Solo guardar token en localStorage, no el usuario completo
+      if (action.payload.token) {
         localStorage.setItem("token", action.payload.token);
+        // Guardar rol temporalmente para la próxima carga (solo para saber qué query ejecutar)
+        localStorage.setItem(
+          "usuario",
+          JSON.stringify({ rol: action.payload.rol }),
+        );
       }
-      localStorage.setItem("usuario", JSON.stringify(action.payload));
-      return { ...state, usuario: action.payload };
+
+      return {
+        ...state,
+        usuario: action.payload,
+        estaCargando: false,
+        error: null,
+      };
+
     case "LOGOUT":
       localStorage.removeItem("token");
       localStorage.removeItem("usuario");
-      return { ...state, usuario: null };
+
+      return {
+        ...state,
+        usuario: null,
+        estaCargando: false,
+        error: null,
+      };
+
     case "ACTUALIZAR_USUARIO":
-      const usuarioActualizado = { ...state.usuario, ...action.payload } as Usuario;
-      localStorage.setItem("usuario", JSON.stringify(usuarioActualizado));
-      return { ...state, usuario: usuarioActualizado };
+      const usuarioActualizado = {
+        ...state.usuario,
+        ...action.payload,
+      } as Usuario;
+
+      // Solo actualizar rol en localStorage si es necesario
+      if (action.payload.rol) {
+        localStorage.setItem(
+          "usuario",
+          JSON.stringify({ rol: action.payload.rol }),
+        );
+      }
+
+      return {
+        ...state,
+        usuario: usuarioActualizado,
+        error: null,
+      };
+
+    case "SET_LOADING":
+      return { ...state, estaCargando: action.payload };
+
+    case "SET_ERROR":
+      return { ...state, error: action.payload };
+
     default:
       return state;
   }
 };
 
-/**
- * Obtiene la fecha actual en Bogotá (Colombia) en formato YYYY-MM-DD
- */
-const getTodayInBogota = (): string => {
-  // Crear objeto Date con la hora actual
-  const now = new Date();
-
-  // Formatear la fecha a YYYY-MM-DD
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
+// 🔹 Utilidades de fecha simplificadas
+const getTodayString = (): string => {
+  return new Date().toISOString().split("T")[0];
 };
 
-/**
- * Obtiene la fecha de un timestamp o fecha ISO en formato UTC y la ajusta para que 
- * corresponda con la fecha almacenada en la base de datos
- */
-const getDateFromInputFixed = (dateInput: string): Date => {
-  let date: Date;
-
-  // Si es un timestamp numérico (como string)
+const parseDate = (dateInput: string): Date => {
+  // Manejar timestamp numérico
   if (/^\d+$/.test(dateInput)) {
-    const timestamp = parseInt(dateInput, 10);
-    date = new Date(timestamp);
+    return new Date(parseInt(dateInput, 10));
+  }
 
-    // Crear una nueva fecha usando los componentes UTC para preservar la fecha correcta
-    return new Date(Date.UTC(
-      date.getUTCFullYear(),
-      date.getUTCMonth(),
-      date.getUTCDate()
-    ));
-  }
-  // Si es una fecha ISO
-  else if (dateInput.includes('T') || dateInput.includes('+')) {
-    // Crear la fecha a partir de la cadena ISO
-    date = new Date(dateInput);
-
-    // Usar los componentes UTC para preservar la fecha
-    return new Date(Date.UTC(
-      date.getUTCFullYear(),
-      date.getUTCMonth(),
-      date.getUTCDate()
-    ));
-  }
-  // Si es formato YYYY-MM-DD
-  else if (dateInput.match(/^\d{4}-\d{2}-\d{2}/)) {
-    // Extraer componentes
-    const parts = dateInput.split('-');
-    const year = parseInt(parts[0], 10);
-    const month = parseInt(parts[1], 10) - 1; // Meses en JS son 0-11
-    const day = parseInt(parts[2], 10);
-
-    // Crear fecha usando UTC
-    return new Date(Date.UTC(year, month, day));
-  }
-  // Cualquier otro formato
-  else {
-    date = new Date(dateInput);
-    return date;
-  }
+  // Formato estándar
+  return new Date(dateInput);
 };
 
-/**
- * Extrae la parte de fecha (YYYY-MM-DD) de un objeto Date usando UTC
- */
-const formatToYYYYMMDD = (date: Date): string => {
-  // Usar componentes UTC para que coincida con la fecha de la base de datos
-  const year = date.getUTCFullYear();
-  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-  const day = String(date.getUTCDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+const getDaysDifference = (futureDate: string, currentDate: string): number => {
+  const future = new Date(futureDate);
+  const current = new Date(currentDate);
+  const diffTime = future.getTime() - current.getTime();
+
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 };
 
-// 🔹 5. Proveedor del contexto
+// 🔹 Contexto
+const AuthContext = createContext<AuthContextType | null>(null);
+
+// 🔹 Provider Principal
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
+  // 🔹 Valores computados
+  const pensionActiva = useMemo(() => {
+    if (!state.usuario || state.usuario.rol !== "estudiante") return true;
 
-  const { data } = useQuery(OBTENER_PERFIL, {
-    fetchPolicy: "network-only"
-  });
+    return state.usuario.pension_activa !== false;
+  }, [state.usuario]);
 
-  useEffect(() => {
-    if (data?.obtenerPerfil) {
-      const usuario = data.obtenerPerfil;
-      
-      // Determinar el tipo basado en campos específicos
-      if (usuario.grado) {
-        // Es un Estudiante
-        dispatch({ 
-          type: "LOGIN", 
-          payload: {
-            ...usuario,
-            grado_id: usuario.grado.id,
-            grado_nombre: usuario.grado.nombre,
-            rol: "estudiante"
-          } 
-        });
-      } else {
-        // Es un Maestro
-        dispatch({ 
-          type: "LOGIN", 
-          payload: {
-            ...usuario,
-            rol: "maestro"
-          } 
-        });
-      }
-    }
-  }, [data]);
+  const puedeRealizarOperaciones = useMemo(() => {
+    if (!state.usuario || state.usuario.rol !== "estudiante") return true;
 
-  // Verificar si el usuario es un estudiante
+    return pensionActiva;
+  }, [state.usuario, pensionActiva]);
+
   const isEstudiante = state.usuario?.rol === "estudiante";
 
-  // Consulta GraphQL para obtener tareas solo si el usuario es estudiante
-  const { data: tareasData } = useQuery(OBTENER_TAREAS_ESTUDIANTE, {
-    variables: {
-      gradoId: isEstudiante ? state.usuario?.grado_id || "" : "",
-      areaId: null // Para obtener todas las áreas
+  // 🔹 Inicialización solo con token (datos frescos del servidor)
+  useEffect(() => {
+    const initializeAuth = () => {
+      try {
+        const token = localStorage.getItem("token");
+
+        if (token) {
+          // Solo verificamos que hay token, los datos se obtienen del servidor
+          dispatch({ type: "SET_LOADING", payload: true });
+          // El useEffect de consultas GraphQL se encargará de obtener los datos
+        } else {
+          // No hay token, no hay usuario autenticado
+          dispatch({ type: "SET_LOADING", payload: false });
+        }
+      } catch (error) {
+        console.error("Error al verificar token:", error);
+        dispatch({
+          type: "SET_ERROR",
+          payload: "Error al verificar autenticación",
+        });
+        dispatch({ type: "SET_LOADING", payload: false });
+      }
+    };
+
+    initializeAuth();
+  }, []);
+
+  // 🔹 Verificación de pensión para estudiantes
+  useEffect(() => {
+    const pathname = window.location.pathname;
+    const rutasPermitidas = ["/ingreso", "/pension-inactiva"];
+
+    if (
+      isEstudiante &&
+      !pensionActiva &&
+      !rutasPermitidas.some((ruta) => pathname.includes(ruta))
+    ) {
+      const error = new Error("Pensión inactiva");
+
+      throw error;
+    }
+  }, [pensionActiva, isEstudiante]);
+
+  // 🔹 Consultas GraphQL con lazy loading
+  const [obtenerPerfil] = useLazyQuery(OBTENER_PERFIL, {
+    fetchPolicy: "network-only",
+    onCompleted: (data) => {
+      if (data?.obtenerPerfil) {
+        const usuario = data.obtenerPerfil;
+        const updatedUser = usuario.grado
+          ? {
+              ...usuario,
+              grado_id: usuario.grado.id,
+              grado_nombre: usuario.grado.nombre,
+              rol: "estudiante",
+            }
+          : { ...usuario, rol: "maestro" };
+
+        dispatch({ type: "LOGIN", payload: updatedUser });
+      }
     },
-    skip: !isEstudiante, // Solo ejecutar si el usuario es estudiante
-    fetchPolicy: "network-only"
+    onError: (error) => {
+      console.error("Error al obtener perfil:", error);
+      dispatch({ type: "SET_ERROR", payload: "Error al cargar perfil" });
+    },
   });
 
-  // Efecto para mostrar notificaciones de tareas pendientes solo para estudiantes
+  const [obtenerPerfilUsuario] = useLazyQuery(OBTENER_PERFIL_USUARIO, {
+    fetchPolicy: "network-only",
+    onCompleted: (data) => {
+      if (data?.obtenerPerfilUsuario?.rol === "admin") {
+        dispatch({
+          type: "LOGIN",
+          payload: { ...data.obtenerPerfilUsuario, rol: "admin" },
+        });
+      }
+    },
+    onError: (error) => {
+      console.error("Error al obtener perfil admin:", error);
+      dispatch({
+        type: "SET_ERROR",
+        payload: "Error al cargar perfil de administrador",
+      });
+    },
+  });
+
+  // 🔹 Ejecutar consultas automáticamente si hay token
   useEffect(() => {
-    // Solo proceder si el usuario es estudiante y tenemos datos de tareas
-    if (!isEstudiante || !tareasData?.obtenerTareasEstudiante) return;
+    const token = localStorage.getItem("token");
+
+    if (token) {
+      // Obtener datos frescos del servidor basado en el token
+      const savedUser = localStorage.getItem("usuario");
+      const isAdminFromStorage = savedUser
+        ? JSON.parse(savedUser).rol === "admin"
+        : false;
+
+      if (isAdminFromStorage) {
+        obtenerPerfilUsuario();
+      } else {
+        obtenerPerfil();
+      }
+    }
+  }, []); // Solo al montar el componente
+
+  // 🔹 Consulta de tareas para estudiantes
+  const { data: tareasData } = useQuery(OBTENER_TAREAS_ESTUDIANTE, {
+    variables: {
+      gradoId: state.usuario?.grado_id || "",
+      areaId: null,
+    },
+    skip: !isEstudiante || !puedeRealizarOperaciones,
+    fetchPolicy: "network-only",
+    onError: (error) => {
+      if (pensionActiva) {
+        console.error("Error al obtener tareas:", error);
+        dispatch({ type: "SET_ERROR", payload: "Error al cargar tareas" });
+      }
+    },
+  });
+
+  // 🔹 Notificaciones de tareas
+  useEffect(() => {
+    if (
+      !isEstudiante ||
+      !puedeRealizarOperaciones ||
+      !tareasData?.obtenerTareasEstudiante
+    ) {
+      return;
+    }
 
     const tareas = tareasData.obtenerTareasEstudiante as Tarea[];
+    const hoy = getTodayString();
 
-    // Obtener la fecha actual en Bogotá
-    const hoyString = getTodayInBogota();
+    // Filtrar tareas pendientes por días
+    const tareasPorDias: Record<number, Tarea[]> = {};
 
-    // Convertir a objeto Date para comparaciones
-    const hoyDate = new Date(`${hoyString}T00:00:00`);
+    tareas
+      .filter((tarea) => tarea.estado !== "ENTREGADA")
+      .forEach((tarea) => {
+        try {
+          const fechaEntrega = parseDate(tarea.fechaEntrega)
+            .toISOString()
+            .split("T")[0];
+          const dias = getDaysDifference(fechaEntrega, hoy);
 
-    // Filtrar tareas pendientes o por entregar próximamente
-    const tareasPendientes = tareas.filter(tarea => {
-      try {
-        // Obtener la fecha de entrega ajustada para que coincida con la BD
-        const fechaEntregaDate = getDateFromInputFixed(tarea.fechaEntrega);
+          if (dias >= 0 && dias <= 3) {
+            if (!tareasPorDias[dias]) tareasPorDias[dias] = [];
+            tareasPorDias[dias].push(tarea);
+          }
+        } catch (error) {
+          console.error("Error al procesar fecha de tarea:", error);
+        }
+      });
 
-        // Extraer solo la parte de fecha para comparación
-        const fechaEntregaString = formatToYYYYMMDD(fechaEntregaDate);
+    // Mostrar notificaciones
+    Object.entries(tareasPorDias).forEach(([dias, tareas]) => {
+      const numDias = parseInt(dias);
+      const esHoy = numDias === 0;
+      const mensaje = esHoy
+        ? `¡Tienes ${tareas.length} tarea${tareas.length > 1 ? "s" : ""} para entregar HOY!`
+        : `Tienes ${tareas.length} tarea${tareas.length > 1 ? "s" : ""} para entregar en ${numDias} día${numDias > 1 ? "s" : ""}`;
 
-        // Para comparación, usar objetos Date normalizados a medianoche
-        const fechaEntregaComparable = new Date(`${fechaEntregaString}T00:00:00`);
+      const toastType = esHoy ? toast.error : toast.info;
 
-        // Calcular la diferencia de días
-        const diferenciaMilisegundos = fechaEntregaComparable.getTime() - hoyDate.getTime();
-        const diferenciaDias = Math.floor(diferenciaMilisegundos / (1000 * 60 * 60 * 24));
-
-        // Incluir tareas que vencen hoy o en los próximos 3 días y no estén entregadas
-        return diferenciaDias >= 0 && tarea.estado !== "ENTREGADA";
-      } catch (error) {
-        console.error("Error al procesar fecha de tarea:", error);
-        return false;
-      }
-    });
-
-    // Mostrar notificaciones para tareas que vencen hoy
-    const tareasHoy = tareasPendientes.filter(tarea => {
-      try {
-        const fechaEntregaDate = getDateFromInputFixed(tarea.fechaEntrega);
-        const fechaEntregaString = formatToYYYYMMDD(fechaEntregaDate);
-        return fechaEntregaString === hoyString;
-      } catch (error) {
-        return false;
-      }
-    });
-
-    if (tareasHoy.length > 0) {
-      toast.error(
+      toastType(
         <div>
-          <strong>¡Tienes {tareasHoy.length} {tareasHoy.length === 1 ? 'tarea' : 'tareas'} para entregar HOY!</strong>
+          <strong>{mensaje}</strong>
           <ul className="mt-2 list-disc pl-4">
-            {tareasHoy.map(tarea => (
+            {tareas.map((tarea) => (
               <li key={tarea.id}>
                 {tarea.nombre} - {tarea.area.nombre}
               </li>
             ))}
           </ul>
         </div>,
-        { autoClose: 12000, closeOnClick: false }
+        { autoClose: 12000, closeOnClick: false },
       );
-    }
-
-    // Mostrar notificaciones para tareas que vencen pronto (pero no hoy)
-    const tareasProntoVencer = tareasPendientes.filter(tarea => {
-      try {
-        const fechaEntregaDate = getDateFromInputFixed(tarea.fechaEntrega);
-        const fechaEntregaString = formatToYYYYMMDD(fechaEntregaDate);
-        return fechaEntregaString > hoyString;
-      } catch (error) {
-        return false;
-      }
     });
+  }, [tareasData, isEstudiante, puedeRealizarOperaciones]);
 
-    if (tareasProntoVencer.length > 0) {
-      // Agrupar tareas por días restantes
-      const tareasPorDia: Record<string, Tarea[]> = {};
-
-
-      tareasProntoVencer.forEach(tarea => {
-        try {
-          const fechaEntregaDate = getDateFromInputFixed(tarea.fechaEntrega);
-          const fechaEntregaString = formatToYYYYMMDD(fechaEntregaDate);
-
-          // Para comparación, usar objetos Date normalizados a medianoche
-          const fechaEntregaComparable = new Date(`${fechaEntregaString}T00:00:00`);
-
-          const diferenciaDias = Math.floor(
-            (fechaEntregaComparable.getTime() - hoyDate.getTime()) / (1000 * 60 * 60 * 24)
-          );
-
-          const key = diferenciaDias.toString();
-          if (!tareasPorDia[key]) {
-            tareasPorDia[key] = [];
-          }
-
-          tareasPorDia[key].push(tarea);
-        } catch (error) {
-          console.error("Error al agrupar tarea:", error);
-        }
-      });
-
-      // Mostrar notificación por cada grupo de días
-      Object.keys(tareasPorDia).forEach(dias => {
-        const tareas = tareasPorDia[dias];
-
-        toast.info(
-          <div>
-            <strong>
-              Tienes {tareas.length} {tareas.length === 1 ? 'tarea' : 'tareas'} para entregar en {dias} {dias === '1' ? 'día' : 'días'}
-            </strong>
-            <ul className="mt-2 list-disc pl-4">
-              {tareas.map(tarea => (
-                <li key={tarea.id}>
-                  {tarea.nombre} - {tarea.area.nombre}
-                </li>
-              ))}
-            </ul>
-          </div>,
-          { autoClose: 12000, closeOnClick: false }
-        );
-      });
-    }
-  }, [tareasData, isEstudiante]);
-
+  // 🔹 Funciones del contexto
+  const contextValue: AuthContextType = {
+    ...state,
+    pensionActiva,
+    puedeRealizarOperaciones,
+    login: (user) => dispatch({ type: "LOGIN", payload: user }),
+    logout: () => dispatch({ type: "LOGOUT" }),
+    actualizarUsuario: (datos) =>
+      dispatch({ type: "ACTUALIZAR_USUARIO", payload: datos }),
+  };
 
   return (
     <>
-      <AuthContext.Provider
-        value={{
-          usuario: state.usuario,
-          login: (user) => dispatch({ type: "LOGIN", payload: user }),
-          logout: () => dispatch({ type: "LOGOUT" }),
-          actualizarUsuario: (datosActualizados) =>
-            dispatch({ type: "ACTUALIZAR_USUARIO", payload: datosActualizados }),
-        }}
-      >
+      <AuthContext.Provider value={contextValue}>
         {children}
       </AuthContext.Provider>
       <Toaster position="top-right" />
-
       <ToastContainer
-        position="top-right"
+        closeOnClick
+        draggable
+        newestOnTop
+        pauseOnFocusLoss
+        pauseOnHover
         autoClose={12000}
         hideProgressBar={false}
-        newestOnTop
-        closeOnClick
+        position="top-right"
         rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
         theme="colored"
       />
     </>
   );
 }
-// 🔹 6. Hook para usar el contexto en cualquier parte de la app
-export const useAuth = () => useContext(AuthContext);
+
+// 🔹 Hooks y HOCs
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+
+  if (!context) {
+    throw new Error("useAuth debe usarse dentro de AuthProvider");
+  }
+
+  return context;
+};
+
+export const useConditionedQuery = (query: any, options: any = {}) => {
+  const { usuario, puedeRealizarOperaciones } = useAuth();
+  const shouldSkip = usuario?.rol === "estudiante" && !puedeRealizarOperaciones;
+
+  return useQuery(query, {
+    ...options,
+    skip: shouldSkip || options.skip,
+  });
+};

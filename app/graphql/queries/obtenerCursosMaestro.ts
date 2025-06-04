@@ -7,6 +7,10 @@ export const OBTENER_CURSOS_MAESTRO = gql`
       grado {
         id
         nombre
+        director {
+          id
+          nombre_completo
+        }
       }
       area {
         id

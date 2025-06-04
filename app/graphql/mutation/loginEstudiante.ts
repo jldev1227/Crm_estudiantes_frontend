@@ -24,6 +24,7 @@ export const LOGIN_ESTUDIANTE = gql`
         grado {
           nombre
         }
+        pension_activa
       }
     }
   }

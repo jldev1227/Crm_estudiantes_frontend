@@ -11,6 +11,7 @@ export const OBTENER_CURSO = gql`
         numero_identificacion
         nombre_completo
         celular_padres
+        fecha_nacimiento
         grado_id
       }
       area {
