@@ -13,7 +13,6 @@ import {
   DropdownItem,
 } from "@heroui/dropdown";
 import { Chip } from "@heroui/chip";
-import { EditIcon, EyeIcon } from "lucide-react";
 
 import { Maestro } from "@/types";
 import TablaMaestros from "@/components/TablaMaestros";

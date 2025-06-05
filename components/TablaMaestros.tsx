@@ -1,8 +1,6 @@
 "use client";
 
-import { Button } from "@heroui/button";
 import { Pagination } from "@heroui/pagination";
-import { EditIcon, EyeIcon } from "lucide-react";
 import React from "react";
 
 import { Maestro } from "@/types";
@@ -66,7 +64,7 @@ export default function TablaMaestros({
         key: "celular",
         label: "CELULAR",
         sortable: false,
-      }
+      },
     ];
 
     return baseColumns;

@@ -13,11 +13,13 @@ import {
   ChevronDown,
   X,
   RefreshCw,
+  AlertTriangle, // ✅ Agregado para el icono de alerta
 } from "lucide-react";
 
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useEstudiante } from "@/app/context/EstudianteContext";
 import { Calificacion, Nota } from "@/types";
+import { useAuth } from "@/app/context/AuthContext";
 
 interface MapaCalificaciones {
   [key: string]: Calificacion;
@@ -26,6 +28,7 @@ interface MapaCalificaciones {
 export default function CalificacionesPage() {
   const periodos = [1, 2, 3, 4];
   const router = useRouter();
+  const { usuario } = useAuth();
   const { areas, obtenerCalificaciones, cargandoCalificaciones } =
     useEstudiante();
 
@@ -46,13 +49,20 @@ export default function CalificacionesPage() {
       setLoading(true);
       setError(null);
 
+      // Validación de permisos para ver calificaciones
+      if (!usuario?.ver_calificaciones) {
+        const errorMessage =
+          "No tiene acceso a las calificaciones. Para cualquier duda, comuníquese con el área administrativa.";
+
+        console.error(errorMessage);
+        throw new Error(errorMessage);
+      }
+
       if (!areas || areas.length === 0) {
         console.log("No hay áreas disponibles aún");
 
         return;
       }
-
-      console.log("Cargando todas las calificaciones...");
 
       // ✅ Tipado correcto del mapa
       const mapaCalificaciones: MapaCalificaciones = {};
@@ -61,8 +71,6 @@ export default function CalificacionesPage() {
       for (const periodo of periodos) {
         for (const area of areas) {
           try {
-            // ✅ ASEGURAR QUE obtenerCalificaciones RETORNE DATOS
-            // Si obtenerCalificaciones no retorna nada, necesitas modificarla o usar otra función
             const calificacionArea = await obtenerCalificaciones(
               area.id,
               periodo,
@@ -113,6 +121,7 @@ export default function CalificacionesPage() {
               `Error obteniendo calificaciones para área ${area.nombre}, período ${periodo}:`,
               areaError,
             );
+            // Continuar con las siguientes áreas en lugar de fallar completamente
           }
         }
       }
@@ -128,9 +137,60 @@ export default function CalificacionesPage() {
       setInicializado(true);
     } catch (err) {
       console.error("Error general cargando todas las calificaciones:", err);
-      setError(
-        "Error al cargar las calificaciones. Por favor, intenta de nuevo.",
-      );
+
+      // Manejo específico de diferentes tipos de errores
+      let errorMessage =
+        "Error al cargar las calificaciones. Por favor, intenta de nuevo.";
+
+      if (err instanceof Error) {
+        // Si es un error de permisos, mantener el mensaje original
+        if (err.message.includes("No tiene acceso a las calificaciones")) {
+          errorMessage = err.message;
+        }
+        // Si es un error de red/conexión
+        else if (
+          err.message.includes("NetworkError") ||
+          err.message.includes("fetch")
+        ) {
+          errorMessage =
+            "Error de conexión. Verifique su conexión a internet e intente nuevamente.";
+        }
+        // Si es un error de GraphQL
+        else if (err.message.includes("GraphQL")) {
+          errorMessage =
+            "Error en el servidor. Por favor, contacte al área de soporte técnico.";
+        }
+        // Error genérico con información adicional para desarrollo
+        else {
+          errorMessage = `Error al cargar las calificaciones: ${err.message}`;
+          console.error("Detalles del error:", {
+            message: err.message,
+            stack: err.stack,
+            name: err.name,
+          });
+        }
+      }
+      // Si no es una instancia de Error (puede ser un objeto de error de GraphQL)
+      else if (typeof err === "object" && err !== null) {
+        console.error("Error objeto:", err);
+        if ("networkError" in err) {
+          errorMessage =
+            "Error de conexión. Verifique su conexión a internet e intente nuevamente.";
+        } else if (
+          "graphQLErrors" in err &&
+          Array.isArray(err.graphQLErrors) &&
+          err.graphQLErrors.length > 0
+        ) {
+          errorMessage =
+            "Error en el servidor. Por favor, contacte al área de soporte técnico.";
+          console.error("Errores GraphQL:", err.graphQLErrors);
+        }
+      }
+
+      setError(errorMessage);
+
+      // Opcional: Reportar error a servicio de monitoreo
+      // reportError(err);
     } finally {
       setLoading(false);
     }
@@ -249,6 +309,7 @@ export default function CalificacionesPage() {
     setAreaSeleccionada(nuevaArea);
   };
 
+  // ✅ Función actualizada para manejar el estado de reintento
   const actualizarCalificaciones = async () => {
     setInicializado(false);
     await cargarTodasCalificaciones();
@@ -277,21 +338,68 @@ export default function CalificacionesPage() {
   if (error) {
     return (
       <ProtectedRoute>
-        <div className="bg-white min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <div className="text-red-500 mb-4">
-              <BookOpen className="mx-auto" size={48} />
+        <div className="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen flex items-center justify-center p-4">
+          <div className="text-center max-w-md mx-auto">
+            {/* Icono animado */}
+            <div className="relative">
+              <div className="flex w-20 h-20 mx-auto bg-red-50 rounded-full p-4 mb-6 shadow-lg">
+                <div className="relative mx-auto">
+                  <BookOpen className="text-red-500" size={48} />
+                  <div className="absolute -top-1 -right-1 bg-red-500 rounded-full p-1">
+                    <AlertTriangle className="text-white" size={16} />
+                  </div>
+                </div>
+              </div>
+              {/* Círculos decorativos */}
+              <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-2">
+                <div className="w-2 h-2 bg-red-300 rounded-full animate-pulse" />
+              </div>
             </div>
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">
-              Error al cargar
+
+            {/* Título */}
+            <h3 className="text-2xl font-bold text-gray-800 mb-3">
+              Oops, algo salió mal
             </h3>
-            <p className="text-gray-600 mb-4">{error}</p>
-            <button
-              className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
-              onClick={actualizarCalificaciones}
-            >
-              Reintentar
-            </button>
+
+            {/* Mensaje de error */}
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+              <p className="text-red-700 text-sm leading-relaxed">{error}</p>
+            </div>
+
+            <div className="flex flex-col gap-5">
+              {/* Botón de reintento */}
+              <button
+                className="
+                  group relative px-6 py-3 bg-red-500 text-white rounded-lg font-medium
+                  transition-all duration-200 transform hover:scale-105 hover:bg-red-600
+                  focus:outline-none focus:ring-4 focus:ring-red-200 active:scale-95
+                  disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
+                  cursor-pointer}
+                "
+                onClick={() => window.location.reload()}
+              >
+                <div className="flex items-center justify-center space-x-2">
+                  <RefreshCw
+                    className="transition-transform duration-200 group-hover:rotate-180"
+                    size={20}
+                  />
+                  <span>Reintentar</span>
+                </div>
+              </button>
+
+              {/* Botón de reintento */}
+              <button onClick={() => router.back()}>
+                <div className="flex items-center justify-center space-x-2">
+                  <ArrowLeft size={20} />
+                  <span>Volver</span>
+                </div>
+              </button>
+
+              {/* Texto de ayuda */}
+            </div>
+            <p className="text-gray-500 text-sm mt-4">
+              Si el problema persiste, contacte al administrador
+            </p>
           </div>
         </div>
       </ProtectedRoute>
@@ -303,7 +411,7 @@ export default function CalificacionesPage() {
       <div className="bg-white min-h-screen p-4">
         {/* Header */}
         <div className="max-w-4xl mx-auto mb-6">
-          <div className="flex flex-col items-center gap-4 mb-6">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
             <div className="flex items-center gap-4">
               <button
                 className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"

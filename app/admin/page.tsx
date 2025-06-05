@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { useRouter } from "next/navigation";
-import { GraduationCap, BookOpen, Users, User, ChevronRight, CheckSquare } from "lucide-react";
+import { GraduationCap, User, ChevronRight } from "lucide-react";
 
 export default function CourseManagementWelcome() {
   const router = useRouter();
@@ -45,9 +45,7 @@ export default function CourseManagementWelcome() {
             <User className="text-gray-500" size={48} />
           </div>
           <div className="flex-grow text-center">
-            <h2 className="text-2xl font-bold mb-2 text-gray-800">
-              Maestros
-            </h2>
+            <h2 className="text-2xl font-bold mb-2 text-gray-800">Maestros</h2>
             <p className="text-gray-600">
               Administra la informacion de los maestros
             </p>

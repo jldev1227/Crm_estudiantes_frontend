@@ -167,7 +167,7 @@ export default function PerfilEstudiantePage() {
       <div className="py-10 px-4">
         <div className="max-w-3xl mx-auto bg-white shadow-xl rounded-2xl overflow-hidden">
           {/* Encabezado del Perfil */}
-          <div className="bg-primary-500 text-white p-6 flex flex-col sm:flex-row gap-5 justify-center items-center sm:space-x-6">
+          <div className="bg-gradient-to-r from-primary-400 to-primary-600 text-white p-6 flex flex-col sm:flex-row gap-5 justify-center items-center sm:space-x-6">
             <div className="bg-white bg-opacity-20 rounded-full p-4">
               <User className="text-white" size={64} />
             </div>

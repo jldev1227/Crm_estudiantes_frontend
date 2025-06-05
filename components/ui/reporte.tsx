@@ -6,6 +6,7 @@ import {
   Document,
   StyleSheet,
   pdf,
+  Image,
 } from "@react-pdf/renderer";
 
 import { Area, Calificacion, Estudiante, Maestro } from "@/types";
@@ -367,12 +368,11 @@ export const ReporteEstudiantePDF = ({
             flexDirection: "row",
             alignItems: "center",
             backgroundColor: "#4e70be",
-            padding: 10,
+            padding: 15,
           }}
         >
-          <img
-            alt="Logo del Gimnasio Vancouver"
-            src={"/LOGO.png"}
+          <Image
+            src={"/LOGO-WHITE.png"}
             style={{
               width: 100,
               height: 100,

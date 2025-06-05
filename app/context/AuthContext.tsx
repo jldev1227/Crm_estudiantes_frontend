@@ -34,6 +34,7 @@ interface Usuario {
   createdAt?: string;
   updatedAt?: string;
   pension_activa?: boolean;
+  ver_calificaciones?: boolean;
 }
 
 interface Tarea {

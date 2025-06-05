@@ -16,6 +16,7 @@ export const OBTENER_PERFIL = gql`
           nombre
         }
         pension_activa
+        ver_calificaciones
       }
       ... on Maestro {
         id
