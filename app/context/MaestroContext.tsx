@@ -118,8 +118,6 @@ export function MaestroProvider({ children }: { children: React.ReactNode }) {
         },
       });
 
-      console.log(data);
-
       return data.obtenerCursoGeneral;
     } catch (error) {
       console.error("Error obteniendo curso:", error);
@@ -151,7 +149,6 @@ export function MaestroProvider({ children }: { children: React.ReactNode }) {
   };
 
   const obtenerCalificacionesEstudiante = async (estudianteId: string) => {
-    console.log("estudiante", estudianteId);
     try {
       if (!estudianteId) {
         console.warn("Faltan datos del estudiante para obtener calificaciones");
@@ -164,8 +161,6 @@ export function MaestroProvider({ children }: { children: React.ReactNode }) {
           estudiante_id: estudianteId,
         },
       });
-
-      console.log(data);
 
       return data?.obtenerCalificacionEstudiante || null;
     } catch (error) {

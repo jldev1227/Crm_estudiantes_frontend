@@ -59,6 +59,7 @@ interface AuthContextType extends AuthState {
   login: (usuario: Usuario) => void;
   logout: () => void;
   actualizarUsuario: (datos: Partial<Usuario>) => void;
+  actualizarPermisosCalificaciones: (estado: boolean) => void;
   pensionActiva: boolean;
   puedeRealizarOperaciones: boolean;
 }
@@ -74,6 +75,7 @@ type AuthAction =
   | { type: "LOGIN"; payload: Usuario }
   | { type: "LOGOUT" }
   | { type: "ACTUALIZAR_USUARIO"; payload: Partial<Usuario> }
+  | { type: "ACTUALIZAR_VER_CALIFICACIONES"; payload: boolean }
   | { type: "SET_LOADING"; payload: boolean }
   | { type: "SET_ERROR"; payload: string | null };
 
@@ -127,6 +129,17 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         ...state,
         usuario: usuarioActualizado,
         error: null,
+      };
+
+    case "ACTUALIZAR_VER_CALIFICACIONES":
+      const usuarioConCalificaciones = {
+        ...state.usuario,
+        ver_calificaciones: action.payload,
+      } as Usuario;
+
+      return {
+        ...state,
+        usuario: usuarioConCalificaciones,
       };
 
     case "SET_LOADING":
@@ -375,6 +388,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     logout: () => dispatch({ type: "LOGOUT" }),
     actualizarUsuario: (datos) =>
       dispatch({ type: "ACTUALIZAR_USUARIO", payload: datos }),
+    actualizarPermisosCalificaciones: (estado: boolean) =>
+      dispatch({ type: "ACTUALIZAR_VER_CALIFICACIONES", payload: estado }),
   };
 
   return (

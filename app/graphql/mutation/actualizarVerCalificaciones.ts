@@ -1,9 +1,9 @@
 // app/graphql/mutation/actualizarPension.js
 import { gql } from "@apollo/client";
 
-export const ACTUALIZAR_PENSION = gql`
-  mutation ActualizarPension($id: ID!) {
-    actualizarPension(id: $id) {
+export const ACTUALIZAR_VER_CALIFICACIONES = gql`
+  mutation ActualizarVerCalificaciones($id: ID!) {
+    actualizarVerCalificaciones(id: $id) {
       id
       tipo_documento
       numero_identificacion

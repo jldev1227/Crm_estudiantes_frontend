@@ -25,6 +25,7 @@ export const LOGIN_ESTUDIANTE = gql`
           nombre
         }
         pension_activa
+        ver_calificaciones
       }
     }
   }

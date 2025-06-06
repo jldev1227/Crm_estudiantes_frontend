@@ -557,9 +557,6 @@ export const procesarDatosEstudiante = (
   estudiante: Estudiante,
   periodo: number = 1,
 ) => {
-  console.log("Array de calificaciones recibido:", calificacionesArray);
-  console.log("Estudiante recibido:", estudiante);
-
   // ✅ Validar estudiante
   if (!estudiante) {
     console.error("Estudiante no definido");
@@ -635,8 +632,6 @@ export const procesarDatosEstudiante = (
     promedioGeneral,
   };
 
-  console.log("Resultado final procesado:", resultado);
-
   return resultado;
 };
 
@@ -648,12 +643,6 @@ export const handleGenerateEstudiantePDF = async (
   periodo: number = 1,
 ): Promise<void> => {
   try {
-    console.log("Datos recibidos:");
-    console.log("- Estudiante:", infoEstudiante);
-    console.log("- Calificaciones:", calificaciones);
-    console.log("- Director:", director);
-    console.log("- Período:", periodo);
-
     if (!infoEstudiante) {
       alert("No se encontró información del estudiante");
 

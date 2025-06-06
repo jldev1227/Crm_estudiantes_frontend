@@ -53,6 +53,10 @@ interface EstudiantePensionActualizadaResponse {
   estado_pension: boolean;
 }
 
+interface EstudianteVerCalificacionesActualizadaResponse {
+  estado_ver_calificaciones: boolean;
+}
+
 interface EstudianteContextType {
   areas: Area[];
   actividades: Actividad[];
@@ -89,7 +93,7 @@ const EstudianteContext = createContext<EstudianteContextType | undefined>(
 export const EstudianteProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const { usuario } = useAuth();
+  const { usuario, actualizarPermisosCalificaciones } = useAuth();
   const [areas, setAreas] = useState<Area[]>([]);
   const [actividades, setActividades] = useState<Actividad[]>([]);
   const [calificaciones, setCalificaciones] = useState<any[]>([]);
@@ -297,6 +301,35 @@ export const EstudianteProvider: React.FC<{ children: React.ReactNode }> = ({
           }, 5000);
         }
       };
+      const handleVerCalificacionesActualizada = (
+        data: EstudianteVerCalificacionesActualizadaResponse,
+      ) => {
+        setSocketEventLogs((prev) => [
+          ...prev,
+          {
+            eventName: "estudiante:ver-calificaciones-actualizada",
+            data,
+            timestamp: new Date(),
+          },
+        ]);
+
+        if (data.estado_ver_calificaciones) {
+          addToast({
+            title: "Acceso habilitado",
+            description:
+              "Ya puedes acceder a las calificaciones. Tu acceso ha sido autorizado.",
+            color: "success",
+          });
+          actualizarPermisosCalificaciones(data.estado_ver_calificaciones);
+        } else {
+          actualizarPermisosCalificaciones(data.estado_ver_calificaciones);
+          addToast({
+            title: "Se ha deshabilitado tu acceso a las calificaciones",
+            description: `Cualquier duda contactar al area administrativa`,
+            color: "warning",
+          });
+        }
+      };
 
       const handleEstudianteError = (data: EstudianteErrorEvent) => {
         // Verificar si el error corresponde al Estudiante actual
@@ -318,6 +351,10 @@ export const EstudianteProvider: React.FC<{ children: React.ReactNode }> = ({
         "estudiante:pension-actualizada",
         handlePensionActualizada,
       );
+      socketService.on(
+        "estudiante:ver-calificaciones-actualizada",
+        handleVerCalificacionesActualizada,
+      );
 
       socketService.on("estudiante:error", handleEstudianteError);
 
@@ -328,6 +365,7 @@ export const EstudianteProvider: React.FC<{ children: React.ReactNode }> = ({
 
         // Limpiar manejadores de eventos de servicios
         socketService.off("estudiante:pension-actualizada");
+        socketService.off("estudiante:ver-calificaciones-actualizada");
       };
     }
   }, [usuario?.id]);

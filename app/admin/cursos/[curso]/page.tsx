@@ -96,7 +96,12 @@ export default function CursoDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const { obtenerCurso, curso, actualizarPension } = useAdmin();
+  const {
+    obtenerCurso,
+    curso,
+    actualizarPension,
+    actualizarVerCalificaciones,
+  } = useAdmin();
 
   // Efecto para cargar datos del curso usando el contexto
   useEffect(() => {
@@ -585,6 +590,7 @@ export default function CursoDashboard() {
           {/* Aquí insertas tu componente de tabla de estudiantes */}
           <EstudiantesResponsive
             estudiantes={curso.estudiantes}
+            handleCalificaciones={actualizarVerCalificaciones}
             handlePension={actualizarPension}
             isAdmin={true}
           />

@@ -72,8 +72,6 @@ export default function CalificacionesPage() {
     const director =
       data.obtenerCalificacionesEstudiante.estudiante.grado.director;
 
-    console.log(director, data);
-
     if (director) {
       setDirector(director);
     }

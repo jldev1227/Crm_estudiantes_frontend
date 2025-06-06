@@ -30,7 +30,8 @@ type SortField =
   | "numero_identificacion"
   | "tipo_documento"
   | "fecha_nacimiento"
-  | "pension_activa";
+  | "pension_activa"
+  | "ver_calificaciones";
 type SortDirection = "asc" | "desc";
 
 interface TablaEstudiantesProps {
@@ -39,6 +40,7 @@ interface TablaEstudiantesProps {
   isDirector?: boolean;
   isVisible?: boolean;
   onPensionChange?: (estudianteId: number) => void;
+  onCalificacionesChange?: (estudianteId: number) => void;
   sortField?: SortField;
   sortDirection?: SortDirection;
   onSortChange?: (campo: SortField) => void;
@@ -50,6 +52,7 @@ export default function TablaEstudiantes({
   isDirector,
   isVisible,
   onPensionChange,
+  onCalificacionesChange,
   sortField = "nombre_completo",
   sortDirection = "asc",
   onSortChange,
@@ -142,6 +145,15 @@ export default function TablaEstudiantes({
       baseColumns.push({
         key: "pension_activa",
         label: "PENSIÓN",
+        sortable: true,
+      });
+    }
+
+    // Añadimos la columna de Calificaciones solo si el usuario es admin
+    if (isAdmin) {
+      baseColumns.push({
+        key: "ver_calificaciones",
+        label: "Puede ver Calificaciones",
         sortable: true,
       });
     }
@@ -284,6 +296,30 @@ export default function TablaEstudiantes({
                         }`}
                       >
                         {item.pension_activa ? "Activa" : "Inactiva"}
+                      </span>
+                      <button
+                        aria-label={`Cambiar estado de pensión para ${item.nombre_completo}`}
+                        className="px-3 py-1 text-xs font-medium rounded bg-primary-500 text-white hover:bg-primary-700 transition-colors"
+                        style={{ minHeight: 28 }}
+                        onClick={() => handlePension(item.id)}
+                      >
+                        Cambiar
+                      </button>
+                    </div>
+                  </td>
+                )}
+
+                {isAdmin && (
+                  <td className="px-6 py-4 whitespace-nowrap text-sm align-middle">
+                    <div className="flex items-center gap-3 min-h-[24px]">
+                      <span
+                        className={`min-w-[70px] text-center px-2 inline-block text-xs leading-5 font-semibold rounded-full ${
+                          item.ver_calificaciones
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {item.ver_calificaciones ? "Activa" : "Inactiva"}
                       </span>
                       <button
                         aria-label={`Cambiar estado de pensión para ${item.nombre_completo}`}

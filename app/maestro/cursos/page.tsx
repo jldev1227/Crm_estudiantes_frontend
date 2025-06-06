@@ -111,8 +111,6 @@ export default function Page() {
   const cursosPorGrado = useMemo(() => {
     if (!cursos) return {};
 
-    console.log(cursos);
-
     return cursos.reduce(
       (
         acc: {

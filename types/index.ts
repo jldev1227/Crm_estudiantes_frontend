@@ -13,6 +13,7 @@ export type Estudiante = {
   celular_padres: string;
   grado_id: string;
   pension_activa?: boolean;
+  ver_calificaciones?: boolean;
   grado: Grado;
 };
 

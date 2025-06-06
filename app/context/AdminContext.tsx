@@ -6,6 +6,7 @@ import { useApolloClient } from "@apollo/client";
 import { OBTENER_CURSOS } from "../graphql/queries/obtenerCursos";
 import { OBTENER_CURSO_GENERAL } from "../graphql/queries/obtenerCursoGeneral";
 import { ACTUALIZAR_PENSION } from "../graphql/mutation/actualizarPension";
+import { ACTUALIZAR_VER_CALIFICACIONES } from "../graphql/mutation/actualizarVerCalificaciones";
 import { OBTENER_MAESTROS } from "../graphql/queries/obtenerMaestros";
 import { OBTENER_CALIFICACIONES } from "../graphql/queries/obtenerCalificaciones";
 
@@ -120,6 +121,7 @@ interface AdminContextType {
   ) => Promise<CalificacionesGradoCompletoResponse | void>;
   obtenerCurso: (id: number) => void;
   actualizarPension: (id: number) => void;
+  actualizarVerCalificaciones: (id: number) => void;
   establecerPeriodo: (periodo: number) => void;
   limpiarError: () => void;
 }
@@ -195,6 +197,25 @@ const adminReducer = (state: any, action: any) => {
           estudiantes: state.curso.estudiantes.map((estudiante: Estudiante) =>
             estudiante.id === action.payload.id
               ? { ...estudiante, pension_activa: !estudiante.pension_activa }
+              : estudiante,
+          ),
+        },
+      };
+    case "ACTUALIZAR_VER_CALIFICACIONES":
+      if (!state.curso) return { ...state, estaCargando: false };
+
+      return {
+        ...state,
+        estaCargando: false,
+        error: null,
+        curso: {
+          ...state.curso,
+          estudiantes: state.curso.estudiantes.map((estudiante: Estudiante) =>
+            estudiante.id === action.payload.id
+              ? {
+                  ...estudiante,
+                  ver_calificaciones: !estudiante.ver_calificaciones,
+                }
               : estudiante,
           ),
         },
@@ -297,6 +318,29 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  // Función que ejecuta la mutation y despacha la acción para actualizar la pension del estudiante
+  const actualizarVerCalificaciones = async (id: number) => {
+    dispatch({ type: "SET_LOADING", payload: true });
+
+    try {
+      const { data } = await client.mutate({
+        mutation: ACTUALIZAR_VER_CALIFICACIONES,
+        variables: { id },
+      });
+
+      dispatch({
+        type: "ACTUALIZAR_VER_CALIFICACIONES",
+        payload: { id: data.actualizarVerCalificaciones.id },
+      });
+    } catch (error) {
+      console.error("Error actualizando ver calificaciones:", error);
+      dispatch({
+        type: "SET_ERROR",
+        payload: "Error al actualizar ver calificaciones",
+      });
+    }
+  };
+
   // Función que ejecuta la query y despacha la acción para guardar los maestros
   const obtenerMaestros = async () => {
     dispatch({ type: "SET_LOADING", payload: true });
@@ -324,13 +368,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
     grado_id: number,
     periodo: number,
   ): Promise<CalificacionesGradoCompletoResponse | void> => {
-    console.log(
-      "Obteniendo calificaciones para grado:",
-      grado_id,
-      "periodo:",
-      periodo,
-    );
-
     dispatch({ type: "SET_LOADING", payload: true });
 
     try {
@@ -340,8 +377,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
         fetchPolicy: "network-only", // Para asegurar datos frescos
         errorPolicy: "all",
       });
-
-      console.log("Data recibida:", data);
 
       if (data?.obtenerCalificaciones) {
         dispatch({
@@ -365,7 +400,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Función para establecer el periodo
   const establecerPeriodo = (periodo: number) => {
-    console.log("Estableciendo período:", periodo);
     dispatch({
       type: "ESTABLECER_PERIODO",
       payload: periodo,
@@ -394,6 +428,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
     obtenerCalificaciones, // Función principal para calificaciones
     obtenerMaestros,
     actualizarPension,
+    actualizarVerCalificaciones,
     establecerPeriodo,
     limpiarError,
   };

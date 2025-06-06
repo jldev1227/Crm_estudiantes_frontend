@@ -18,6 +18,7 @@ export const OBTENER_CURSO_GENERAL = gql`
         fecha_nacimiento
         tipo_documento
         pension_activa
+        ver_calificaciones
       }
       areas {
         id

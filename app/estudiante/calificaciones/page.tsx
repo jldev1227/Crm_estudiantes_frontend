@@ -130,8 +130,6 @@ export default function CalificacionesPage() {
       const calificacionesArray: Calificacion[] =
         Object.values(mapaCalificaciones);
 
-      console.log("Todas las calificaciones cargadas:", calificacionesArray);
-
       // ✅ ASEGURAR QUE setTodasCalificaciones ACEPTE EL TIPO CORRECTO
       setTodasCalificaciones(calificacionesArray);
       setInicializado(true);
@@ -335,7 +333,7 @@ export default function CalificacionesPage() {
     );
   }
 
-  if (error) {
+  if (error || !usuario?.ver_calificaciones) {
     return (
       <ProtectedRoute>
         <div className="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen flex items-center justify-center p-4">
@@ -363,7 +361,13 @@ export default function CalificacionesPage() {
 
             {/* Mensaje de error */}
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-              <p className="text-red-700 text-sm leading-relaxed">{error}</p>
+              <p className="text-red-700 text-sm leading-relaxed">
+                {error
+                  ? error
+                  : !usuario?.ver_calificaciones
+                    ? "No tiene acceso a las calificaciones. Para cualquier duda, comuníquese con el área administrativa."
+                    : "Error del servidor"}
+              </p>
             </div>
 
             <div className="flex flex-col gap-5">

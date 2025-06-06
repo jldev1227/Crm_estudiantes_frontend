@@ -41,9 +41,11 @@ type SortField =
   | "numero_identificacion"
   | "tipo_documento"
   | "fecha_nacimiento"
-  | "pension_activa";
+  | "pension_activa"
+  | "ver_calificaciones";
 type SortDirection = "asc" | "desc";
 type PensionFilter = "todas" | "activa" | "inactiva";
+type CalificacionesFilter = "todas" | "activa" | "inactiva";
 
 // Extender el tipo Estudiante para incluir pension_activa
 interface EstudianteConPension extends Estudiante {
@@ -84,12 +86,14 @@ export default function EstudiantesResponsive({
   isDirector,
   isVisible,
   handlePension,
+  handleCalificaciones,
 }: {
   estudiantes: Estudiante[];
   isAdmin?: boolean;
   isDirector?: boolean;
   isVisible?: boolean;
   handlePension?: (id: number) => void;
+  handleCalificaciones?: (id: number) => void;
 }) {
   const router = useRouter();
   const params = useParams();
@@ -100,6 +104,8 @@ export default function EstudiantesResponsive({
   const [sortField, setSortField] = useState<SortField>("nombre_completo");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [pensionFilter, setPensionFilter] = useState<PensionFilter>("todas");
+  const [calificacionesFilter, setCalificacioneFilter] =
+    useState<PensionFilter>("todas");
   const [filtrando, setFiltrando] = useState(false);
 
   // Estado local de estudiantes para manipulación
@@ -114,6 +120,7 @@ export default function EstudiantesResponsive({
       sortField,
       sortDirection,
       pensionFilter,
+      calificacionesFilter,
     );
   }, [estudiantes]);
 
@@ -123,7 +130,8 @@ export default function EstudiantesResponsive({
     terminoBusqueda: string,
     campoOrden: SortField,
     direccionOrden: SortDirection,
-    filtroPension: PensionFilter,
+    filtroPension?: PensionFilter,
+    filtroCalificaciones?: CalificacionesFilter,
   ) => {
     // Paso 1: Filtrar por término de búsqueda
     let resultado = listaEstudiantes.filter((estudiante) => {
@@ -143,6 +151,18 @@ export default function EstudiantesResponsive({
         if (filtroPension === "activa")
           return estudiante.pension_activa === true;
         if (filtroPension === "inactiva")
+          return estudiante.pension_activa === false;
+
+        return true;
+      });
+    }
+
+    // Paso 2: Filtrar por estado de calificaciones (solo para admin)
+    if (isAdmin && filtroCalificaciones !== "todas") {
+      resultado = resultado.filter((estudiante) => {
+        if (filtroCalificaciones === "activa")
+          return estudiante.pension_activa === true;
+        if (filtroCalificaciones === "inactiva")
           return estudiante.pension_activa === false;
 
         return true;
@@ -169,6 +189,16 @@ export default function EstudiantesResponsive({
           : pensionB - pensionA;
       }
 
+      // Si el campo de ordenamiento es pension_activa
+      if (campoOrden === "ver_calificaciones" && isAdmin) {
+        const calificacionA = a.ver_calificaciones ? 1 : 0;
+        const calificacionB = b.ver_calificaciones ? 1 : 0;
+
+        return direccionOrden === "asc"
+          ? calificacionA - calificacionB
+          : calificacionB - calificacionA;
+      }
+
       // Para otros campos, comparar strings
       const valorA = String(a[campoOrden] || "").toLowerCase();
       const valorB = String(b[campoOrden] || "").toLowerCase();
@@ -187,7 +217,14 @@ export default function EstudiantesResponsive({
   // Manejadores de eventos
   const handleBusquedaChange = (valor: string) => {
     setBusqueda(valor);
-    aplicarFiltros(estudiantes, valor, sortField, sortDirection, pensionFilter);
+    aplicarFiltros(
+      estudiantes,
+      valor,
+      sortField,
+      sortDirection,
+      pensionFilter,
+      calificacionesFilter,
+    );
   };
 
   const handleSortChange = (campo: SortField) => {
@@ -196,17 +233,36 @@ export default function EstudiantesResponsive({
       const newDirection = sortDirection === "asc" ? "desc" : "asc";
 
       setSortDirection(newDirection);
-      aplicarFiltros(estudiantes, busqueda, campo, newDirection, pensionFilter);
+      aplicarFiltros(
+        estudiantes,
+        busqueda,
+        campo,
+        newDirection,
+        pensionFilter,
+        calificacionesFilter,
+      );
     } else {
       // Si es un campo diferente, usamos ese campo con dirección ascendente
       setSortField(campo);
       setSortDirection("asc");
-      aplicarFiltros(estudiantes, busqueda, campo, "asc", pensionFilter);
+      aplicarFiltros(
+        estudiantes,
+        busqueda,
+        campo,
+        "asc",
+        pensionFilter,
+        calificacionesFilter,
+      );
     }
   };
 
   const handlePensionFilterChange = (valor: PensionFilter) => {
     setPensionFilter(valor);
+    aplicarFiltros(estudiantes, busqueda, sortField, sortDirection, valor);
+  };
+
+  const handleCalificacionesFilterChange = (valor: CalificacionesFilter) => {
+    setCalificacioneFilter(valor);
     aplicarFiltros(estudiantes, busqueda, sortField, sortDirection, valor);
   };
 
@@ -226,6 +282,7 @@ export default function EstudiantesResponsive({
       tipo_documento: "Tipo Doc.",
       fecha_nacimiento: "Edad",
       pension_activa: "Pensión",
+      ver_calificaciones: "Puede ver Calificaciones",
     };
 
     return `${fieldLabels[sortField]} ${sortDirection === "asc" ? "↑" : "↓"}`;
@@ -610,6 +667,7 @@ export default function EstudiantesResponsive({
           isVisible={isVisible}
           sortDirection={sortDirection}
           sortField={sortField}
+          onCalificacionesChange={handleCalificaciones}
           onPensionChange={handlePension}
           onSortChange={handleSortChange}
         />
@@ -630,18 +688,20 @@ export default function EstudiantesResponsive({
       </p>
 
       {/* Cards de estudiantes */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {estudiantesFiltrados.map((estudiante: EstudianteConPension) => (
           <Card
             key={estudiante.id}
             className="shadow-sm transition-shadow ease-in-out duration-500 bg-gray-50 hover:shadow-md"
           >
-            <div className="p-4">
+            <div className="space-y-2 p-4">
               <div className="flex justify-between items-start">
                 <h3 className="font-bold text-lg">
                   {estudiante.nombre_completo}
                 </h3>
-                {isAdmin && (
+              </div>
+              {isAdmin && (
+                <div className="space-x-2">
                   <Chip
                     color={estudiante.pension_activa ? "success" : "danger"}
                     size="sm"
@@ -651,8 +711,17 @@ export default function EstudiantesResponsive({
                       ? "Pensión activa"
                       : "Pensión inactiva"}
                   </Chip>
-                )}
-              </div>
+                  <Chip
+                    color={estudiante.ver_calificaciones ? "success" : "danger"}
+                    size="sm"
+                    variant="flat"
+                  >
+                    {estudiante.ver_calificaciones
+                      ? "Calificaciones activa"
+                      : "Calificaciones inactiva"}
+                  </Chip>
+                </div>
+              )}
 
               <div className="mt-2 space-y-1">
                 <p className="text-sm text-gray-600 flex items-center gap-1">
@@ -682,6 +751,18 @@ export default function EstudiantesResponsive({
                   onPress={() => handlePension(estudiante.id)}
                 >
                   {estudiante.pension_activa ? "Desactivar" : "Activar"} pensión
+                </Button>
+              )}
+              {isAdmin && handleCalificaciones && (
+                <Button
+                  fullWidth
+                  className="mt-6"
+                  color={estudiante.ver_calificaciones ? "danger" : "success"}
+                  variant="flat"
+                  onPress={() => handleCalificaciones(estudiante.id)}
+                >
+                  {estudiante.ver_calificaciones ? "Desactivar" : "Activar"}{" "}
+                  calificaciones
                 </Button>
               )}
 
