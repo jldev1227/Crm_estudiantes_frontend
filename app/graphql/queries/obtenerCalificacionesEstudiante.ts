@@ -14,6 +14,12 @@ export const OBTENER_CALIFICACIONES_ESTUDIANTE = gql`
       area_id: $area_id
       periodo: $periodo
     ) {
+      puesto {
+        posicion
+        total
+        promedio
+        percentil
+      }
       estudiante {
         id
         nombre_completo

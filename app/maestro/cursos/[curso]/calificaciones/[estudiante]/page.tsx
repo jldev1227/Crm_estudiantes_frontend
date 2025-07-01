@@ -17,6 +17,7 @@ import {
   User,
   Phone,
   CreditCard,
+  ArmchairIcon,
 } from "lucide-react";
 import { Button } from "@heroui/button";
 
@@ -59,6 +60,8 @@ export default function CalificacionesPage() {
     {
       variables: {
         estudiante_id: params.estudiante,
+        grado_id: params.curso,
+        periodo: periodoSeleccionado
       },
       skip: !params.estudiante,
       fetchPolicy: "cache-and-network",
@@ -279,6 +282,7 @@ export default function CalificacionesPage() {
                       todasCalificaciones, // ✅ Array de calificaciones (puede estar vacío)
                       director, // ✅ Objeto director (puede ser null)
                       periodoSeleccionado, // ✅ Período seleccionado
+                      data.obtenerCalificacionesEstudiante.puesto.posicion
                     )
                   }
                 >
@@ -286,7 +290,7 @@ export default function CalificacionesPage() {
                   Descargar Boletin
                 </Button>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-blue-50 rounded-lg">
                     <User className="text-blue-600" size={16} />
@@ -330,6 +334,19 @@ export default function CalificacionesPage() {
                       {
                         data.obtenerCalificacionesEstudiante.estudiante
                           .celular_padres
+                      }
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-amber-50 rounded-lg">
+                    <ArmchairIcon className="text-amber-600" size={16} />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-500">Puesto</p>
+                    <p className="font-medium text-gray-800">
+                      {
+                        data.obtenerCalificacionesEstudiante.puesto.posicion
                       }
                     </p>
                   </div>

@@ -294,6 +294,7 @@ interface ReporteEstudianteProps {
     grado: string;
     periodo: string;
     año: string;
+    puesto: string;
   };
   director: Maestro;
   areas: AreaConPromedio[];
@@ -415,6 +416,9 @@ export const ReporteEstudiantePDF = ({
               <Text style={styles.labelText}>Periodo</Text>
             </View>
             <View style={{ flex: 1 }}>
+              <Text style={styles.labelText}>Puesto</Text>
+            </View>
+            <View style={{ flex: 1 }}>
               <Text style={styles.labelText}>Grado</Text>
             </View>
             <View style={{ flex: 1 }}>
@@ -431,6 +435,11 @@ export const ReporteEstudiantePDF = ({
             <View style={{ flex: 1 }}>
               <Text style={styles.valueText}>
                 {safeValue(estudiante.periodo)}
+              </Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.valueText}>
+                {safeValue(estudiante.puesto)}
               </Text>
             </View>
             <View style={{ flex: 1 }}>
@@ -556,6 +565,7 @@ export const procesarDatosEstudiante = (
   calificacionesArray: Calificacion[],
   estudiante: Estudiante,
   periodo: number = 1,
+  puesto: number | null,
 ) => {
   // ✅ Validar estudiante
   if (!estudiante) {
@@ -571,6 +581,7 @@ export const procesarDatosEstudiante = (
     documento: `${estudiante.tipo_documento || "N/A"}: ${estudiante.numero_identificacion || "N/A"}`,
     grado: estudiante.grado?.nombre || "Sin grado",
     periodo: periodo,
+    puesto: puesto,
     año: new Date().getFullYear().toString(),
     celular_padres: estudiante.celular_padres || "N/A",
     pension_activa: estudiante.pension_activa || false,
@@ -641,6 +652,7 @@ export const handleGenerateEstudiantePDF = async (
   calificaciones: Calificacion[],
   director: Maestro | null,
   periodo: number = 1,
+  puesto: number | null,
 ): Promise<void> => {
   try {
     if (!infoEstudiante) {
@@ -653,6 +665,7 @@ export const handleGenerateEstudiantePDF = async (
       calificaciones,
       infoEstudiante,
       periodo,
+      puesto
     );
 
     if (!datosReporte) {
@@ -677,6 +690,7 @@ export const handleGenerateEstudiantePDF = async (
         nombre: datosReporte.estudiante.nombre,
         grado: datosReporte.estudiante.grado,
         periodo: String(datosReporte.estudiante.periodo), // Convertir a string si es necesario
+        puesto: String(datosReporte.estudiante.puesto), // Convertir a string si es necesario
         año: datosReporte.estudiante.año,
       },
       director: directorData,
