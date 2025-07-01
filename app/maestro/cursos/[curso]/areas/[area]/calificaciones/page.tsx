@@ -5,6 +5,7 @@ import { useMutation } from "@apollo/client";
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 import { Select, SelectItem } from "@heroui/select";
+import { Checkbox } from "@heroui/checkbox";
 import {
   Table,
   TableHeader,
@@ -116,7 +117,7 @@ const SistemaCalificaciones = () => {
   const area_id = params?.area as string;
 
   // Constants
-  const REGULAR_ACTIVITIES_PERCENTAGE = 70;
+  const REGULAR_ACTIVITIES_PERCENTAGE = 100; // Cambiar a 100% cuando no hay evaluación final
   const FINAL_EVALUATION_PERCENTAGE = 30;
 
   // Use the MaestroContext
@@ -131,9 +132,7 @@ const SistemaCalificaciones = () => {
   } = useMaestro();
 
   // Estados locales
-  const [actividades, setActividades] = useState<Actividad[]>([
-    { id: "final", nombre: "Evaluación Final", porcentaje: 30, isFinal: true },
-  ]);
+  const [actividades, setActividades] = useState<Actividad[]>([]);
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
   const [calificaciones, setCalificaciones] = useState<{
     [estudianteId: string]: { [actividadId: string]: string };
@@ -145,6 +144,9 @@ const SistemaCalificaciones = () => {
   }>({ nombre: "", porcentaje: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  
+  // NUEVO ESTADO: Checkbox para evaluación final opcional
+  const [incluirEvaluacionFinal, setIncluirEvaluacionFinal] = useState(true);
 
   // GraphQL mutation
   const [guardarCalificaciones, { loading: guardandoCalificaciones }] =
@@ -208,7 +210,102 @@ const SistemaCalificaciones = () => {
     }
   }, [curso]);
 
-  // Efecto para cargar calificaciones existentes desde el contexto - CORREGIDO
+  // NUEVO EFECTO: Manejar el cambio del checkbox de evaluación final
+  useEffect(() => {
+    // Solo ejecutar si hay actividades cargadas para evitar ejecuciones prematuras
+    if (actividades.length === 0) return;
+
+    const tieneEvaluacionFinal = actividades.some(act => act.isFinal);
+    
+    if (incluirEvaluacionFinal && !tieneEvaluacionFinal) {
+      // AGREGAR evaluación final
+      const nuevaEvaluacionFinal = {
+        id: "final",
+        nombre: "Evaluación Final",
+        porcentaje: FINAL_EVALUATION_PERCENTAGE,
+        isFinal: true,
+      };
+      
+      // Redistribuir porcentajes de actividades regulares
+      const actividadesRegulares = actividades.filter(act => !act.isFinal);
+      const porcentajeRegular = actividadesRegulares.length > 0 
+        ? (100 - FINAL_EVALUATION_PERCENTAGE) / actividadesRegulares.length
+        : 70; // valor por defecto
+      
+      const actividadesActualizadas = [
+        ...actividadesRegulares.map(act => ({ ...act, porcentaje: porcentajeRegular })),
+        nuevaEvaluacionFinal
+      ];
+      
+      setActividades(actividadesActualizadas);
+      
+      // IMPORTANTE: Actualizar las calificaciones para incluir la nueva evaluación final
+      setCalificaciones(prev => {
+        const nuevasCalificaciones = { ...prev };
+        
+        // Para cada estudiante, añadir la nueva actividad final con valor vacío
+        Object.keys(nuevasCalificaciones).forEach(estudianteId => {
+          if (nuevasCalificaciones[estudianteId]) {
+            nuevasCalificaciones[estudianteId] = {
+              ...nuevasCalificaciones[estudianteId],
+              [nuevaEvaluacionFinal.id]: ""
+            };
+          }
+        });
+        
+        return nuevasCalificaciones;
+      });
+      
+      toast.success("Evaluación final añadida. Los porcentajes se han redistribuido automáticamente.");
+      
+    } else if (!incluirEvaluacionFinal && tieneEvaluacionFinal) {
+      // ELIMINAR evaluación final
+      const actividadesSinFinal = actividades.filter(act => !act.isFinal);
+      const actividadesFinal = actividades.filter(act => act.isFinal);
+      
+      if (actividadesSinFinal.length > 0) {
+        const porcentajeRegular = 100 / actividadesSinFinal.length;
+        const actividadesActualizadas = actividadesSinFinal.map(act => ({
+          ...act,
+          porcentaje: porcentajeRegular
+        }));
+        setActividades(actividadesActualizadas);
+      } else {
+        // Si no hay actividades regulares, crear una actividad por defecto
+        setActividades([
+          {
+            id: "act1",
+            nombre: "Actividad 1",
+            porcentaje: 100,
+            isFinal: false,
+          },
+        ]);
+      }
+      
+      // IMPORTANTE: Actualizar las calificaciones para eliminar las actividades finales
+      setCalificaciones(prev => {
+        const nuevasCalificaciones = { ...prev };
+        
+        // Para cada estudiante, eliminar las actividades finales
+        Object.keys(nuevasCalificaciones).forEach(estudianteId => {
+          if (nuevasCalificaciones[estudianteId]) {
+            const calificacionesEstudiante = { ...nuevasCalificaciones[estudianteId] };
+            actividadesFinal.forEach(actFinal => {
+              delete calificacionesEstudiante[actFinal.id];
+            });
+            nuevasCalificaciones[estudianteId] = calificacionesEstudiante;
+          }
+        });
+        
+        return nuevasCalificaciones;
+      });
+      
+      toast.success("Evaluación final eliminada. Los porcentajes se han redistribuido automáticamente.");
+    }
+    // Si incluirEvaluacionFinal === tieneEvaluacionFinal, no hacer nada (estado consistente)
+  }, [incluirEvaluacionFinal]); // Quitar actividades.length de las dependencias
+
+  // Efecto para cargar calificaciones existentes desde el contexto - MODIFICADO
   useEffect(() => {
     if (calificacionesContext && Array.isArray(calificacionesContext)) {
       // Filtrar solo las calificaciones del período actual
@@ -252,33 +349,18 @@ const SistemaCalificaciones = () => {
           }
         });
 
-        // Asegurar que la evaluación final esté presente si no existe
-        const tieneEvaluacionFinal = nuevasActividades.some(
-          (act) => act.isFinal,
-        );
-
-        if (!tieneEvaluacionFinal) {
-          nuevasActividades.push({
-            id: "final",
-            nombre: "Evaluación Final",
-            porcentaje: 30,
-            isFinal: true,
-          });
+        // Verificar si hay evaluación final en las actividades existentes y actualizar el checkbox
+        const tieneEvaluacionFinal = nuevasActividades.some(act => act.isFinal);
+        
+        // IMPORTANTE: Actualizar el estado del checkbox ANTES de establecer las actividades
+        // para evitar que se ejecute el efecto del checkbox cuando no debería
+        if (tieneEvaluacionFinal !== incluirEvaluacionFinal) {
+          setIncluirEvaluacionFinal(tieneEvaluacionFinal);
         }
 
-        // Actualizar las actividades solo si son diferentes
-        setActividades((prev) => {
-          const idsActuales = prev.map((a) => a.id).sort();
-          const idsNuevos = nuevasActividades.map((a) => a.id).sort();
+        setActividades(nuevasActividades);
 
-          if (JSON.stringify(idsActuales) !== JSON.stringify(idsNuevos)) {
-            return nuevasActividades;
-          }
-
-          return prev;
-        });
-
-        // Mapear las calificaciones a la estructura local - CONVERTIR A STRING
+        // Mapear las calificaciones a la estructura local
         const nuevasCalificaciones: {
           [estudianteId: string]: { [actividadId: string]: string };
         } = {};
@@ -291,7 +373,7 @@ const SistemaCalificaciones = () => {
           });
         });
 
-        // Llenar con los valores existentes - CONVERTIR NÚMEROS A STRING
+        // Llenar con los valores existentes
         calificacionesPeriodoActual.forEach((calificacion: any) => {
           const estudianteId = calificacion.estudiante_id.toString();
 
@@ -302,7 +384,6 @@ const SistemaCalificaciones = () => {
                 nota.valor !== undefined &&
                 nota.valor !== null
               ) {
-                // CONVERTIR EL NÚMERO A STRING
                 nuevasCalificaciones[estudianteId][nota.actividad_id] =
                   nota.valor.toString();
               }
@@ -312,18 +393,26 @@ const SistemaCalificaciones = () => {
 
         setCalificaciones(nuevasCalificaciones);
       } else {
-        // Si no hay calificaciones para este período, resetear a actividades por defecto
-        console.log(
-          "No hay calificaciones para el período actual, usando actividades por defecto",
-        );
-        setActividades([
-          {
-            id: "final",
-            nombre: "Evaluación Final",
-            porcentaje: 30,
-            isFinal: true,
-          },
-        ]);
+        // Si no hay calificaciones para este período, usar configuración por defecto
+        const actividadesPorDefecto = incluirEvaluacionFinal
+          ? [
+              {
+                id: "final",
+                nombre: "Evaluación Final",
+                porcentaje: 30,
+                isFinal: true,
+              },
+            ]
+          : [
+              {
+                id: "act1",
+                nombre: "Actividad 1",
+                porcentaje: 100,
+                isFinal: false,
+              },
+            ];
+
+        setActividades(actividadesPorDefecto);
 
         // Inicializar calificaciones vacías para todos los estudiantes
         const calificacionesVacias: {
@@ -331,15 +420,21 @@ const SistemaCalificaciones = () => {
         } = {};
 
         estudiantes.forEach((estudiante) => {
-          calificacionesVacias[estudiante.id] = { final: "" };
+          calificacionesVacias[estudiante.id] = {};
+          actividadesPorDefecto.forEach((actividad) => {
+            calificacionesVacias[estudiante.id][actividad.id] = "";
+          });
         });
         setCalificaciones(calificacionesVacias);
       }
     }
-  }, [calificacionesContext, periodoSeleccionado, estudiantes]);
+  }, [calificacionesContext, periodoSeleccionado, estudiantes]); // Remover incluirEvaluacionFinal de las dependencias
 
   // Efecto para sincronizar calificaciones cuando cambian estudiantes o actividades
   useEffect(() => {
+    // Solo ejecutar si hay estudiantes y actividades, y evitar ciclos infinitos
+    if (estudiantes.length === 0 || actividades.length === 0) return;
+    
     setCalificaciones((prev) => {
       const nuevasCalificaciones: {
         [estudianteId: string]: { [actividadId: string]: string };
@@ -354,11 +449,13 @@ const SistemaCalificaciones = () => {
         });
       });
 
-      return nuevasCalificaciones;
+      // Solo actualizar si hay cambios reales
+      const hayChangios = JSON.stringify(prev) !== JSON.stringify(nuevasCalificaciones);
+      return hayChangios ? nuevasCalificaciones : prev;
     });
-  }, [estudiantes, actividades]);
+  }, [estudiantes.length, actividades.map(a => a.id).join(',')]); // Dependencias más específicas
 
-  // Función distribuirPorcentajes - CORREGIDA
+  // Función distribuirPorcentajes - MODIFICADA para manejar evaluación final opcional
   const distribuirPorcentajes = useCallback(
     (
       actividadesRegulares: Actividad[],
@@ -368,9 +465,12 @@ const SistemaCalificaciones = () => {
         return [...actividadesFinal]; // Devolver solo las actividades finales si no hay regulares
       }
 
-      // El nuevo porcentaje para cada actividad regular (total 70% dividido equitativamente)
-      const nuevoPorcentaje =
-        REGULAR_ACTIVITIES_PERCENTAGE / actividadesRegulares.length;
+      // Calcular el porcentaje disponible para actividades regulares
+      const porcentajeFinal = actividadesFinal.reduce((sum, act) => sum + act.porcentaje, 0);
+      const porcentajeDisponible = 100 - porcentajeFinal;
+      
+      // El nuevo porcentaje para cada actividad regular
+      const nuevoPorcentaje = porcentajeDisponible / actividadesRegulares.length;
 
       // Actualizar los porcentajes de las actividades regulares
       const nuevasActividadesRegulares: Actividad[] = actividadesRegulares.map(
@@ -382,7 +482,7 @@ const SistemaCalificaciones = () => {
 
       return [...nuevasActividadesRegulares, ...actividadesFinal];
     },
-    [REGULAR_ACTIVITIES_PERCENTAGE],
+    [],
   );
 
   // Función mejorada para manejar el cambio de período
@@ -394,15 +494,26 @@ const SistemaCalificaciones = () => {
     // Limpiar calificaciones al cambiar de período
     setCalificaciones({});
 
-    // Resetear actividades a las por defecto
-    setActividades([
-      {
-        id: "final",
-        nombre: "Evaluación Final",
-        porcentaje: 30,
-        isFinal: true,
-      },
-    ]);
+    // Resetear actividades a las por defecto según el estado del checkbox
+    const actividadesPorDefecto = incluirEvaluacionFinal
+      ? [
+          {
+            id: "final",
+            nombre: "Evaluación Final",
+            porcentaje: 30,
+            isFinal: true,
+          },
+        ]
+      : [
+          {
+            id: "act1",
+            nombre: "Actividad 1",
+            porcentaje: 100,
+            isFinal: false,
+          },
+        ];
+
+    setActividades(actividadesPorDefecto);
 
     // Cargar calificaciones del nuevo período
     if (grado_id && area_id) {
@@ -436,11 +547,10 @@ const SistemaCalificaciones = () => {
     }));
   };
 
-  // Añadir nueva actividad - CORREGIDO COMPLETAMENTE
+  // Añadir nueva actividad - MODIFICADO
   const handleAddActividad = () => {
     if (!nuevaActividad.nombre) {
       toast.error("Ingrese nombre para la nueva actividad");
-
       return;
     }
 
@@ -452,12 +562,12 @@ const SistemaCalificaciones = () => {
       (act) => act.isFinal,
     );
 
-    // Crear la nueva actividad con TODAS las propiedades del tipo Actividad
+    // Crear la nueva actividad
     const nuevaActividadObj: Actividad = {
-      id: `act${actividades.length + 1}`,
+      id: `act${Date.now()}`, // Usar timestamp para evitar conflictos
       nombre: nuevaActividad.nombre,
       porcentaje: 0, // Se calculará automáticamente en distribuirPorcentajes
-      isFinal: false, // Es una actividad regular, no final
+      isFinal: false,
     };
 
     // Añadir la nueva actividad a las actividades regulares
@@ -485,8 +595,8 @@ const SistemaCalificaciones = () => {
       return nuevo;
     });
 
-    // Reiniciar el formulario - CORREGIR también esto
-    setNuevaActividad({ nombre: "", porcentaje: "" }); // Solo limpiar nombre, no porcentaje
+    // Reiniciar el formulario
+    setNuevaActividad({ nombre: "", porcentaje: "" });
 
     toast.success(
       `Actividad "${nuevaActividad.nombre}" añadida. Porcentajes redistribuidos automáticamente.`,
@@ -501,7 +611,6 @@ const SistemaCalificaciones = () => {
 
     if (actividadesRegulares.length === 0) {
       toast.error("No hay actividades regulares para redistribuir");
-
       return;
     }
 
@@ -540,11 +649,10 @@ const SistemaCalificaciones = () => {
     return Math.round(notaAjustada * 100) / 100; // Round to 2 decimal places
   };
 
-  // Eliminar actividad
+  // Eliminar actividad - MODIFICADO
   const handleEliminarActividad = (actividadId: string) => {
     if (actividades.length <= 1) {
       toast.error("Debe haber al menos una actividad");
-
       return;
     }
 
@@ -552,8 +660,7 @@ const SistemaCalificaciones = () => {
     const actividad = actividades.find((act) => act.id === actividadId);
 
     if (actividad?.isFinal) {
-      toast.error("No se puede eliminar la evaluación final");
-
+      toast.error("No se puede eliminar la evaluación final. Use el checkbox para deshabilitarla.");
       return;
     }
 
@@ -566,10 +673,20 @@ const SistemaCalificaciones = () => {
       (act) => act.id !== actividadId,
     );
 
-    if (nuevasActividadesRegulares.length === 0) {
-      toast.error("Debe haber al menos una actividad regular");
-
+    if (nuevasActividadesRegulares.length === 0 && actividadesFinal.length === 0) {
+      toast.error("Debe haber al menos una actividad");
       return;
+    }
+
+    // Si no quedan actividades regulares pero hay evaluación final, crear una actividad por defecto
+    if (nuevasActividadesRegulares.length === 0 && actividadesFinal.length > 0) {
+      const nuevaActividad: Actividad = {
+        id: "act1",
+        nombre: "Actividad 1",
+        porcentaje: 70, // 100% - 30% de evaluación final
+        isFinal: false,
+      };
+      nuevasActividadesRegulares.push(nuevaActividad);
     }
 
     // Redistribuir porcentajes automáticamente
@@ -648,332 +765,14 @@ const SistemaCalificaciones = () => {
       0,
     );
 
+    const total = totalRegulares + totalFinal;
+
     return {
       totalRegulares,
       totalFinal,
-      total: totalRegulares + totalFinal,
-      esValido:
-        Math.abs(totalRegulares - REGULAR_ACTIVITIES_PERCENTAGE) < 0.1 &&
-        Math.abs(totalFinal - FINAL_EVALUATION_PERCENTAGE) < 0.1,
+      total,
+      esValido: Math.abs(total - 100) < 0.1,
     };
-  };
-
-  // Efecto para cargar calificaciones existentes desde el contexto y autocompletar
-  useEffect(() => {
-    if (calificacionesContext && Array.isArray(calificacionesContext)) {
-      // Filtrar solo las calificaciones del período actual
-      const calificacionesPeriodoActual = calificacionesContext.filter(
-        (calificacion: Calificacion) =>
-          calificacion.periodo === periodoSeleccionado,
-      );
-
-      if (calificacionesPeriodoActual.length > 0) {
-        // Extraer todas las actividades únicas de las calificaciones existentes
-        const actividadesExistentes = new Set<string>();
-        const actividadesInfo = new Map<
-          string,
-          { nombre: string; porcentaje: number }
-        >();
-
-        calificacionesPeriodoActual.forEach((calificacion: Calificacion) => {
-          calificacion.notas.forEach((nota: Nota) => {
-            actividadesExistentes.add(nota.actividad_id);
-            actividadesInfo.set(nota.actividad_id, {
-              nombre: nota.nombre,
-              porcentaje: nota.porcentaje,
-            });
-          });
-        });
-
-        // Crear array de actividades basado en las calificaciones existentes
-        const nuevasActividades: Actividad[] = [];
-
-        actividadesExistentes.forEach((actividadId) => {
-          const info = actividadesInfo.get(actividadId);
-
-          if (info) {
-            nuevasActividades.push({
-              id: actividadId,
-              nombre: info.nombre,
-              porcentaje: info.porcentaje,
-              isFinal:
-                actividadId === "final" ||
-                info.nombre.toLowerCase().includes("final"),
-            });
-          }
-        });
-
-        // Asegurar que la evaluación final esté presente si no existe
-        const tieneEvaluacionFinal = nuevasActividades.some(
-          (act) => act.isFinal,
-        );
-
-        if (!tieneEvaluacionFinal) {
-          nuevasActividades.push({
-            id: "final",
-            nombre: "Evaluación Final",
-            porcentaje: 30,
-            isFinal: true,
-          });
-        }
-
-        // Actualizar las actividades
-        setActividades(nuevasActividades);
-        const nuevasCalificaciones: {
-          [estudianteId: string]: { [actividadId: string]: string };
-        } = {};
-
-        calificacionesPeriodoActual.forEach((calificacion: Calificacion) => {
-          const estudianteId = calificacion.estudiante_id;
-
-          // Add type guard to ensure estudianteId is not undefined
-          if (!estudianteId) {
-            console.warn(
-              "Estudiante ID is undefined, skipping calificacion:",
-              calificacion,
-            );
-
-            return; // Skip this iteration
-          }
-
-          nuevasCalificaciones[estudianteId] = {};
-
-          // Inicializar todas las actividades con valor vacío
-          nuevasActividades.forEach((actividad) => {
-            nuevasCalificaciones[estudianteId][actividad.id] = "";
-          });
-
-          // Llenar con los valores existentes
-          calificacion.notas.forEach((nota: Nota) => {
-            if (
-              nota.actividad_id &&
-              nota.valor !== undefined &&
-              nota.valor !== null
-            ) {
-              nuevasCalificaciones[estudianteId][nota.actividad_id] =
-                nota.valor.toString();
-            }
-          });
-        });
-
-        setCalificaciones(nuevasCalificaciones);
-      } else {
-        // Si no hay calificaciones para este período, resetear a actividades por defecto
-        console.log(
-          "No hay calificaciones para el período actual, usando actividades por defecto",
-        );
-        setActividades([
-          {
-            id: "final",
-            nombre: "Evaluación Final",
-            porcentaje: 30,
-            isFinal: true,
-          },
-        ]);
-        setCalificaciones({});
-      }
-    }
-  }, [calificacionesContext, periodoSeleccionado]);
-
-  // Solo se ejecuta si no hay calificaciones del contexto o si se agregan nuevos estudiantes
-  useEffect(() => {
-    if (!calificacionesContext || calificacionesContext.length === 0) {
-      setCalificaciones((prev) => {
-        const nuevasCalificaciones: {
-          [estudianteId: string]: { [actividadId: string]: string };
-        } = {};
-
-        estudiantes.forEach((estudiante) => {
-          nuevasCalificaciones[estudiante.id] = {};
-          actividades.forEach((actividad) => {
-            // Mantener valor anterior si existe, si no, dejar vacío
-            nuevasCalificaciones[estudiante.id][actividad.id] =
-              prev?.[estudiante.id]?.[actividad.id] ?? "";
-          });
-        });
-
-        return nuevasCalificaciones;
-      });
-    } else {
-      // Si hay calificaciones del contexto, solo agregar estudiantes nuevos que no estén en las calificaciones
-      setCalificaciones((prev) => {
-        const nuevasCalificaciones = { ...prev };
-
-        estudiantes.forEach((estudiante) => {
-          // Si el estudiante no existe en las calificaciones actuales, agregarlo
-          if (!nuevasCalificaciones[estudiante.id]) {
-            nuevasCalificaciones[estudiante.id] = {};
-            actividades.forEach((actividad) => {
-              nuevasCalificaciones[estudiante.id][actividad.id] = "";
-            });
-          } else {
-            // Si el estudiante existe, asegurar que tenga todas las actividades
-            actividades.forEach((actividad) => {
-              if (
-                nuevasCalificaciones[estudiante.id][actividad.id] === undefined
-              ) {
-                nuevasCalificaciones[estudiante.id][actividad.id] = "";
-              }
-            });
-          }
-        });
-
-        return nuevasCalificaciones;
-      });
-    }
-  }, [estudiantes, actividades, calificacionesContext]);
-
-  // Función principal de validación
-  const validateCalificacionesData = (
-    calificaciones: Calificacion[],
-    estudiantes: Estudiante[],
-    actividades: Actividad[],
-  ) => {
-    const validation = {
-      isValid: true,
-      errors: [] as string[],
-      warnings: [] as string[],
-      statistics: {
-        totalStudents: estudiantes.length,
-        studentsWithGrades: 0,
-        studentsWithCompleteGrades: 0,
-        totalActivities: actividades.length,
-        missingGrades: 0,
-        invalidGrades: 0,
-      },
-    };
-
-    // 1. Validar estructura básica
-    if (!Array.isArray(calificaciones)) {
-      validation.errors.push("Calificaciones debe ser un array");
-      validation.isValid = false;
-
-      return validation;
-    }
-
-    if (!Array.isArray(estudiantes) || estudiantes.length === 0) {
-      validation.errors.push("No hay estudiantes para validar");
-      validation.isValid = false;
-
-      return validation;
-    }
-
-    if (!Array.isArray(actividades) || actividades.length === 0) {
-      validation.errors.push("No hay actividades definidas");
-      validation.isValid = false;
-
-      return validation;
-    }
-
-    // 2. Crear mapas para búsqueda rápida
-    const estudiantesMap = new Map(estudiantes.map((est) => [est.id, est]));
-    const calificacionesMap = new Map(
-      calificaciones.map((cal) => [cal.estudiante_id, cal]),
-    );
-
-    // 3. Validar cada estudiante
-    estudiantes.forEach((estudiante) => {
-      const calificacion = calificacionesMap.get(estudiante.id);
-
-      if (!calificacion) {
-        validation.warnings.push(
-          `Estudiante ${estudiante.nombre_completo} no tiene calificaciones`,
-        );
-
-        return;
-      }
-
-      validation.statistics.studentsWithGrades++;
-
-      // Validar estructura de calificación
-      if (calificacion.estudiante_id !== estudiante.id) {
-        validation.errors.push(
-          `ID inconsistente para ${estudiante.nombre_completo}`,
-        );
-        validation.isValid = false;
-      }
-
-      // Validar notas del estudiante
-      const notasMap = new Map(
-        calificacion.notas.map((nota) => [nota.actividad_id, nota]),
-      );
-      let completeGrades = true;
-
-      actividades.forEach((actividad) => {
-        const nota = notasMap.get(actividad.id);
-
-        if (!nota) {
-          validation.warnings.push(
-            `${estudiante.nombre_completo}: falta nota para ${actividad.nombre}`,
-          );
-          validation.statistics.missingGrades++;
-          completeGrades = false;
-
-          return;
-        }
-
-        // Validar rango de la nota (0-5)
-        if (nota.valor < 0 || nota.valor > 5) {
-          validation.errors.push(
-            `${estudiante.nombre_completo}: nota inválida (${nota.valor}) en ${actividad.nombre}`,
-          );
-          validation.statistics.invalidGrades++;
-          validation.isValid = false;
-        }
-
-        // Validar porcentaje
-        if (nota.porcentaje !== actividad.porcentaje) {
-          validation.warnings.push(
-            `${estudiante.nombre_completo}: porcentaje inconsistente en ${actividad.nombre}`,
-          );
-        }
-      });
-
-      if (completeGrades) {
-        validation.statistics.studentsWithCompleteGrades++;
-      }
-
-      if (!calificacion.estudiante_id) return;
-
-      // Validar nota final calculada
-      const notaCalculada: number = calcularNotaFinal(
-        calificacion.estudiante_id,
-      );
-      const diferencia = Math.abs(notaCalculada - calificacion.notaFinal);
-
-      if (diferencia > 0.1) {
-        // Tolerancia de 0.1 por redondeo
-        validation.warnings.push(
-          `${estudiante.nombre_completo}: nota final inconsistente (registrada: ${calificacion.notaFinal}, calculada: ${notaCalculada.toFixed(2)})`,
-        );
-      }
-    });
-
-    // 4. Validar que no hay calificaciones huérfanas
-    calificaciones.forEach((calificacion) => {
-      if (calificacion.estudiante_id)
-        if (!estudiantesMap.has(calificacion.estudiante_id)) {
-          validation.errors.push(
-            `Calificación huérfana para estudiante ID: ${calificacion.estudiante_id}`,
-          );
-          validation.isValid = false;
-        }
-    });
-
-    // 5. Validar suma de porcentajes
-    const totalPorcentaje = actividades.reduce(
-      (sum, act) => sum + act.porcentaje,
-      0,
-    );
-
-    if (Math.abs(totalPorcentaje - 100) > 0.1) {
-      validation.errors.push(
-        `Los porcentajes de actividades no suman 100% (suma: ${totalPorcentaje}%)`,
-      );
-      validation.isValid = false;
-    }
-
-    return validation;
   };
 
   // Verificar si hay notas para mostrar advertencia
@@ -1051,7 +850,6 @@ const SistemaCalificaciones = () => {
                 variant="bordered"
                 onSelectionChange={(keys) => {
                   const key = Array.from(keys)[0] as string;
-
                   handlePeriodoChange(key);
                 }}
               >
@@ -1109,7 +907,7 @@ const SistemaCalificaciones = () => {
                       Actividades regulares
                     </span>
                     <p className="font-semibold">
-                      {porcentajes.totalRegulares.toFixed(1)}% / 70%
+                      {porcentajes.totalRegulares.toFixed(1)}%
                     </p>
                   </div>
                   <div className="bg-white p-2 rounded border">
@@ -1117,7 +915,7 @@ const SistemaCalificaciones = () => {
                       Evaluación final
                     </span>
                     <p className="font-semibold">
-                      {porcentajes.totalFinal.toFixed(1)}% / 30%
+                      {porcentajes.totalFinal.toFixed(1)}%
                     </p>
                   </div>
                   <div className="bg-white p-2 rounded border">
@@ -1154,21 +952,67 @@ const SistemaCalificaciones = () => {
                 Configura las actividades y sus porcentajes de evaluación
               </p>
             </div>
-            <Button
-              className="w-full sm:w-auto"
-              color="primary"
-              startContent={<EditIcon />}
-              variant={editando ? "flat" : "light"}
-              onPress={() => setEditando(!editando)}
-            >
-              {editando ? "Cancelar Edición" : "Editar Actividades"}
-            </Button>
+            <div className="flex flex-col sm:flex-row gap-3">
+              {/* NUEVO CHECKBOX PARA EVALUACIÓN FINAL */}
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  isSelected={incluirEvaluacionFinal}
+                  onValueChange={setIncluirEvaluacionFinal}
+                  color="primary"
+                  size="sm"
+                >
+                  <span className="text-sm text-gray-700">Incluir Evaluación Final</span>
+                </Checkbox>
+              </div>
+              <Button
+                className="w-full sm:w-auto"
+                color="primary"
+                startContent={<EditIcon />}
+                variant={editando ? "flat" : "light"}
+                onPress={() => setEditando(!editando)}
+              >
+                {editando ? "Cancelar Edición" : "Editar Actividades"}
+              </Button>
+            </div>
           </div>
         </CardHeader>
 
         <Divider />
 
         <CardBody className="pt-4">
+          {/* Información sobre la evaluación final */}
+          {!incluirEvaluacionFinal && (
+            <Card className="bg-blue-50 border border-blue-200 mb-4">
+              <CardBody className="py-3">
+                <div className="flex items-center gap-2 text-blue-700">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                  <div>
+                    <p className="font-medium">Modo: Solo Actividades Regulares</p>
+                    <p className="text-sm">Las actividades regulares representarán el 100% de la calificación</p>
+                  </div>
+                </div>
+              </CardBody>
+            </Card>
+          )}
+
+          {incluirEvaluacionFinal && (
+            <Card className="bg-green-50 border border-green-200 mb-4">
+              <CardBody className="py-3">
+                <div className="flex items-center gap-2 text-green-700">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                  <div>
+                    <p className="font-medium">Modo: Con Evaluación Final</p>
+                    <p className="text-sm">Actividades regulares: 70% | Evaluación final: 30%</p>
+                  </div>
+                </div>
+              </CardBody>
+            </Card>
+          )}
+
           {editando && (
             <div className="mb-6">
               <Card className="bg-gray-50 border">
@@ -1241,6 +1085,11 @@ const SistemaCalificaciones = () => {
                                   Eliminar
                                 </Button>
                               )}
+                              {actividad.isFinal && (
+                                <span className="text-xs text-gray-500">
+                                  Use el checkbox para deshabilitarla
+                                </span>
+                              )}
                             </TableCell>
                           </TableRow>
                         ))}
@@ -1252,7 +1101,7 @@ const SistemaCalificaciones = () => {
 
                   <div>
                     <h4 className="text-md font-semibold mb-3 text-gray-700">
-                      Añadir Nueva Actividad
+                      Añadir Nueva Actividad Regular
                     </h4>
                     <div className="flex flex-col items-center sm:flex-row gap-3">
                       <Input
@@ -1319,12 +1168,14 @@ const SistemaCalificaciones = () => {
                     {porcentajes.totalRegulares.toFixed(1)}%
                   </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Evaluación final:</span>
-                  <span className="font-semibold">
-                    {porcentajes.totalFinal.toFixed(1)}%
-                  </span>
-                </div>
+                {incluirEvaluacionFinal && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Evaluación final:</span>
+                    <span className="font-semibold">
+                      {porcentajes.totalFinal.toFixed(1)}%
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-gray-600">Total:</span>
                   <span
