@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { useMutation } from "@apollo/client";
+import { useMutation, useQuery } from "@apollo/client";
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 import { Select, SelectItem } from "@heroui/select";
@@ -16,7 +16,7 @@ import {
 } from "@heroui/table";
 import { toast } from "react-hot-toast";
 import { useParams, useRouter } from "next/navigation";
-import { CheckCircle, XCircle } from "lucide-react";
+import { CheckCircle, Plus, Trash2, XCircle } from "lucide-react";
 import { Card, CardHeader, CardBody } from "@heroui/card";
 import { Chip } from "@heroui/chip";
 import { Divider } from "@heroui/divider";
@@ -24,6 +24,7 @@ import { Divider } from "@heroui/divider";
 import { Calificacion, Estudiante } from "@/types";
 import { GUARDAR_CALIFICACIONES } from "@/app/graphql/mutation/guardarCalificaciones";
 import { useMaestro } from "@/app/context/MaestroContext";
+import { OBTENER_INDICADORES } from "@/app/graphql/queries/obtenerIndicadores";
 
 // Iconos como componentes
 const WarningIcon = () => (
@@ -110,6 +111,11 @@ type Nota = {
   actividad_id: string;
 };
 
+type Indicador = {
+  id: number;
+  nombre: string;
+};
+
 const SistemaCalificaciones = () => {
   const params = useParams();
   const router = useRouter();
@@ -117,7 +123,6 @@ const SistemaCalificaciones = () => {
   const area_id = params?.area as string;
 
   // Constants
-  const REGULAR_ACTIVITIES_PERCENTAGE = 100; // Cambiar a 100% cuando no hay evaluación final
   const FINAL_EVALUATION_PERCENTAGE = 30;
 
   // Use the MaestroContext
@@ -132,6 +137,8 @@ const SistemaCalificaciones = () => {
   } = useMaestro();
 
   // Estados locales
+  const [indicadores, setIndicadores] = useState<Indicador[]>([]);
+  const [nextId, setNextId] = useState(1);
   const [actividades, setActividades] = useState<Actividad[]>([]);
   const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
   const [calificaciones, setCalificaciones] = useState<{
@@ -144,9 +151,33 @@ const SistemaCalificaciones = () => {
   }>({ nombre: "", porcentaje: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  
+
   // NUEVO ESTADO: Checkbox para evaluación final opcional
   const [incluirEvaluacionFinal, setIncluirEvaluacionFinal] = useState(true);
+
+  // Función para agregar un nuevo indicador
+  const agregarIndicador = () => {
+    const nuevoIndicador = {
+      id: nextId,
+      nombre: "",
+    };
+
+    setIndicadores([...indicadores, nuevoIndicador]);
+    setNextId(nextId + 1);
+  };
+
+  // Función para actualizar el nombre de un indicador
+  const actualizarIndicador = (id: number, nombre: string) => {
+    setIndicadores(
+      indicadores.map((indicador) =>
+        indicador.id === id ? { ...indicador, nombre } : indicador,
+      ),
+    );
+  };
+  // Función para eliminar un indicador
+  const eliminarIndicador = (id: number) => {
+    setIndicadores(indicadores.filter((indicador) => indicador.id !== id));
+  };
 
   // GraphQL mutation
   const [guardarCalificaciones, { loading: guardandoCalificaciones }] =
@@ -173,6 +204,30 @@ const SistemaCalificaciones = () => {
         setLoading(false);
       },
     });
+
+  const { loading: loadingIndicadores, error: errorIndicadores } = useQuery(
+    OBTENER_INDICADORES,
+    {
+      variables: {
+        gradoId: parseInt(grado_id), // Convertir a Int
+        areaId: parseInt(area_id), // Convertir a Int
+        periodo: parseInt(periodoSeleccionado), // Convertir a Int
+      },
+      skip: !grado_id || !area_id || !periodoSeleccionado, // No ejecutar si faltan variables
+      onCompleted: (data) => {
+        // Cuando la query se complete, actualizar el estado local
+        if (data) {
+          console.log(data.obtenerIndicadores.data);
+          setIndicadores(
+            data.obtenerIndicadores.data.map((indicador: Indicador) => ({
+              id: indicador.id,
+              nombre: indicador.nombre,
+            })),
+          );
+        }
+      },
+    },
+  );
 
   // Efecto para cargar datos del curso
   const fetchData = useCallback(async () => {
@@ -215,8 +270,8 @@ const SistemaCalificaciones = () => {
     // Solo ejecutar si hay actividades cargadas para evitar ejecuciones prematuras
     if (actividades.length === 0) return;
 
-    const tieneEvaluacionFinal = actividades.some(act => act.isFinal);
-    
+    const tieneEvaluacionFinal = actividades.some((act) => act.isFinal);
+
     if (incluirEvaluacionFinal && !tieneEvaluacionFinal) {
       // AGREGAR evaluación final
       const nuevaEvaluacionFinal = {
@@ -225,50 +280,56 @@ const SistemaCalificaciones = () => {
         porcentaje: FINAL_EVALUATION_PERCENTAGE,
         isFinal: true,
       };
-      
+
       // Redistribuir porcentajes de actividades regulares
-      const actividadesRegulares = actividades.filter(act => !act.isFinal);
-      const porcentajeRegular = actividadesRegulares.length > 0 
-        ? (100 - FINAL_EVALUATION_PERCENTAGE) / actividadesRegulares.length
-        : 70; // valor por defecto
-      
+      const actividadesRegulares = actividades.filter((act) => !act.isFinal);
+      const porcentajeRegular =
+        actividadesRegulares.length > 0
+          ? (100 - FINAL_EVALUATION_PERCENTAGE) / actividadesRegulares.length
+          : 70; // valor por defecto
+
       const actividadesActualizadas = [
-        ...actividadesRegulares.map(act => ({ ...act, porcentaje: porcentajeRegular })),
-        nuevaEvaluacionFinal
+        ...actividadesRegulares.map((act) => ({
+          ...act,
+          porcentaje: porcentajeRegular,
+        })),
+        nuevaEvaluacionFinal,
       ];
-      
+
       setActividades(actividadesActualizadas);
-      
+
       // IMPORTANTE: Actualizar las calificaciones para incluir la nueva evaluación final
-      setCalificaciones(prev => {
+      setCalificaciones((prev) => {
         const nuevasCalificaciones = { ...prev };
-        
+
         // Para cada estudiante, añadir la nueva actividad final con valor vacío
-        Object.keys(nuevasCalificaciones).forEach(estudianteId => {
+        Object.keys(nuevasCalificaciones).forEach((estudianteId) => {
           if (nuevasCalificaciones[estudianteId]) {
             nuevasCalificaciones[estudianteId] = {
               ...nuevasCalificaciones[estudianteId],
-              [nuevaEvaluacionFinal.id]: ""
+              [nuevaEvaluacionFinal.id]: "",
             };
           }
         });
-        
+
         return nuevasCalificaciones;
       });
-      
-      toast.success("Evaluación final añadida. Los porcentajes se han redistribuido automáticamente.");
-      
+
+      toast.success(
+        "Evaluación final añadida. Los porcentajes se han redistribuido automáticamente.",
+      );
     } else if (!incluirEvaluacionFinal && tieneEvaluacionFinal) {
       // ELIMINAR evaluación final
-      const actividadesSinFinal = actividades.filter(act => !act.isFinal);
-      const actividadesFinal = actividades.filter(act => act.isFinal);
-      
+      const actividadesSinFinal = actividades.filter((act) => !act.isFinal);
+      const actividadesFinal = actividades.filter((act) => act.isFinal);
+
       if (actividadesSinFinal.length > 0) {
         const porcentajeRegular = 100 / actividadesSinFinal.length;
-        const actividadesActualizadas = actividadesSinFinal.map(act => ({
+        const actividadesActualizadas = actividadesSinFinal.map((act) => ({
           ...act,
-          porcentaje: porcentajeRegular
+          porcentaje: porcentajeRegular,
         }));
+
         setActividades(actividadesActualizadas);
       } else {
         // Si no hay actividades regulares, crear una actividad por defecto
@@ -281,26 +342,31 @@ const SistemaCalificaciones = () => {
           },
         ]);
       }
-      
+
       // IMPORTANTE: Actualizar las calificaciones para eliminar las actividades finales
-      setCalificaciones(prev => {
+      setCalificaciones((prev) => {
         const nuevasCalificaciones = { ...prev };
-        
+
         // Para cada estudiante, eliminar las actividades finales
-        Object.keys(nuevasCalificaciones).forEach(estudianteId => {
+        Object.keys(nuevasCalificaciones).forEach((estudianteId) => {
           if (nuevasCalificaciones[estudianteId]) {
-            const calificacionesEstudiante = { ...nuevasCalificaciones[estudianteId] };
-            actividadesFinal.forEach(actFinal => {
+            const calificacionesEstudiante = {
+              ...nuevasCalificaciones[estudianteId],
+            };
+
+            actividadesFinal.forEach((actFinal) => {
               delete calificacionesEstudiante[actFinal.id];
             });
             nuevasCalificaciones[estudianteId] = calificacionesEstudiante;
           }
         });
-        
+
         return nuevasCalificaciones;
       });
-      
-      toast.success("Evaluación final eliminada. Los porcentajes se han redistribuido automáticamente.");
+
+      toast.success(
+        "Evaluación final eliminada. Los porcentajes se han redistribuido automáticamente.",
+      );
     }
     // Si incluirEvaluacionFinal === tieneEvaluacionFinal, no hacer nada (estado consistente)
   }, [incluirEvaluacionFinal]); // Quitar actividades.length de las dependencias
@@ -350,8 +416,10 @@ const SistemaCalificaciones = () => {
         });
 
         // Verificar si hay evaluación final en las actividades existentes y actualizar el checkbox
-        const tieneEvaluacionFinal = nuevasActividades.some(act => act.isFinal);
-        
+        const tieneEvaluacionFinal = nuevasActividades.some(
+          (act) => act.isFinal,
+        );
+
         // IMPORTANTE: Actualizar el estado del checkbox ANTES de establecer las actividades
         // para evitar que se ejecute el efecto del checkbox cuando no debería
         if (tieneEvaluacionFinal !== incluirEvaluacionFinal) {
@@ -434,7 +502,7 @@ const SistemaCalificaciones = () => {
   useEffect(() => {
     // Solo ejecutar si hay estudiantes y actividades, y evitar ciclos infinitos
     if (estudiantes.length === 0 || actividades.length === 0) return;
-    
+
     setCalificaciones((prev) => {
       const nuevasCalificaciones: {
         [estudianteId: string]: { [actividadId: string]: string };
@@ -450,10 +518,12 @@ const SistemaCalificaciones = () => {
       });
 
       // Solo actualizar si hay cambios reales
-      const hayChangios = JSON.stringify(prev) !== JSON.stringify(nuevasCalificaciones);
+      const hayChangios =
+        JSON.stringify(prev) !== JSON.stringify(nuevasCalificaciones);
+
       return hayChangios ? nuevasCalificaciones : prev;
     });
-  }, [estudiantes.length, actividades.map(a => a.id).join(',')]); // Dependencias más específicas
+  }, [estudiantes.length, actividades.map((a) => a.id).join(",")]); // Dependencias más específicas
 
   // Función distribuirPorcentajes - MODIFICADA para manejar evaluación final opcional
   const distribuirPorcentajes = useCallback(
@@ -466,11 +536,15 @@ const SistemaCalificaciones = () => {
       }
 
       // Calcular el porcentaje disponible para actividades regulares
-      const porcentajeFinal = actividadesFinal.reduce((sum, act) => sum + act.porcentaje, 0);
+      const porcentajeFinal = actividadesFinal.reduce(
+        (sum, act) => sum + act.porcentaje,
+        0,
+      );
       const porcentajeDisponible = 100 - porcentajeFinal;
-      
+
       // El nuevo porcentaje para cada actividad regular
-      const nuevoPorcentaje = porcentajeDisponible / actividadesRegulares.length;
+      const nuevoPorcentaje =
+        porcentajeDisponible / actividadesRegulares.length;
 
       // Actualizar los porcentajes de las actividades regulares
       const nuevasActividadesRegulares: Actividad[] = actividadesRegulares.map(
@@ -551,6 +625,7 @@ const SistemaCalificaciones = () => {
   const handleAddActividad = () => {
     if (!nuevaActividad.nombre) {
       toast.error("Ingrese nombre para la nueva actividad");
+
       return;
     }
 
@@ -611,6 +686,7 @@ const SistemaCalificaciones = () => {
 
     if (actividadesRegulares.length === 0) {
       toast.error("No hay actividades regulares para redistribuir");
+
       return;
     }
 
@@ -653,6 +729,7 @@ const SistemaCalificaciones = () => {
   const handleEliminarActividad = (actividadId: string) => {
     if (actividades.length <= 1) {
       toast.error("Debe haber al menos una actividad");
+
       return;
     }
 
@@ -660,7 +737,10 @@ const SistemaCalificaciones = () => {
     const actividad = actividades.find((act) => act.id === actividadId);
 
     if (actividad?.isFinal) {
-      toast.error("No se puede eliminar la evaluación final. Use el checkbox para deshabilitarla.");
+      toast.error(
+        "No se puede eliminar la evaluación final. Use el checkbox para deshabilitarla.",
+      );
+
       return;
     }
 
@@ -673,19 +753,27 @@ const SistemaCalificaciones = () => {
       (act) => act.id !== actividadId,
     );
 
-    if (nuevasActividadesRegulares.length === 0 && actividadesFinal.length === 0) {
+    if (
+      nuevasActividadesRegulares.length === 0 &&
+      actividadesFinal.length === 0
+    ) {
       toast.error("Debe haber al menos una actividad");
+
       return;
     }
 
     // Si no quedan actividades regulares pero hay evaluación final, crear una actividad por defecto
-    if (nuevasActividadesRegulares.length === 0 && actividadesFinal.length > 0) {
+    if (
+      nuevasActividadesRegulares.length === 0 &&
+      actividadesFinal.length > 0
+    ) {
       const nuevaActividad: Actividad = {
         id: "act1",
         nombre: "Actividad 1",
         porcentaje: 70, // 100% - 30% de evaluación final
         isFinal: false,
       };
+
       nuevasActividadesRegulares.push(nuevaActividad);
     }
 
@@ -739,6 +827,7 @@ const SistemaCalificaciones = () => {
             area_id,
             periodo: periodoSeleccionado,
             calificaciones: calificacionesSubmit,
+            indicadores: indicadores, // Pasar los indicadores
           },
         },
       });
@@ -791,7 +880,7 @@ const SistemaCalificaciones = () => {
   };
 
   // Renderizado - Mostrar loading mientras carga
-  if (!curso) {
+  if (!curso || loading || loadingIndicadores) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary" />
@@ -850,6 +939,7 @@ const SistemaCalificaciones = () => {
                 variant="bordered"
                 onSelectionChange={(keys) => {
                   const key = Array.from(keys)[0] as string;
+
                   handlePeriodoChange(key);
                 }}
               >
@@ -864,16 +954,19 @@ const SistemaCalificaciones = () => {
       </Card>
 
       {/* Alertas y Mensajes */}
-      {error && (
-        <Card className="border border-red-200 bg-red-50">
-          <CardBody className="py-3">
-            <div className="flex items-center gap-2 text-red-700">
-              <XCircle className="w-5 h-5" />
-              <span className="font-medium">{error}</span>
-            </div>
-          </CardBody>
-        </Card>
-      )}
+      {error ||
+        (errorIndicadores && (
+          <Card className="border border-red-200 bg-red-50">
+            <CardBody className="py-3">
+              <div className="flex items-center gap-2 text-red-700">
+                <XCircle className="w-5 h-5" />
+                <span className="font-medium">
+                  {error || errorIndicadores.message}
+                </span>
+              </div>
+            </CardBody>
+          </Card>
+        ))}
 
       {hayNotasSinCompletar() && (
         <Card className="border border-yellow-200 bg-yellow-50">
@@ -940,6 +1033,109 @@ const SistemaCalificaciones = () => {
         </Card>
       )}
 
+      <Card className="shadow-sm">
+        <CardHeader className="pb-3">
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 w-full">
+            <div>
+              <h2 className="text-xl font-bold text-gray-800">
+                Actividades de Evaluación
+              </h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Registra los indicadores de logros
+              </p>
+            </div>
+            {indicadores.length === 0 && (
+              <Button
+                className="w-full sm:w-auto"
+                color="primary"
+                startContent={<Plus size={16} />}
+                onPress={agregarIndicador}
+              >
+                Agregar Indicador
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+        <Divider />
+        <CardBody className="pt-4">
+          {indicadores.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500 mb-4">No hay indicadores agregados</p>
+              <Button
+                color="primary"
+                startContent={<Plus size={16} />}
+                variant="flat"
+                onPress={agregarIndicador}
+              >
+                Agregar primer indicador
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {indicadores.map((indicador, index) => (
+                <div key={indicador.id} className="flex gap-3 items-start">
+                  <div className="flex-1">
+                    <Input
+                      classNames={{
+                        input: "text-sm",
+                        label: "text-sm font-medium",
+                      }}
+                      label={`Indicador ${index + 1}`}
+                      placeholder="Escribe el nombre del indicador..."
+                      value={indicador.nombre}
+                      variant="bordered"
+                      onValueChange={(value) =>
+                        actualizarIndicador(indicador.id, value)
+                      }
+                    />
+                  </div>
+
+                  <Button
+                    isIconOnly
+                    className="mt-2"
+                    color="danger"
+                    size="sm"
+                    variant="flat"
+                    onPress={() => eliminarIndicador(indicador.id)}
+                  >
+                    <Trash2 size={16} />
+                  </Button>
+                </div>
+              ))}
+
+              {/* Botón para agregar más indicadores al final de la lista */}
+              <div className="pt-3 border-t border-gray-200">
+                <Button
+                  className="w-full sm:w-auto"
+                  color="primary"
+                  startContent={<Plus size={16} />}
+                  variant="flat"
+                  onPress={agregarIndicador}
+                >
+                  Agregar otro indicador
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Resumen de indicadores */}
+          {indicadores.length > 0 && (
+            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">
+                Resumen ({indicadores.length} indicadores)
+              </h3>
+              <div className="space-y-1">
+                {indicadores.map((indicador, index) => (
+                  <div key={indicador.id} className="text-sm text-gray-600">
+                    {index + 1}. {indicador.nombre}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </CardBody>
+      </Card>
+
       {/* Gestión de Actividades */}
       <Card className="shadow-sm">
         <CardHeader className="pb-3">
@@ -956,12 +1152,14 @@ const SistemaCalificaciones = () => {
               {/* NUEVO CHECKBOX PARA EVALUACIÓN FINAL */}
               <div className="flex items-center gap-2">
                 <Checkbox
-                  isSelected={incluirEvaluacionFinal}
-                  onValueChange={setIncluirEvaluacionFinal}
                   color="primary"
+                  isSelected={incluirEvaluacionFinal}
                   size="sm"
+                  onValueChange={setIncluirEvaluacionFinal}
                 >
-                  <span className="text-sm text-gray-700">Incluir Evaluación Final</span>
+                  <span className="text-sm text-gray-700">
+                    Incluir Evaluación Final
+                  </span>
                 </Checkbox>
               </div>
               <Button
@@ -985,12 +1183,25 @@ const SistemaCalificaciones = () => {
             <Card className="bg-blue-50 border border-blue-200 mb-4">
               <CardBody className="py-3">
                 <div className="flex items-center gap-2 text-blue-700">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  <svg
+                    className="w-5 h-5"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      clipRule="evenodd"
+                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                      fillRule="evenodd"
+                    />
                   </svg>
                   <div>
-                    <p className="font-medium">Modo: Solo Actividades Regulares</p>
-                    <p className="text-sm">Las actividades regulares representarán el 100% de la calificación</p>
+                    <p className="font-medium">
+                      Modo: Solo Actividades Regulares
+                    </p>
+                    <p className="text-sm">
+                      Las actividades regulares representarán el 100% de la
+                      calificación
+                    </p>
                   </div>
                 </div>
               </CardBody>
@@ -1001,12 +1212,22 @@ const SistemaCalificaciones = () => {
             <Card className="bg-green-50 border border-green-200 mb-4">
               <CardBody className="py-3">
                 <div className="flex items-center gap-2 text-green-700">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  <svg
+                    className="w-5 h-5"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      clipRule="evenodd"
+                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                      fillRule="evenodd"
+                    />
                   </svg>
                   <div>
                     <p className="font-medium">Modo: Con Evaluación Final</p>
-                    <p className="text-sm">Actividades regulares: 70% | Evaluación final: 30%</p>
+                    <p className="text-sm">
+                      Actividades regulares: 70% | Evaluación final: 30%
+                    </p>
                   </div>
                 </div>
               </CardBody>

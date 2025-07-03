@@ -18,12 +18,14 @@ import {
   Phone,
   CreditCard,
   ArmchairIcon,
+  Circle,
+  Target,
 } from "lucide-react";
 import { Button } from "@heroui/button";
 
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { OBTENER_CALIFICACIONES_ESTUDIANTE } from "@/app/graphql/queries/obtenerCalificacionesEstudiante";
-import { Calificacion, Maestro } from "@/types";
+import { Area, Calificacion, Grado, Maestro } from "@/types";
 import { handleGenerateEstudiantePDF } from "@/components/ui/reporte";
 
 const DocumentIcon = () => (
@@ -43,6 +45,20 @@ const DocumentIcon = () => (
   </svg>
 );
 
+interface Indicador {
+  id: string | number;
+  nombre: string;
+  periodo: number;
+  grado_id: number;
+  area_id: number;
+  // Relaciones opcionales
+  grado?: Grado;
+  area?: Area;
+  // Timestamps (si están habilitados en Sequelize)
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
 export default function CalificacionesPage() {
   const periodos = [1, 2, 3, 4];
   const params = useParams();
@@ -61,7 +77,7 @@ export default function CalificacionesPage() {
       variables: {
         estudiante_id: params.estudiante,
         grado_id: params.curso,
-        periodo: periodoSeleccionado
+        periodo: periodoSeleccionado,
       },
       skip: !params.estudiante,
       fetchPolicy: "cache-and-network",
@@ -71,6 +87,8 @@ export default function CalificacionesPage() {
   // Procesar datos de calificaciones
   const todasCalificaciones = useMemo(() => {
     if (!data?.obtenerCalificacionesEstudiante) return [];
+
+    console.log(data.obtenerCalificacionesEstudiante);
 
     const director =
       data.obtenerCalificacionesEstudiante.estudiante.grado.director;
@@ -282,7 +300,8 @@ export default function CalificacionesPage() {
                       todasCalificaciones, // ✅ Array de calificaciones (puede estar vacío)
                       director, // ✅ Objeto director (puede ser null)
                       periodoSeleccionado, // ✅ Período seleccionado
-                      data.obtenerCalificacionesEstudiante.puesto.posicion
+                      data.obtenerCalificacionesEstudiante.puesto.posicion,
+                      data.obtenerCalificacionesEstudiante.indicadores, // ✅ Indicadores
                     )
                   }
                 >
@@ -345,9 +364,7 @@ export default function CalificacionesPage() {
                   <div>
                     <p className="text-sm text-gray-500">Puesto</p>
                     <p className="font-medium text-gray-800">
-                      {
-                        data.obtenerCalificacionesEstudiante.puesto.posicion
-                      }
+                      {data.obtenerCalificacionesEstudiante.puesto.posicion}
                     </p>
                   </div>
                 </div>
@@ -534,6 +551,65 @@ export default function CalificacionesPage() {
                         </div>
                       ))}
                     </div>
+
+                    {/* NUEVA SECCIÓN: Indicadores de Evaluación */}
+                    {data.obtenerCalificacionesEstudiante.indicadores.lista
+                      .length > 0 && (
+                      <div className="mt-6 pt-4 border-t border-gray-200">
+                        <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                          <Target size={16} />
+                          Indicadores de Logros (
+                          {
+                            data.obtenerCalificacionesEstudiante.indicadores
+                              .lista.length
+                          }
+                          )
+                        </h4>
+                        <div className="grid gap-2">
+                          {data.obtenerCalificacionesEstudiante.indicadores.lista.map(
+                            (indicador: Indicador, index: number) => (
+                              <div
+                                key={indicador.id}
+                                className="flex items-start gap-3 p-3 bg-blue-50 rounded-xl border border-blue-100"
+                              >
+                                <div className="flex-shrink-0 mt-1">
+                                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <span className="text-xs font-medium text-blue-600">
+                                      {index + 1}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="flex-1">
+                                  <p className="text-sm font-medium text-gray-800">
+                                    {indicador.nombre}
+                                  </p>
+                                  <p className="text-xs text-gray-600 mt-1">
+                                    Período {indicador.periodo} •{" "}
+                                    {calificacion.area?.nombre}
+                                  </p>
+                                </div>
+                                <div className="flex-shrink-0">
+                                  <Circle className="text-blue-400" size={16} />
+                                </div>
+                              </div>
+                            ),
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Mensaje si no hay indicadores */}
+                    {data.obtenerCalificacionesEstudiante.indicadores.lista
+                      .length === 0 && (
+                      <div className="mt-6 pt-4 border-t border-gray-200">
+                        <div className="flex items-center gap-2 text-gray-500">
+                          <Target size={16} />
+                          <span className="text-sm">
+                            No hay indicadores registrados para este período
+                          </span>
+                        </div>
+                      </div>
+                    )}
 
                     {/* Resumen de la nota final */}
                     <div className="mt-4 pt-4 border-t border-gray-200">

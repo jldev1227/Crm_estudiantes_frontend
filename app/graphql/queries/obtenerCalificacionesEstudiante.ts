@@ -55,6 +55,27 @@ export const OBTENER_CALIFICACIONES_ESTUDIANTE = gql`
           nombre
         }
       }
+      indicadores {
+        total
+        lista {
+          id
+          nombre
+          periodo
+          area {
+            id
+            nombre
+          }
+        }
+        porArea {
+          area_id
+          area_nombre
+          indicadores {
+            id
+            nombre
+            periodo
+          }
+        }
+      }
     }
   }
 `;

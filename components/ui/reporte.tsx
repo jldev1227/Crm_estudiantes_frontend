@@ -11,6 +11,31 @@ import {
 
 import { Area, Calificacion, Estudiante, Maestro } from "@/types";
 
+type Indicador = {
+  id: string;
+  nombre: string;
+  periodo: number;
+  area: Area;
+};
+
+type IndicadorSimple = {
+  id: string;
+  nombre: string;
+  periodo: number;
+};
+
+type IndicadoresPorArea = {
+  area_id: number;
+  area_nombre: string;
+  indicadores: IndicadorSimple[];
+};
+
+type IndicadoresData = {
+  total: number;
+  lista: Indicador[];
+  porArea: IndicadoresPorArea[];
+};
+
 // Estilos para el PDF con un diseño elegante tipo tabla
 const styles = StyleSheet.create({
   page: {
@@ -25,7 +50,7 @@ const styles = StyleSheet.create({
     maxWidth: 300,
     marginBottom: 2,
     color: "#fff",
-    textAlign: "center", // <-- text-center
+    textAlign: "center",
   },
   subHeader: {
     fontSize: 10,
@@ -38,7 +63,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: "semibold",
     color: "#fff",
-    textAlign: "center", // <-- text-center
+    textAlign: "center",
   },
   period: {
     textAlign: "center",
@@ -83,7 +108,7 @@ const styles = StyleSheet.create({
     borderRightWidth: 1,
     borderColor: "#E0E0E0",
     fontWeight: "bold",
-    textAlign: "center", // <-- text-center
+    textAlign: "center",
   },
   tableColHeader2: {
     width: "20%",
@@ -119,7 +144,7 @@ const styles = StyleSheet.create({
     borderRightWidth: 1,
     borderColor: "#E0E0E0",
     height: "100%",
-    textAlign: "center", // <-- text-center
+    textAlign: "center",
   },
   tableCol2: {
     width: "20%",
@@ -150,12 +175,12 @@ const styles = StyleSheet.create({
   // Text styles
   labelText: {
     fontSize: 12,
-    textAlign: "center", // <-- text-center
+    textAlign: "center",
     textTransform: "capitalize",
   },
   valueText: {
     fontSize: 12,
-    textAlign: "center", // <-- text-center
+    textAlign: "center",
     textTransform: "capitalize",
   },
   flex: {
@@ -174,7 +199,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     fontSize: 12,
     fontWeight: "bold",
-    textAlign: "center", // <-- text-center
+    textAlign: "center",
   },
   altoValue: {
     color: "#007AFF",
@@ -183,7 +208,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     fontSize: 12,
     fontWeight: "bold",
-    textAlign: "center", // <-- text-center
+    textAlign: "center",
   },
   basicoValue: {
     color: "#FF9500",
@@ -192,7 +217,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     fontSize: 12,
     fontWeight: "bold",
-    textAlign: "center", // <-- text-center
+    textAlign: "center",
   },
   bajoValue: {
     color: "#e60f0f",
@@ -201,7 +226,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     fontSize: 12,
     fontWeight: "bold",
-    textAlign: "center", // <-- text-center
+    textAlign: "center",
   },
   grayValue: {
     color: "#00000074",
@@ -209,7 +234,7 @@ const styles = StyleSheet.create({
     padding: 3,
     borderRadius: 3,
     fontSize: 12,
-    textAlign: "center", // <-- text-center
+    textAlign: "center",
   },
 
   footer: {
@@ -231,6 +256,39 @@ const styles = StyleSheet.create({
     textAlign: "center",
     backgroundColor: "#4472C415",
     padding: 8,
+  },
+
+  // ✅ NUEVOS ESTILOS PARA INDICADORES
+  indicadoresSection: {
+    marginTop: 8,
+    marginBottom: 8,
+    paddingHorizontal: 8,
+  },
+  indicadoresHeader: {
+    fontSize: 10,
+    fontWeight: "bold",
+    color: "#4472C4",
+    marginBottom: 4,
+    textAlign: "left",
+  },
+  indicadorItem: {
+    fontSize: 10,
+    color: "#333",
+    marginBottom: 2,
+    paddingLeft: 8,
+    textAlign: "left",
+  },
+  indicadorBullet: {
+    fontSize: 10,
+    color: "#4472C4",
+    marginRight: 4,
+  },
+  noIndicadores: {
+    fontSize: 8,
+    color: "#666",
+    fontStyle: "italic",
+    textAlign: "center",
+    paddingVertical: 4,
   },
 
   // Actividades table styles
@@ -255,7 +313,7 @@ const styles = StyleSheet.create({
     borderRightWidth: 1,
     borderColor: "#E0E0E0",
     fontSize: 8,
-    textAlign: "center", // <-- text-center
+    textAlign: "center",
   },
   activityCol2: {
     width: "25%",
@@ -282,9 +340,11 @@ const styles = StyleSheet.create({
   },
 });
 
+// ✅ Interface actualizada para incluir indicadores simples
 interface AreaConPromedio {
   area: Area;
   promedio: number;
+  indicadores: IndicadorSimple[]; // Cambio a IndicadorSimple
 }
 
 // Interfaz para los datos del reporte por área
@@ -500,36 +560,75 @@ export const ReporteEstudiantePDF = ({
             </View>
           </View>
 
-          {/* Mapear todas las áreas */}
+          {/* ✅ Mapear todas las áreas con indicadores */}
           {areas.map((areaData: AreaConPromedio, index) => {
-            const { area, promedio } = areaData;
+            const { area, promedio, indicadores } = areaData;
             const desempeño = getDesempenoTexto(promedio);
             const isLast = index === areas.length - 1;
 
             return (
-              <View
-                key={area.id}
-                style={[
-                  isLast ? styles.tableRowLast : styles.tableRow,
-                  styles.flex,
-                ]}
-              >
-                <View style={{ flex: 2 }}>
-                  <Text style={styles.labelText}>
-                    {area.nombre.toLowerCase()}
-                  </Text>
+              <View key={`area-${area.id}`}>
+                {/* Fila de la asignatura */}
+                <View
+                  style={[
+                    isLast && indicadores.length === 0
+                      ? styles.tableRowLast
+                      : styles.tableRow,
+                    styles.flex,
+                  ]}
+                >
+                  <View style={{ flex: 2 }}>
+                    <Text style={styles.labelText}>
+                      {area.nombre.toLowerCase()}
+                    </Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={getDesempenoStyle(promedio)}>
+                      {promedio.toFixed(1)}
+                    </Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={getDesempenoStyle(promedio)}>{desempeño}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.valueText}>0</Text>
+                  </View>
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={getDesempenoStyle(promedio)}>
-                    {promedio.toFixed(1)}
-                  </Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={getDesempenoStyle(promedio)}>{desempeño}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.valueText} />
-                </View>
+
+                {/* ✅ NUEVA SECCIÓN: Indicadores del área */}
+                {indicadores.length > 0 && (
+                  <View
+                    style={[
+                      styles.tableRow,
+                      {
+                        backgroundColor: "#f8f9fa",
+                        borderBottomWidth: isLast ? 0 : 1,
+                      },
+                    ]}
+                  >
+                    <View style={{ width: "100%", padding: 8 }}>
+                      <Text style={styles.indicadoresHeader}>
+                        Indicadores de Logros ({indicadores.length}):
+                      </Text>
+                      {indicadores.map((indicador, indIndex) => (
+                        <View
+                          key={`indicador-${indicador.id}`}
+                          style={{ flexDirection: "row", marginBottom: 2 }}
+                        >
+                          <Text style={styles.indicadorBullet}>•</Text>
+                          <Text style={styles.indicadorItem}>
+                            {indicador.nombre}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                )}
+
+                {/* Agregar borde final si es la última área y no tiene indicadores */}
+                {isLast && indicadores.length === 0 && (
+                  <View style={{ borderBottomWidth: 0 }} />
+                )}
               </View>
             );
           })}
@@ -561,11 +660,13 @@ export const ReporteEstudiantePDF = ({
   );
 };
 
+// ✅ Función actualizada para procesar datos con estructura GraphQL
 export const procesarDatosEstudiante = (
   calificacionesArray: Calificacion[],
   estudiante: Estudiante,
   periodo: number = 1,
   puesto: number | null,
+  indicadoresData: IndicadoresData | null,
 ) => {
   // ✅ Validar estudiante
   if (!estudiante) {
@@ -587,7 +688,7 @@ export const procesarDatosEstudiante = (
     pension_activa: estudiante.pension_activa || false,
   };
 
-  // ✅ Procesar calificaciones (puede estar vacío)
+  // ✅ Procesar calificaciones sin duplicidad
   let areas: AreaConPromedio[] = [];
   let promedioGeneral = 0;
 
@@ -596,33 +697,70 @@ export const procesarDatosEstudiante = (
     Array.isArray(calificacionesArray) &&
     calificacionesArray.length > 0
   ) {
-    // Procesar todas las áreas con sus calificaciones
-    areas = calificacionesArray.map((calificacion) => {
-      const actividades =
-        calificacion.notas?.map((nota: any) => ({
-          nombre: nota.nombre || "Sin nombre",
-          nota: nota.valor || 0,
-          porcentaje: nota.porcentaje || 0,
-        })) || [];
+    // ✅ RESOLVER DUPLICIDAD: Agrupar calificaciones por area_id
+    const areaMap = new Map<
+      string,
+      {
+        area: any;
+        calificaciones: Calificacion[];
+        sumaNotas: number;
+        cantidadNotas: number;
+      }
+    >();
 
-      // Calcular la nota final del área
-      let notaFinal = 0;
+    // Agrupar todas las calificaciones por área
+    calificacionesArray.forEach((calificacion) => {
+      const areaId = calificacion.area?.id?.toString();
 
-      if (actividades.length > 0) {
-        notaFinal = actividades.reduce(
-          (sum: number, act: any) => sum + (act.nota * act.porcentaje) / 100,
-          0,
+      if (!areaId) return;
+
+      if (!areaMap.has(areaId)) {
+        areaMap.set(areaId, {
+          area: calificacion.area,
+          calificaciones: [],
+          sumaNotas: 0,
+          cantidadNotas: 0,
+        });
+      }
+
+      const areaData = areaMap.get(areaId)!;
+
+      areaData.calificaciones.push(calificacion);
+
+      // Sumar notas para promedio
+      if (calificacion.notaFinal && calificacion.notaFinal > 0) {
+        areaData.sumaNotas += calificacion.notaFinal;
+        areaData.cantidadNotas++;
+      }
+    });
+
+    // ✅ Convertir el Map a array de áreas procesadas
+    areas = Array.from(areaMap.values()).map((areaData) => {
+      const { area, sumaNotas, cantidadNotas } = areaData;
+
+      // Calcular promedio del área
+      const promedioArea = cantidadNotas > 0 ? sumaNotas / cantidadNotas : 0;
+
+      // ✅ Buscar indicadores para esta área usando porArea
+      let indicadoresArea: IndicadorSimple[] = [];
+
+      if (indicadoresData && indicadoresData.porArea) {
+        const areaIndicadores = indicadoresData.porArea.find(
+          (porArea) => porArea.area_id.toString() === area.id?.toString(),
         );
-      } else {
-        // Si no hay actividades, usar la nota final directa
-        notaFinal = calificacion.notaFinal || 0;
+
+        if (areaIndicadores) {
+          // Filtrar por período si es necesario
+          indicadoresArea = areaIndicadores.indicadores.filter(
+            (indicador) => indicador.periodo === periodo,
+          );
+        }
       }
 
       return {
-        area: calificacion.area || { id: "unknown", nombre: "Área sin nombre" },
-        actividades,
-        promedio: notaFinal,
-        notaFinalOriginal: calificacion.notaFinal || 0,
+        area,
+        promedio: promedioArea,
+        indicadores: indicadoresArea,
       };
     });
 
@@ -643,16 +781,24 @@ export const procesarDatosEstudiante = (
     promedioGeneral,
   };
 
+  console.log("📊 Datos procesados:", {
+    totalAreas: areas.length,
+    areasConIndicadores: areas.filter((a) => a.indicadores.length > 0).length,
+    totalIndicadores: areas.reduce((sum, a) => sum + a.indicadores.length, 0),
+    indicadoresDataRecibida: indicadoresData?.total || 0,
+  });
+
   return resultado;
 };
 
-// ✅ Función actualizada para generar el PDF
+// ✅ Función actualizada para generar el PDF con estructura GraphQL
 export const handleGenerateEstudiantePDF = async (
   infoEstudiante: Estudiante,
   calificaciones: Calificacion[],
   director: Maestro | null,
   periodo: number = 1,
   puesto: number | null,
+  indicadoresData: IndicadoresData | null,
 ): Promise<void> => {
   try {
     if (!infoEstudiante) {
@@ -661,11 +807,19 @@ export const handleGenerateEstudiantePDF = async (
       return;
     }
 
+    console.log("🚀 Generando PDF con:", {
+      estudiante: infoEstudiante.nombre_completo,
+      calificaciones: calificaciones.length,
+      indicadores: indicadoresData?.total || 0,
+      periodo,
+    });
+
     const datosReporte = procesarDatosEstudiante(
       calificaciones,
       infoEstudiante,
       periodo,
-      puesto
+      puesto,
+      indicadoresData,
     );
 
     if (!datosReporte) {
@@ -689,13 +843,13 @@ export const handleGenerateEstudiantePDF = async (
       estudiante: {
         nombre: datosReporte.estudiante.nombre,
         grado: datosReporte.estudiante.grado,
-        periodo: String(datosReporte.estudiante.periodo), // Convertir a string si es necesario
-        puesto: String(datosReporte.estudiante.puesto), // Convertir a string si es necesario
+        periodo: String(datosReporte.estudiante.periodo),
+        puesto: String(datosReporte.estudiante.puesto),
         año: datosReporte.estudiante.año,
       },
       director: directorData,
       areas: datosReporte.areas,
-      promedio: datosReporte.promedioGeneral, // ✅ Usar promedioGeneral como promedio
+      promedio: datosReporte.promedioGeneral,
     };
 
     const blob = await pdf(
@@ -720,13 +874,15 @@ export const handleGenerateEstudiantePDF = async (
       link.click();
       URL.revokeObjectURL(url);
     }
+
+    console.log("✅ PDF generado exitosamente");
   } catch (error: any) {
     const message =
       error.message ||
       "Ocurrió un error al generar el PDF. Por favor, inténtelo de nuevo.";
 
     alert(message);
-    console.error("Error al generar el reporte:", error);
+    console.error("❌ Error al generar el reporte:", error);
   }
 };
 
