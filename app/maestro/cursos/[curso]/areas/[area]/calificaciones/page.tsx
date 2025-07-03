@@ -1038,7 +1038,7 @@ const SistemaCalificaciones = () => {
           <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 w-full">
             <div>
               <h2 className="text-xl font-bold text-gray-800">
-                Actividades de Evaluación
+                Indicadores de Logros
               </h2>
               <p className="text-sm text-gray-600 mt-1">
                 Registra los indicadores de logros
