@@ -144,22 +144,22 @@ export default function Page() {
   }, [cursos, usuario?.id]);
 
   // Funciones de navegación por materia
-  const verMateria = (gradoId: string, areaId: string) => {
+  const verMateria = (gradoId: number, areaId: number) => {
     router.push(`/maestro/cursos/${gradoId}/areas/${areaId}`);
   };
 
-  const agregarActividad = (gradoId: string, areaId: string) => {
+  const agregarActividad = (gradoId: number, areaId: number) => {
     router.push(
       `/maestro/cursos/${gradoId}/areas/${areaId}/actividades/agregar`,
     );
   };
 
-  const verReportesMateria = (gradoId: string, areaId: string) => {
+  const verReportesMateria = (gradoId: number, areaId: number) => {
     router.push(`/maestro/cursos/${gradoId}/areas/${areaId}/calificaciones`);
   };
 
   // Funciones de navegación por grado
-  const verGradoCompleto = (gradoId: string) => {
+  const verGradoCompleto = (gradoId: number) => {
     router.push(`/maestro/cursos/${gradoId}`);
   };
 
