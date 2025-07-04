@@ -19,14 +19,14 @@ import { useAuth } from "@/app/context/AuthContext";
 const GimnasioLogo = () => {
   return (
     <div className="flex items-center">
-      {/* <img
+      <img
         alt="Logo"
         className="mx-auto"
         height={42}
         src={"/LOGO.png"}
         width={42}
       />
-      <span className="font-bold text-inherit">Gimnasio Vancouver</span> */}
+      <span className="font-bold text-inherit">Gimnasio Vancouver</span>
     </div>
   );
 };
