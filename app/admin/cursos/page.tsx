@@ -111,7 +111,7 @@ export default function Page() {
   }, [cursos]);
 
   // Funciones de navegación
-  const verGrado = (gradoId: string) => {
+  const verGrado = (gradoId: number) => {
     router.push(`/admin/cursos/${gradoId}`);
   };
 
