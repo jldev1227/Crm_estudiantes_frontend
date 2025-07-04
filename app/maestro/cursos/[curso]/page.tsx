@@ -14,6 +14,7 @@ import EstudiantesResponsive from "@/components/estudiantesResponsive";
 import { useAuth } from "@/app/context/AuthContext";
 import { useValidateCourseAccess } from "@/hooks/useValidateCourseAccess";
 import { useMaestro } from "@/app/context/MaestroContext";
+import { Area } from "@/types";
 
 // Iconos como componentes
 const EyeIcon = () => (
@@ -201,7 +202,7 @@ export default function CursoDashboard() {
   };
 
   // Navegación
-  const verArea = (areaId: string) => {
+  const verArea = (areaId: number) => {
     router.push(`/maestro/cursos/${curso.id}/areas/${areaId}`);
   };
 
@@ -383,15 +384,6 @@ export default function CursoDashboard() {
                           </div>
                         </div>
                       </div>
-                      <Button
-                        isIconOnly
-                        color="primary"
-                        size="sm"
-                        variant="light"
-                        onPress={() => verMaestro(grupo.maestro.id)}
-                      >
-                        <EyeIcon />
-                      </Button>
                     </div>
 
                     <div className="space-y-2">
@@ -422,7 +414,7 @@ export default function CursoDashboard() {
         </Card>
       )}
 
-      {/* Listado de Todas las Áreas */}
+      {/* Listado de Todas las Áreas - CÓDIGO ACTUALIZADO */}
       {curso.areas && curso.areas.length > 0 && (
         <Card className="shadow-sm">
           <CardHeader className="pb-3">
@@ -438,56 +430,89 @@ export default function CursoDashboard() {
           <Divider />
           <CardBody className="pt-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {curso.areas.map((area: any) => (
-                <div
-                  key={area.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <Chip
-                      color={getColorArea(area.nombre)}
-                      size="sm"
-                      variant="flat"
-                    >
-                      {area.nombre}
-                    </Chip>
-                    <div className="text-xs text-gray-600">
-                      {area.maestro.nombre_completo
-                        .split(" ")
-                        .slice(0, 2)
-                        .join(" ")}
+              {curso.areas.map((area: Area, index: number) => {
+                // ✅ Verificar si el usuario actual es el maestro asignado a esta área
+                const esMaestroAsignado = area.maestro.id === usuario?.id;
+
+                return (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Chip
+                        color={getColorArea(area.nombre)}
+                        size="sm"
+                        variant="flat"
+                      >
+                        {area.nombre}
+                      </Chip>
+                      <div className="text-xs text-gray-600">
+                        {area.maestro.nombre_completo
+                          .split(" ")
+                          .slice(0, 2)
+                          .join(" ")}
+                        {/* ✅ Indicador visual si es tu área */}
+                        {esMaestroAsignado && (
+                          <Chip
+                            className="ml-2"
+                            color="success"
+                            size="sm"
+                            variant="dot"
+                          >
+                            Tu área
+                          </Chip>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-1">
+                      {/* ✅ Solo mostrar botones si es el maestro asignado */}
+                      {esMaestroAsignado ? (
+                        <>
+                          <Tooltip content={`Ver ${area.nombre}`}>
+                            <Button
+                              isIconOnly
+                              color="primary"
+                              size="sm"
+                              variant="light"
+                              onPress={() => verArea(area.id)}
+                            >
+                              <EyeIcon />
+                            </Button>
+                          </Tooltip>
+                          <Tooltip
+                            content={`Añadir actividad a ${area.nombre}`}
+                          >
+                            <Button
+                              isIconOnly
+                              color="success"
+                              size="sm"
+                              variant="light"
+                              onPress={() =>
+                                router.push(
+                                  `/maestro/cursos/${curso.id}/areas/${area.id}/actividades/nueva`,
+                                )
+                              }
+                            >
+                              <PlusIcon />
+                            </Button>
+                          </Tooltip>
+                        </>
+                      ) : (
+                        /* ✅ Mostrar indicador de "no accesible" para áreas de otros maestros */
+                        <Tooltip content="Solo el maestro asignado puede acceder">
+                          <div className="flex items-center text-gray-400">
+                            <Chip color="default" size="sm" variant="flat">
+                              Sin acceso
+                            </Chip>
+                          </div>
+                        </Tooltip>
+                      )}
                     </div>
                   </div>
-                  <div className="flex gap-1">
-                    <Tooltip content={`Ver ${area.nombre}`}>
-                      <Button
-                        isIconOnly
-                        color="primary"
-                        size="sm"
-                        variant="light"
-                        onPress={() => verArea(area.id)}
-                      >
-                        <EyeIcon />
-                      </Button>
-                    </Tooltip>
-                    <Tooltip content={`Añadir actividad a ${area.nombre}`}>
-                      <Button
-                        isIconOnly
-                        color="success"
-                        size="sm"
-                        variant="light"
-                        onPress={() =>
-                          router.push(
-                            `/maestro/cursos/${curso.id}/areas/${area.id}/actividades/nueva`,
-                          )
-                        }
-                      >
-                        <PlusIcon />
-                      </Button>
-                    </Tooltip>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </CardBody>
         </Card>

@@ -90,8 +90,6 @@ export default function CalificacionesPage() {
   const todasCalificaciones = useMemo(() => {
     if (!data?.obtenerCalificacionesEstudiante) return [];
 
-    console.log(data.obtenerCalificacionesEstudiante);
-
     const director =
       data.obtenerCalificacionesEstudiante.estudiante.grado.director;
 

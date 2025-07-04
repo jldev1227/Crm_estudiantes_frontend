@@ -38,6 +38,7 @@ export type Curso = {
 export type Area = {
   id: number;
   nombre: string;
+  maestro: Maestro;
 };
 
 export type Grado = {
