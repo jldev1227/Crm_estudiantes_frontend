@@ -109,7 +109,8 @@ export default function CalificacionesPage() {
                 mapaCalificaciones[key] = {
                   ...calificacion,
                   area: {
-                    id: area.id,
+                    id:
+                      typeof area.id === "string" ? parseInt(area.id) : area.id,
                     nombre: area.nombre,
                   },
                   periodo: periodo,
@@ -214,7 +215,7 @@ export default function CalificacionesPage() {
       // Filtro por área
       const coincideArea =
         areaSeleccionada === "todas" ||
-        calificacion.area.id === areaSeleccionada;
+        calificacion.area.id.toString() === areaSeleccionada;
 
       return coincidePeriodo && coincideArea;
     });
