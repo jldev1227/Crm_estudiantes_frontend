@@ -124,13 +124,6 @@ const SistemaCalificaciones = () => {
 
   // Constants
   const FINAL_EVALUATION_PERCENTAGE = 30;
-  const GRADOS_CUALITATIVOS = ['PARVULOS', 'PREJARDIN', 'JARDIN', 'TRANSICIÓN'];
-  const CALIFICACIONES_CUALITATIVAS = {
-    DS: 'DESEMPEÑO SUPERIOR',
-    DA: 'DESEMPEÑO ALTO', 
-    DB: 'DESEMPEÑO BÁSICO',
-    SP: 'SIGUE EN PROCESO'
-  };
 
   // Use the MaestroContext
   const {
@@ -161,12 +154,6 @@ const SistemaCalificaciones = () => {
 
   // NUEVO ESTADO: Checkbox para evaluación final opcional
   const [incluirEvaluacionFinal, setIncluirEvaluacionFinal] = useState(true);
-  
-  // Función para determinar si el curso requiere evaluación cualitativa
-  const esEvaluacionCualitativa = () => {
-    const nombreCurso = curso?.nombre?.toUpperCase() || '';
-    return GRADOS_CUALITATIVOS.some(grado => nombreCurso.includes(grado));
-  };
 
   // Función para agregar un nuevo indicador
   const agregarIndicador = () => {
@@ -622,23 +609,15 @@ const SistemaCalificaciones = () => {
     actividadId: string,
     valor: string,
   ) => {
-    // Para evaluación cualitativa, solo validar que sea una opción válida
-    if (esEvaluacionCualitativa()) {
-      const valoresValidos = Object.keys(CALIFICACIONES_CUALITATIVAS);
-      if (valor !== "" && !valoresValidos.includes(valor)) {
-        return;
-      }
-    } else {
-      // Validar que la nota esté entre 0 y 5 para evaluación cuantitativa
-      const valorNumerico = parseFloat(valor);
+    // Validar que la nota esté entre 0 y 5
+    const valorNumerico = parseFloat(valor);
 
-      if (isNaN(valorNumerico) && valor !== "") {
-        return;
-      }
+    if (isNaN(valorNumerico) && valor !== "") {
+      return;
+    }
 
-      if (valorNumerico < 0 || valorNumerico > 5) {
-        return;
-      }
+    if (valorNumerico < 0 || valorNumerico > 5) {
+      return;
     }
 
     setCalificaciones((prev) => ({
@@ -731,47 +710,27 @@ const SistemaCalificaciones = () => {
   };
 
   // Calcular nota final para un estudiante
-  const calcularNotaFinal = (estudianteId: number): string | number => {
-    if (!calificaciones[estudianteId]) return esEvaluacionCualitativa() ? "" : 0;
+  const calcularNotaFinal = (estudianteId: number): number => {
+    if (!calificaciones[estudianteId]) return 0;
 
-    if (esEvaluacionCualitativa()) {
-      // Para evaluación cualitativa, obtener la calificación más común
-      const calificacionesEstudiante = Object.values(calificaciones[estudianteId]).filter(val => val !== "");
-      if (calificacionesEstudiante.length === 0) return "";
-      
-      // Contar frecuencia de cada calificación
-      const frecuencia: { [key: string]: number } = {};
-      calificacionesEstudiante.forEach(calif => {
-        frecuencia[calif] = (frecuencia[calif] || 0) + 1;
-      });
-      
-      // Encontrar la calificación más frecuente
-      const calificacionMasFrecuente = Object.keys(frecuencia).reduce((a, b) => 
-        frecuencia[a] > frecuencia[b] ? a : b
-      );
-      
-      return calificacionMasFrecuente;
-    } else {
-      // Lógica original para evaluación cuantitativa
-      let notaFinal = 0;
-      let porcentajeTotal = 0;
+    let notaFinal = 0;
+    let porcentajeTotal = 0;
 
-      actividades.forEach((actividad) => {
-        const valor = parseFloat(calificaciones[estudianteId][actividad.id]);
+    actividades.forEach((actividad) => {
+      const valor = parseFloat(calificaciones[estudianteId][actividad.id]);
 
-        if (!isNaN(valor)) {
-          notaFinal += valor * (actividad.porcentaje / 100);
-          porcentajeTotal += actividad.porcentaje;
-        }
-      });
+      if (!isNaN(valor)) {
+        notaFinal += valor * (actividad.porcentaje / 100);
+        porcentajeTotal += actividad.porcentaje;
+      }
+    });
 
-      if (porcentajeTotal === 0) return 0;
+    if (porcentajeTotal === 0) return 0;
 
-      // Ajustar según el porcentaje evaluado
-      const notaAjustada = notaFinal * (100 / porcentajeTotal);
+    // Ajustar según el porcentaje evaluado
+    const notaAjustada = notaFinal * (100 / porcentajeTotal);
 
-      return Math.round(notaAjustada * 100) / 100; // Round to 2 decimal places
-    }
+    return Math.round(notaAjustada * 100) / 100; // Round to 2 decimal places
   };
 
   // Eliminar actividad - MODIFICADO
@@ -861,27 +820,12 @@ const SistemaCalificaciones = () => {
     try {
       const calificacionesSubmit = estudiantes.map((estudiante) => ({
         estudiante_id: estudiante.id,
-        notas: actividades.map((actividad) => {
-          const valorCalificacion = calificaciones[estudiante.id][actividad.id] || "";
-          
-          if (esEvaluacionCualitativa()) {
-            // Para evaluación cualitativa, guardar la calificación como string
-            return {
-              actividad_id: actividad.id,
-              nombre: actividad.nombre,
-              valor: valorCalificacion || "SP", // Valor por defecto si está vacío
-              porcentaje: 100 / actividades.length, // Porcentaje equitativo
-            };
-          } else {
-            // Para evaluación cuantitativa, mantener la lógica original
-            return {
-              actividad_id: actividad.id,
-              nombre: actividad.nombre,
-              valor: parseFloat(valorCalificacion || "0"),
-              porcentaje: actividad.porcentaje,
-            };
-          }
-        }),
+        notas: actividades.map((actividad) => ({
+          actividad_id: actividad.id,
+          nombre: actividad.nombre,
+          valor: parseFloat(calificaciones[estudiante.id][actividad.id] || "0"),
+          porcentaje: actividad.porcentaje,
+        })),
       }));
 
       await guardarCalificaciones({
@@ -1050,7 +994,7 @@ const SistemaCalificaciones = () => {
         </Card>
       )}
 
-      {!esEvaluacionCualitativa() && !porcentajes.esValido && (
+      {!porcentajes.esValido && (
         <Card className="border border-orange-200 bg-orange-50">
           <CardBody className="py-4">
             <div className="flex items-start gap-3 text-orange-700">
@@ -1213,21 +1157,19 @@ const SistemaCalificaciones = () => {
               </p>
             </div>
             <div className="flex flex-col sm:flex-row gap-3">
-              {/* CHECKBOX PARA EVALUACIÓN FINAL - Solo para evaluación cuantitativa */}
-              {!esEvaluacionCualitativa() && (
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    color="primary"
-                    isSelected={incluirEvaluacionFinal}
-                    size="sm"
-                    onValueChange={setIncluirEvaluacionFinal}
-                  >
-                    <span className="text-sm text-gray-700">
-                      Incluir Evaluación Final
-                    </span>
-                  </Checkbox>
-                </div>
-              )}
+              {/* NUEVO CHECKBOX PARA EVALUACIÓN FINAL */}
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  color="primary"
+                  isSelected={incluirEvaluacionFinal}
+                  size="sm"
+                  onValueChange={setIncluirEvaluacionFinal}
+                >
+                  <span className="text-sm text-gray-700">
+                    Incluir Evaluación Final
+                  </span>
+                </Checkbox>
+              </div>
               <Button
                 className="w-full sm:w-auto"
                 color="primary"
@@ -1244,11 +1186,11 @@ const SistemaCalificaciones = () => {
         <Divider />
 
         <CardBody className="pt-4">
-          {/* Información sobre el tipo de evaluación */}
-          {esEvaluacionCualitativa() ? (
-            <Card className="bg-purple-50 border border-purple-200 mb-4">
+          {/* Información sobre la evaluación final */}
+          {!incluirEvaluacionFinal && (
+            <Card className="bg-blue-50 border border-blue-200 mb-4">
               <CardBody className="py-3">
-                <div className="flex items-center gap-2 text-purple-700">
+                <div className="flex items-center gap-2 text-blue-700">
                   <svg
                     className="w-5 h-5"
                     fill="currentColor"
@@ -1262,75 +1204,45 @@ const SistemaCalificaciones = () => {
                   </svg>
                   <div>
                     <p className="font-medium">
-                      Modo: Evaluación Cualitativa
+                      Modo: Solo Actividades Regulares
                     </p>
                     <p className="text-sm">
-                      Este grado utiliza calificaciones cualitativas (DS, DA, DB, SP)
+                      Las actividades regulares representarán el 100% de la
+                      calificación
                     </p>
                   </div>
                 </div>
               </CardBody>
             </Card>
-          ) : (
-            <>
-              {!incluirEvaluacionFinal && (
-                <Card className="bg-blue-50 border border-blue-200 mb-4">
-                  <CardBody className="py-3">
-                    <div className="flex items-center gap-2 text-blue-700">
-                      <svg
-                        className="w-5 h-5"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          clipRule="evenodd"
-                          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                          fillRule="evenodd"
-                        />
-                      </svg>
-                      <div>
-                        <p className="font-medium">
-                          Modo: Solo Actividades Regulares
-                        </p>
-                        <p className="text-sm">
-                          Las actividades regulares representarán el 100% de la
-                          calificación
-                        </p>
-                      </div>
-                    </div>
-                  </CardBody>
-                </Card>
-              )}
-            </>
           )}
 
-              {incluirEvaluacionFinal && (
-                <Card className="bg-green-50 border border-green-200 mb-4">
-                  <CardBody className="py-3">
-                    <div className="flex items-center gap-2 text-green-700">
-                      <svg
-                        className="w-5 h-5"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          clipRule="evenodd"
-                          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                          fillRule="evenodd"
-                        />
-                      </svg>
-                      <div>
-                        <p className="font-medium">Modo: Con Evaluación Final</p>
-                        <p className="text-sm">
-                          Actividades regulares: 70% | Evaluación final: 30%
-                        </p>
-                      </div>
-                    </div>
-                  </CardBody>
-                </Card>
-              )}
+          {incluirEvaluacionFinal && (
+            <Card className="bg-green-50 border border-green-200 mb-4">
+              <CardBody className="py-3">
+                <div className="flex items-center gap-2 text-green-700">
+                  <svg
+                    className="w-5 h-5"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      clipRule="evenodd"
+                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                      fillRule="evenodd"
+                    />
+                  </svg>
+                  <div>
+                    <p className="font-medium">Modo: Con Evaluación Final</p>
+                    <p className="text-sm">
+                      Actividades regulares: 70% | Evaluación final: 30%
+                    </p>
+                  </div>
+                </div>
+              </CardBody>
+            </Card>
+          )}
 
-          {editando && !esEvaluacionCualitativa() && (
+          {editando && (
             <div className="mb-6">
               <Card className="bg-gray-50 border">
                 <CardBody className="p-4">
@@ -1446,66 +1358,64 @@ const SistemaCalificaciones = () => {
             </div>
           )}
 
-          {/* Distribución de porcentajes actual - Solo para evaluación cuantitativa */}
-          {!esEvaluacionCualitativa() && (
-            <div>
-              <h3 className="text-md font-semibold mb-3 text-gray-700">
-                Distribución Actual de Porcentajes
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
-                {actividades.map((actividad) => (
-                  <div
-                    key={actividad.id}
-                    className={`p-3 rounded-lg border ${
-                      actividad.isFinal
-                        ? "bg-blue-50 border-blue-200"
-                        : "bg-green-50 border-green-200"
-                    }`}
-                  >
-                    <div className="flex justify-between items-center">
-                      <span className="font-medium text-sm">
-                        {actividad.nombre}
-                      </span>
-                      <Chip
-                        color={actividad.isFinal ? "primary" : "success"}
-                        size="sm"
-                        variant="flat"
-                      >
-                        {actividad.porcentaje.toFixed(1)}%
-                      </Chip>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="bg-gray-100 p-3 rounded-lg">
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Actividades regulares:</span>
-                    <span className="font-semibold">
-                      {porcentajes.totalRegulares.toFixed(1)}%
+          {/* Distribución de porcentajes actual */}
+          <div>
+            <h3 className="text-md font-semibold mb-3 text-gray-700">
+              Distribución Actual de Porcentajes
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
+              {actividades.map((actividad) => (
+                <div
+                  key={actividad.id}
+                  className={`p-3 rounded-lg border ${
+                    actividad.isFinal
+                      ? "bg-blue-50 border-blue-200"
+                      : "bg-green-50 border-green-200"
+                  }`}
+                >
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-sm">
+                      {actividad.nombre}
                     </span>
-                  </div>
-                  {incluirEvaluacionFinal && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Evaluación final:</span>
-                      <span className="font-semibold">
-                        {porcentajes.totalFinal.toFixed(1)}%
-                      </span>
-                    </div>
-                  )}
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Total:</span>
-                    <span
-                      className={`font-semibold ${porcentajes.esValido ? "text-green-600" : "text-red-600"}`}
+                    <Chip
+                      color={actividad.isFinal ? "primary" : "success"}
+                      size="sm"
+                      variant="flat"
                     >
-                      {porcentajes.total.toFixed(1)}%
+                      {actividad.porcentaje.toFixed(1)}%
+                    </Chip>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="bg-gray-100 p-3 rounded-lg">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Actividades regulares:</span>
+                  <span className="font-semibold">
+                    {porcentajes.totalRegulares.toFixed(1)}%
+                  </span>
+                </div>
+                {incluirEvaluacionFinal && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Evaluación final:</span>
+                    <span className="font-semibold">
+                      {porcentajes.totalFinal.toFixed(1)}%
                     </span>
                   </div>
+                )}
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Total:</span>
+                  <span
+                    className={`font-semibold ${porcentajes.esValido ? "text-green-600" : "text-red-600"}`}
+                  >
+                    {porcentajes.total.toFixed(1)}%
+                  </span>
                 </div>
               </div>
             </div>
-          )}
+          </div>
         </CardBody>
       </Card>
 
@@ -1562,82 +1472,43 @@ const SistemaCalificaciones = () => {
                           key={`${estudiante.id}-${actividad.id}`}
                           className="text-center"
                         >
-                          {esEvaluacionCualitativa() ? (
-                            <Select
-                              className="w-20"
-                              placeholder="Seleccionar"
-                              selectedKeys={calificaciones[estudiante.id]?.[actividad.id] ? [calificaciones[estudiante.id][actividad.id]] : []}
-                              size="sm"
-                              variant="bordered"
-                              onSelectionChange={(keys) => {
-                                const selectedKey = Array.from(keys)[0] as string;
-                                handleCalificacionChange(
-                                  estudiante.id,
-                                  actividad.id,
-                                  selectedKey || "",
-                                );
-                              }}
-                            >
-                              {Object.entries(CALIFICACIONES_CUALITATIVAS).map(([key, value]) => (
-                                <SelectItem key={key} value={key}>
-                                  {key}
-                                </SelectItem>
-                              ))}
-                            </Select>
-                          ) : (
-                            <input
-                              className="w-16 p-2 border rounded-md text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              max="5"
-                              min="0"
-                              step="0.1"
-                              type="number"
-                              value={
-                                calificaciones[estudiante.id]?.[actividad.id] ||
-                                ""
-                              }
-                              onChange={(e) =>
-                                handleCalificacionChange(
-                                  estudiante.id,
-                                  actividad.id,
-                                  e.target.value,
-                                )
-                              }
-                            />
-                          )}
+                          <input
+                            className="w-16 p-2 border rounded-md text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            max="5"
+                            min="0"
+                            step="0.1"
+                            type="number"
+                            value={
+                              calificaciones[estudiante.id]?.[actividad.id] ||
+                              ""
+                            }
+                            onChange={(e) =>
+                              handleCalificacionChange(
+                                estudiante.id,
+                                actividad.id,
+                                e.target.value,
+                              )
+                            }
+                          />
                         </TableCell>
                       )) || []),
                       <TableCell
                         key="nota-final"
                         className="text-center font-bold"
                       >
-                        {esEvaluacionCualitativa() ? (
-                          <Chip
-                            color={
-                              calcularNotaFinal(estudiante.id) === "DS" ? "success" :
-                              calcularNotaFinal(estudiante.id) === "DA" ? "primary" :
-                              calcularNotaFinal(estudiante.id) === "DB" ? "warning" :
-                              calcularNotaFinal(estudiante.id) === "SP" ? "danger" : "default"
-                            }
-                            size="sm"
-                            variant="flat"
-                          >
-                            {calcularNotaFinal(estudiante.id) || "Sin calificar"}
-                          </Chip>
-                        ) : (
-                          <Chip
-                            color={
-                              (calcularNotaFinal(estudiante.id) as number) >= 3.5
-                                ? "success"
-                                : (calcularNotaFinal(estudiante.id) as number) >= 3.0
-                                  ? "warning"
-                                  : "danger"
-                            }
-                            size="sm"
-                            variant="flat"
-                          >
-                            {calcularNotaFinal(estudiante.id)}
-                          </Chip>
-                        )}
+                        <Chip
+                          color={
+                            calcularNotaFinal(estudiante.id) >= 3.5
+                              ? "success"
+                              : calcularNotaFinal(estudiante.id) >= 3.0
+                                ? "warning"
+                                : "danger"
+                          }
+                          size="sm"
+                          variant="flat"
+                        >
+                          {calcularNotaFinal(estudiante.id)}
+                        </Chip>
                       </TableCell>,
                     ];
 
@@ -1697,7 +1568,7 @@ const SistemaCalificaciones = () => {
             <Button
               className="w-full sm:w-auto"
               color="primary"
-              isDisabled={!esEvaluacionCualitativa() && !porcentajes.esValido}
+              isDisabled={!porcentajes.esValido}
               isLoading={loading || guardandoCalificaciones}
               radius="sm"
               startContent={
