@@ -559,7 +559,7 @@ export default function CalificacionesPage() {
                       const indicadoresArea =
                         data.obtenerCalificacionesEstudiante.indicadores.lista.filter(
                           (indicador: Indicador) =>
-                            indicador.area_id === calificacion.area_id &&
+                            indicador.area?.id === calificacion.area.id &&
                             indicador.periodo === calificacion.periodo,
                         );
 

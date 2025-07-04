@@ -619,7 +619,7 @@ export const ReporteEstudiantePDF = ({
                       <Text
                         style={[styles.indicadoresHeader, { marginBottom: 6 }]}
                       >
-                        Indicadores de Logros Evaluados ({indicadores.length}):
+                        Indicadores de Logros ({indicadores.length}):
                       </Text>
                       <View style={{ paddingLeft: 8 }}>
                         {indicadores.map((indicador, indIndex) => (
