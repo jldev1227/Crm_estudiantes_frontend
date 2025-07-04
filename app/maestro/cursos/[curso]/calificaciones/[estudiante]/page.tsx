@@ -66,7 +66,9 @@ export default function CalificacionesPage() {
 
   // Estados principales
   const [periodoSeleccionado, setPeriodoSeleccionado] = useState(1);
-  const [areaSeleccionada, setAreaSeleccionada] = useState("todas");
+  const [areaSeleccionada, setAreaSeleccionada] = useState<string | number>(
+    "todas",
+  );
   const [mostrarFiltros, setMostrarFiltros] = useState(false);
   const [director, setDirector] = useState<Maestro | null>(null);
 
@@ -551,65 +553,69 @@ export default function CalificacionesPage() {
                         </div>
                       ))}
                     </div>
+                    {/* SECCIÓN CORREGIDA: Indicadores de Evaluación */}
+                    {(() => {
+                      // Filtrar indicadores específicos para esta área y período
+                      const indicadoresArea =
+                        data.obtenerCalificacionesEstudiante.indicadores.lista.filter(
+                          (indicador: Indicador) =>
+                            indicador.area_id === calificacion.area_id &&
+                            indicador.periodo === calificacion.periodo,
+                        );
 
-                    {/* NUEVA SECCIÓN: Indicadores de Evaluación */}
-                    {data.obtenerCalificacionesEstudiante.indicadores.lista
-                      .length > 0 && (
-                      <div className="mt-6 pt-4 border-t border-gray-200">
-                        <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                          <Target size={16} />
-                          Indicadores de Logros (
-                          {
-                            data.obtenerCalificacionesEstudiante.indicadores
-                              .lista.length
-                          }
-                          )
-                        </h4>
-                        <div className="grid gap-2">
-                          {data.obtenerCalificacionesEstudiante.indicadores.lista.map(
-                            (indicador: Indicador, index: number) => (
-                              <div
-                                key={indicador.id}
-                                className="flex items-start gap-3 p-3 bg-blue-50 rounded-xl border border-blue-100"
-                              >
-                                <div className="flex-shrink-0 mt-1">
-                                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                                    <span className="text-xs font-medium text-blue-600">
-                                      {index + 1}
-                                    </span>
+                      return (
+                        <div className="mt-6 pt-4 border-t border-gray-200">
+                          <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                            <Target size={16} />
+                            Indicadores de Logros ({indicadoresArea.length})
+                          </h4>
+
+                          {indicadoresArea.length > 0 ? (
+                            <div className="grid gap-2">
+                              {indicadoresArea.map(
+                                (indicador: Indicador, index: number) => (
+                                  <div
+                                    key={indicador.id}
+                                    className="flex items-start gap-3 p-3 bg-blue-50 rounded-xl border border-blue-100"
+                                  >
+                                    <div className="flex-shrink-0 mt-1">
+                                      <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                                        <span className="text-xs font-medium text-blue-600">
+                                          {index + 1}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div className="flex-1">
+                                      <p className="text-sm font-medium text-gray-800">
+                                        {indicador.nombre}
+                                      </p>
+                                      <p className="text-xs text-gray-600 mt-1">
+                                        Período {indicador.periodo} •{" "}
+                                        {calificacion.area?.nombre}
+                                      </p>
+                                    </div>
+                                    <div className="flex-shrink-0">
+                                      <Circle
+                                        className="text-blue-400"
+                                        size={16}
+                                      />
+                                    </div>
                                   </div>
-                                </div>
-                                <div className="flex-1">
-                                  <p className="text-sm font-medium text-gray-800">
-                                    {indicador.nombre}
-                                  </p>
-                                  <p className="text-xs text-gray-600 mt-1">
-                                    Período {indicador.periodo} •{" "}
-                                    {calificacion.area?.nombre}
-                                  </p>
-                                </div>
-                                <div className="flex-shrink-0">
-                                  <Circle className="text-blue-400" size={16} />
-                                </div>
-                              </div>
-                            ),
+                                ),
+                              )}
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2 text-gray-500">
+                              <Target size={16} />
+                              <span className="text-sm">
+                                No hay indicadores registrados para esta área en
+                                el período {calificacion.periodo}
+                              </span>
+                            </div>
                           )}
                         </div>
-                      </div>
-                    )}
-
-                    {/* Mensaje si no hay indicadores */}
-                    {data.obtenerCalificacionesEstudiante.indicadores.lista
-                      .length === 0 && (
-                      <div className="mt-6 pt-4 border-t border-gray-200">
-                        <div className="flex items-center gap-2 text-gray-500">
-                          <Target size={16} />
-                          <span className="text-sm">
-                            No hay indicadores registrados para este período
-                          </span>
-                        </div>
-                      </div>
-                    )}
+                      );
+                    })()}
 
                     {/* Resumen de la nota final */}
                     <div className="mt-4 pt-4 border-t border-gray-200">

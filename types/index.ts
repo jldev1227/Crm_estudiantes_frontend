@@ -27,7 +27,7 @@ export type Maestro = {
 };
 
 export type Curso = {
-  id: string;
+  id: number;
   nombre: string;
   areas: Area[];
   grado: Grado;
@@ -36,18 +36,18 @@ export type Curso = {
 };
 
 export type Area = {
-  id: string;
+  id: number;
   nombre: string;
 };
 
 export type Grado = {
-  id: string;
+  id: number;
   nombre: string;
   director?: Maestro;
 };
 
 export type Nota = {
-  id: string;
+  id: number;
   nombre: string;
   valor: number;
   porcentaje: number;
@@ -56,13 +56,13 @@ export type Nota = {
 };
 
 export type Calificacion = {
-  id: string;
+  id: number;
   estudiante: Estudiante;
   grado: Curso;
   area: Area;
   notas: Nota[];
-  grado_id?: string;
-  area_id?: string;
+  grado_id?: number;
+  area_id?: number;
   estudiante_id?: number;
   periodo: number;
   notaFinal: number;

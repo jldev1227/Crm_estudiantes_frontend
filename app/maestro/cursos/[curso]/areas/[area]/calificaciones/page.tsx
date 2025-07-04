@@ -104,11 +104,11 @@ type Actividad = {
 
 // Tipos para las calificaciones del contexto
 type Nota = {
-  id: string;
+  id: number;
   valor: number;
   nombre: string;
   porcentaje: number;
-  actividad_id: string;
+  actividad_id: number;
 };
 
 type Indicador = {
@@ -381,16 +381,21 @@ const SistemaCalificaciones = () => {
 
       if (calificacionesPeriodoActual.length > 0) {
         // Extraer todas las actividades únicas de las calificaciones existentes
+        // Cambiar a Set<string> para manejar IDs como strings
         const actividadesExistentes = new Set<string>();
         const actividadesInfo = new Map<
-          string,
+          string, // Cambiar de number a string
           { nombre: string; porcentaje: number }
         >();
 
         calificacionesPeriodoActual.forEach((calificacion: Calificacion) => {
-          calificacion.notas.forEach((nota: Nota) => {
-            actividadesExistentes.add(nota.actividad_id);
-            actividadesInfo.set(nota.actividad_id, {
+          calificacion.notas.forEach((nota: any) => {
+            // Cambiar a any para evitar conflicto de tipos
+            // Convertir actividad_id a string para consistencia
+            const actividadIdStr = nota.actividad_id.toString();
+
+            actividadesExistentes.add(actividadIdStr);
+            actividadesInfo.set(actividadIdStr, {
               nombre: nota.nombre,
               porcentaje: nota.porcentaje,
             });
@@ -405,7 +410,7 @@ const SistemaCalificaciones = () => {
 
           if (info) {
             nuevasActividades.push({
-              id: actividadId,
+              id: actividadId, // Ya es string
               nombre: info.nombre,
               porcentaje: info.porcentaje,
               isFinal:
@@ -452,7 +457,10 @@ const SistemaCalificaciones = () => {
                 nota.valor !== undefined &&
                 nota.valor !== null
               ) {
-                nuevasCalificaciones[estudianteId][nota.actividad_id] =
+                // Convertir actividad_id a string para consistencia
+                const actividadIdStr = nota.actividad_id.toString();
+
+                nuevasCalificaciones[estudianteId][actividadIdStr] =
                   nota.valor.toString();
               }
             });

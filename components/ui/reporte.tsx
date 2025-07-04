@@ -567,67 +567,115 @@ export const ReporteEstudiantePDF = ({
             const isLast = index === areas.length - 1;
 
             return (
-              <View key={`area-${area.id}`}>
-                {/* Fila de la asignatura */}
-                <View
-                  style={[
-                    isLast && indicadores.length === 0
-                      ? styles.tableRowLast
-                      : styles.tableRow,
-                    styles.flex,
-                  ]}
-                >
-                  <View style={{ flex: 2 }}>
-                    <Text style={styles.labelText}>
-                      {area.nombre.toLowerCase()}
+              <View key={`area-${area.id}`} style={{ width: "100%" }}>
+                {/* Fila principal del área */}
+                <View style={[styles.tableRow, { borderBottomWidth: 0 }]}>
+                  <View style={styles.tableCol1}>
+                    <Text
+                      style={[
+                        styles.labelText,
+                        { fontSize: 11, fontWeight: "bold" },
+                      ]}
+                    >
+                      {area.nombre.toUpperCase()}
                     </Text>
                   </View>
-                  <View style={{ flex: 1 }}>
+                  <View style={styles.tableCol2}>
                     <Text style={getDesempenoStyle(promedio)}>
-                      {promedio.toFixed(1)}
+                      {promedio > 0 ? promedio.toFixed(1) : "N/A"}
                     </Text>
                   </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={getDesempenoStyle(promedio)}>{desempeño}</Text>
+                  <View style={styles.tableCol3}>
+                    <Text style={getDesempenoStyle(promedio)}>
+                      {promedio > 0 ? desempeño : "N/A"}
+                    </Text>
                   </View>
-                  <View style={{ flex: 1 }}>
+                  <View style={styles.tableCol4}>
                     <Text style={styles.valueText}>0</Text>
                   </View>
                 </View>
 
-                {/* ✅ NUEVA SECCIÓN: Indicadores del área */}
+                {/* ✅ INDICADORES DEBAJO DEL ÁREA */}
                 {indicadores.length > 0 && (
                   <View
                     style={[
                       styles.tableRow,
                       {
                         backgroundColor: "#f8f9fa",
-                        borderBottomWidth: isLast ? 0 : 1,
+                        borderBottomWidth: isLast ? 1 : 1,
+                        borderBottomColor: "#E0E0E0",
                       },
                     ]}
                   >
-                    <View style={{ width: "100%", padding: 8 }}>
-                      <Text style={styles.indicadoresHeader}>
-                        Indicadores de Logros ({indicadores.length}):
+                    <View
+                      style={{
+                        width: "100%",
+                        paddingVertical: 8,
+                        paddingHorizontal: 12,
+                        borderLeftWidth: 3,
+                        borderLeftColor: "#4472C4",
+                      }}
+                    >
+                      <Text
+                        style={[styles.indicadoresHeader, { marginBottom: 6 }]}
+                      >
+                        Indicadores de Logros Evaluados ({indicadores.length}):
                       </Text>
-                      {indicadores.map((indicador, indIndex) => (
-                        <View
-                          key={`indicador-${indicador.id}`}
-                          style={{ flexDirection: "row", marginBottom: 2 }}
-                        >
-                          <Text style={styles.indicadorBullet}>•</Text>
-                          <Text style={styles.indicadorItem}>
-                            {indicador.nombre}
-                          </Text>
-                        </View>
-                      ))}
+                      <View style={{ paddingLeft: 8 }}>
+                        {indicadores.map((indicador, indIndex) => (
+                          <View
+                            key={`indicador-${indicador.id}`}
+                            style={{
+                              flexDirection: "row",
+                              marginBottom: 3,
+                              alignItems: "flex-start",
+                            }}
+                          >
+                            <Text
+                              style={[styles.indicadorBullet, { marginTop: 1 }]}
+                            >
+                              {indIndex + 1}.
+                            </Text>
+                            <Text
+                              style={[
+                                styles.indicadorItem,
+                                { flex: 1, marginLeft: 4 },
+                              ]}
+                            >
+                              {indicador.nombre}
+                            </Text>
+                          </View>
+                        ))}
+                      </View>
                     </View>
                   </View>
                 )}
 
-                {/* Agregar borde final si es la última área y no tiene indicadores */}
-                {isLast && indicadores.length === 0 && (
-                  <View style={{ borderBottomWidth: 0 }} />
+                {/* Mensaje cuando no hay indicadores */}
+                {indicadores.length === 0 && (
+                  <View
+                    style={[
+                      styles.tableRow,
+                      {
+                        backgroundColor: "#fafafa",
+                        borderBottomWidth: isLast ? 1 : 1,
+                        borderBottomColor: "#E0E0E0",
+                      },
+                    ]}
+                  >
+                    <View
+                      style={{
+                        width: "100%",
+                        paddingVertical: 6,
+                        paddingHorizontal: 12,
+                      }}
+                    >
+                      <Text style={styles.noIndicadores}>
+                        No hay indicadores registrados para esta área en el
+                        período actual.
+                      </Text>
+                    </View>
+                  </View>
                 )}
               </View>
             );
