@@ -19,23 +19,23 @@ const PAGE_CONFIG = {
   HEIGHT: 842, // 11.7 inches * 72
   WIDTH: 595, // 8.3 inches * 72
   MARGINS: {
-    TOP: 30,
+    TOP: 20,
     BOTTOM: 0, // Espacio para footer
-    LEFT: 40,
-    RIGHT: 40,
+    LEFT: 30,
+    RIGHT: 30,
   },
   // Alturas estimadas de componentes (ajustadas más conservadoras)
   COMPONENT_HEIGHTS: {
     HEADER: 140, // Header con logo (aumentado)
-    STUDENT_INFO: 10, // Tabla de información del estudiante
+    STUDENT_INFO: 0, // Tabla de información del estudiante
     SECTION_TITLE: 40, // Título "INFORME DE DESEMPEÑO"
     TABLE_HEADER: 30, // Header de la tabla de asignaturas
     AREA_ROW: 20, // Fila principal de cada área
-    INDICATOR_BASE: 10, // Base para indicadores (header + padding)
+    INDICATOR_BASE: 15, // Base para indicadores (header + padding)
     INDICATOR_ITEM: 15, // Altura por cada indicador individual (aumentado)
     NO_INDICATORS: 10, // Mensaje "sin indicadores"
     FOOTER: 20, // Footer con firma
-    SAFETY_MARGIN: 15, // Margen de seguridad adicional
+    SAFETY_MARGIN: 27, // Margen de seguridad adicional
   },
 };
 
@@ -43,8 +43,6 @@ const PAGE_CONFIG = {
 // CONSTANTES PARA EVALUACIÓN CUALITATIVA
 // ==========================================
 const GRADOS_CUALITATIVOS = ["PARVULOS", "PREJARDIN", "JARDIN", "TRANSICIÓN"];
-
-type ValorQualitative = "DS" | "DA" | "DB" | "SP";
 
 const convertirNotaACualitativa = (nota: number): string => {
   if (nota >= 4.6) return "DS"; // Desempeño Superior
@@ -242,6 +240,7 @@ const HeaderComponent = () => (
         height: 100,
         position: "absolute",
         objectFit: "contain",
+        left: 10,
       }}
     />
     <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
@@ -325,22 +324,22 @@ const TableHeaderComponent = ({
 }) => (
   <View style={styles.tableHeader}>
     <View style={styles.tableColHeader1}>
-      <Text style={[styles.labelText, { color: "#4472C4", fontSize: 7 }]}>
+      <Text style={[styles.labelText, { color: "#4472C4", fontSize: 11 }]}>
         ASIGNATURA
       </Text>
     </View>
     <View style={styles.tableColHeader2}>
-      <Text style={[styles.labelText, { color: "#4472C4", fontSize: 7 }]}>
+      <Text style={[styles.labelText, { color: "#4472C4", fontSize: 11 }]}>
         {esCualitativo ? "EVALUACIÓN" : "NOTA"}
       </Text>
     </View>
     <View style={styles.tableColHeader3}>
-      <Text style={[styles.labelText, { color: "#4472C4", fontSize: 7 }]}>
+      <Text style={[styles.labelText, { color: "#4472C4", fontSize: 11 }]}>
         DESEMPEÑO
       </Text>
     </View>
     <View style={styles.tableColHeader4}>
-      <Text style={[styles.labelText, { color: "#4472C4", fontSize: 7 }]}>
+      <Text style={[styles.labelText, { color: "#4472C4", fontSize: 11 }]}>
         FALLAS
       </Text>
     </View>
@@ -378,7 +377,9 @@ const AreaRowComponent = ({
       {/* Fila principal del área */}
       <View style={[styles.tableRow, { borderBottomWidth: 0 }]}>
         <View style={styles.tableCol1}>
-          <Text style={[styles.labelText, { fontSize: 7, fontWeight: "bold" }]}>
+          <Text
+            style={[styles.labelText, { fontSize: 11, fontWeight: "bold" }]}
+          >
             {area.nombre.toUpperCase()}
           </Text>
         </View>
@@ -424,13 +425,13 @@ const AreaRowComponent = ({
           <View
             style={{
               width: "100%",
-              paddingVertical: 8,
+              paddingVertical: 4,
               paddingHorizontal: 12,
               borderLeftWidth: 3,
               borderLeftColor: "#4472C4",
             }}
           >
-            <Text style={[styles.indicadoresHeader, { marginBottom: 6 }]}>
+            <Text style={[styles.indicadoresHeader, { marginBottom: 4 }]}>
               Indicadores de Logros ({indicadores.length}):
             </Text>
             <View style={{ paddingLeft: 8 }}>
@@ -439,7 +440,6 @@ const AreaRowComponent = ({
                   key={`indicador-${indicador.id}`}
                   style={{
                     flexDirection: "row",
-                    marginBottom: 3,
                     alignItems: "flex-start",
                   }}
                 >
@@ -498,28 +498,18 @@ const FooterComponent = ({ director }: { director: Maestro }) => (
         <Text
           style={{
             color: "#000",
-            marginBottom: 3,
-            fontSize: 7,
+            marginBottom: 2,
+            fontSize: 11,
             fontWeight: "bold",
           }}
         >
           {director.nombre_completo}
         </Text>
-        <Text style={{ color: "#666", marginBottom: 8, fontSize: 9 }}>
+        <Text style={{ color: "#666", marginBottom: 2, fontSize: 11 }}>
           Directora de curso
         </Text>
       </View>
     </View>
-
-    {/* Fecha de generación */}
-    <Text style={{ marginTop: 15 }}>
-      Reporte generado el{" "}
-      {new Date().toLocaleDateString("es-CO", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })}
-    </Text>
   </View>
 );
 
@@ -598,7 +588,7 @@ export const ReporteEstudiantePDF = ({
                   <Text
                     style={[
                       styles.noIndicadores,
-                      { fontSize: 9, color: "#666" },
+                      { fontSize: 11, color: "#666" },
                     ]}
                   >
                     No hay calificaciones o áreas disponibles para mostrar en
@@ -677,7 +667,7 @@ export const ReporteEstudiantePDF = ({
                           <Text
                             style={[
                               styles.noIndicadores,
-                              { fontSize: 9, color: "#666" },
+                              { fontSize: 11, color: "#666" },
                             ]}
                           >
                             No hay calificaciones registradas para este período.
@@ -705,7 +695,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: PAGE_CONFIG.MARGINS.LEFT,
     paddingTop: PAGE_CONFIG.MARGINS.TOP,
     paddingBottom: PAGE_CONFIG.MARGINS.BOTTOM,
-    fontSize: 9,
+    fontSize: 11,
   },
   headerContainer: {
     flexDirection: "row",
@@ -715,7 +705,7 @@ const styles = StyleSheet.create({
   },
   header: {
     fontWeight: "bold",
-    fontSize: 9,
+    fontSize: 11,
     maxWidth: 300,
     marginBottom: 2,
     color: "#fff",
@@ -736,14 +726,13 @@ const styles = StyleSheet.create({
     opacity: 0.25,
   },
   subHeader: {
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: "medium",
     textAlign: "center",
     color: "#fff",
   },
   contentWrapper: {
     flex: 1,
-    paddingBottom: 20,
   },
   table: {
     display: "flex",
@@ -771,7 +760,7 @@ const styles = StyleSheet.create({
   },
   tableColHeader1: {
     width: "40%",
-    paddingVertical: 5,
+    paddingVertical: 3,
     paddingHorizontal: 5,
     borderRightWidth: 1,
     borderColor: "#E0E0E0",
@@ -780,7 +769,7 @@ const styles = StyleSheet.create({
   },
   tableColHeader2: {
     width: "20%",
-    paddingVertical: 5,
+    paddingVertical: 3,
     paddingHorizontal: 5,
     borderRightWidth: 1,
     borderColor: "#E0E0E0",
@@ -789,7 +778,7 @@ const styles = StyleSheet.create({
   },
   tableColHeader3: {
     width: "20%",
-    paddingVertical: 5,
+    paddingVertical: 3,
     paddingHorizontal: 5,
     borderRightWidth: 1,
     borderColor: "#E0E0E0",
@@ -798,7 +787,7 @@ const styles = StyleSheet.create({
   },
   tableColHeader4: {
     width: "20%",
-    paddingVertical: 5,
+    paddingVertical: 3,
     paddingHorizontal: 5,
     textAlign: "center",
     fontWeight: "bold",
@@ -836,12 +825,12 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   labelText: {
-    fontSize: 9,
+    fontSize: 11,
     textAlign: "center",
     textTransform: "capitalize",
   },
   valueText: {
-    fontSize: 9,
+    fontSize: 11,
     textAlign: "center",
     textTransform: "capitalize",
   },
@@ -857,7 +846,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#2E8B5715",
     padding: 3,
     borderRadius: 3,
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: "bold",
     textAlign: "center",
   },
@@ -866,7 +855,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F0F7FF",
     padding: 3,
     borderRadius: 3,
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: "bold",
     textAlign: "center",
   },
@@ -875,7 +864,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF9F0",
     padding: 3,
     borderRadius: 3,
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: "bold",
     textAlign: "center",
   },
@@ -884,7 +873,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FDF1F1",
     padding: 3,
     borderRadius: 3,
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: "bold",
     textAlign: "center",
   },
@@ -893,7 +882,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F0F0F0",
     padding: 3,
     borderRadius: 3,
-    fontSize: 9,
+    fontSize: 11,
     textAlign: "center",
   },
   // Nuevos estilos para evaluación cualitativa
@@ -902,7 +891,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#2E8B5715",
     padding: 3,
     borderRadius: 3,
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: "bold",
     textAlign: "center",
   },
@@ -911,7 +900,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F0F7FF",
     padding: 3,
     borderRadius: 3,
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: "bold",
     textAlign: "center",
   },
@@ -920,7 +909,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF9F0",
     padding: 3,
     borderRadius: 3,
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: "bold",
     textAlign: "center",
   },
@@ -929,13 +918,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#FDF1F1",
     padding: 3,
     borderRadius: 3,
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: "bold",
     textAlign: "center",
   },
   footer: {
     position: "absolute",
-    fontSize: 9,
+    fontSize: 11,
     bottom: 30,
     left: 40,
     right: 40,
@@ -967,24 +956,24 @@ const styles = StyleSheet.create({
     color: "#4472C4",
     textAlign: "center",
     backgroundColor: "#4472C415",
-    padding: 8,
+    padding: 4,
   },
   indicadoresHeader: {
-    fontSize: 7,
+    fontSize: 11,
     fontWeight: "bold",
     color: "#4472C4",
-    marginBottom: 4,
+    marginBottom: 2,
     textAlign: "left",
   },
   indicadorItem: {
-    fontSize: 7,
+    fontSize: 11,
     color: "#333",
     marginBottom: 2,
     paddingLeft: 8,
     textAlign: "left",
   },
   indicadorBullet: {
-    fontSize: 7,
+    fontSize: 11,
     color: "#4472C4",
     marginRight: 4,
   },

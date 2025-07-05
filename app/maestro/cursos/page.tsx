@@ -288,7 +288,7 @@ export default function Page() {
                         key={`${curso.grado.id}-${curso.area.id}`}
                         className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors"
                       >
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                           <Chip
                             className="font-medium"
                             color={getColorArea(curso.area.nombre)}
