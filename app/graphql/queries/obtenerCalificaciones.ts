@@ -26,6 +26,7 @@ export const OBTENER_CALIFICACIONES = gql`
         nombre
         valor
         porcentaje
+        esQualitativa
         actividad_id
       }
     }

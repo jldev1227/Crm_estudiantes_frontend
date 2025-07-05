@@ -40,6 +40,41 @@ const PAGE_CONFIG = {
 };
 
 // ==========================================
+// CONSTANTES PARA EVALUACIÓN CUALITATIVA
+// ==========================================
+const GRADOS_CUALITATIVOS = ["PARVULOS", "PREJARDIN", "JARDIN", "TRANSICIÓN"];
+
+type ValorQualitative = "DS" | "DA" | "DB" | "SP";
+
+const convertirNotaACualitativa = (nota: number): string => {
+  if (nota >= 4.6) return "DS"; // Desempeño Superior
+  if (nota >= 4.0) return "DA"; // Desempeño Alto
+  if (nota >= 3.5) return "DB"; // Desempeño Básico
+  if (nota >= 3.0) return "SP"; // Sigue en proceso
+
+  return "SP"; // Para notas menores a 3.0
+};
+
+const obtenerNombreCalificacion = (calificacion: string): string => {
+  switch (calificacion) {
+    case "DS":
+      return "Desempeño Superior";
+    case "DA":
+      return "Desempeño Alto";
+    case "DB":
+      return "Desempeño Básico";
+    case "SP":
+      return "Sigue en proceso";
+    default:
+      return "";
+  }
+};
+
+const verificarSiEsCualitativo = (nombreGrado: string): boolean => {
+  return GRADOS_CUALITATIVOS.includes(nombreGrado?.toUpperCase() || "");
+};
+
+// ==========================================
 // FUNCIONES DE CÁLCULO DE ALTURA MEJORADAS
 // ==========================================
 
@@ -191,22 +226,11 @@ const distribuirAreasEnPaginas = (
     });
   }
 
-  console.log("📄 Distribución final de páginas:", {
-    totalAreas: areasValidas.length,
-    totalPaginas: paginas.length,
-    distribucion: paginas.map((p, i) => ({
-      pagina: i + 1,
-      areas: p.areas.length,
-      esPrimera: p.esPrimeraPagina,
-      nombreAreas: p.areas.map((a) => a.area.nombre).join(", "),
-    })),
-  });
-
   return paginas;
 };
 
 // ==========================================
-// COMPONENTES REUTILIZABLES (sin cambios)
+// COMPONENTES REUTILIZABLES ACTUALIZADOS
 // ==========================================
 
 const HeaderComponent = () => (
@@ -242,18 +266,26 @@ const HeaderComponent = () => (
   </View>
 );
 
-const StudentInfoComponent = ({ estudiante }: { estudiante: any }) => (
+const StudentInfoComponent = ({
+  estudiante,
+  esCualitativo,
+}: {
+  estudiante: any;
+  esCualitativo: boolean;
+}) => (
   <View style={[styles.table, styles.pageBreakAvoid]}>
     <View style={[styles.tableRow, styles.flex]}>
-      <View style={{ flex: 3 }}>
+      <View style={{ flex: 4 }}>
         <Text style={styles.labelText}>Nombre y Apellidos del Estudiante</Text>
       </View>
       <View style={{ flex: 1 }}>
         <Text style={styles.labelText}>Periodo</Text>
       </View>
-      <View style={{ flex: 1 }}>
-        <Text style={styles.labelText}>Puesto</Text>
-      </View>
+      {!esCualitativo && (
+        <View style={{ flex: 1 }}>
+          <Text style={styles.labelText}>Puesto</Text>
+        </View>
+      )}
       <View style={{ flex: 1 }}>
         <Text style={styles.labelText}>Grado</Text>
       </View>
@@ -263,7 +295,7 @@ const StudentInfoComponent = ({ estudiante }: { estudiante: any }) => (
     </View>
 
     <View style={[styles.tableRowLast, styles.flex]}>
-      <View style={{ flex: 3 }}>
+      <View style={{ flex: 4 }}>
         <Text style={styles.valueText}>
           {safeValue(estudiante.nombre.toLowerCase())}
         </Text>
@@ -271,9 +303,11 @@ const StudentInfoComponent = ({ estudiante }: { estudiante: any }) => (
       <View style={{ flex: 1 }}>
         <Text style={styles.valueText}>{safeValue(estudiante.periodo)}</Text>
       </View>
-      <View style={{ flex: 1 }}>
-        <Text style={styles.valueText}>{safeValue(estudiante.puesto)}</Text>
-      </View>
+      {!esCualitativo && (
+        <View style={{ flex: 1 }}>
+          <Text style={styles.valueText}>{safeValue(estudiante.puesto)}</Text>
+        </View>
+      )}
       <View style={{ flex: 1 }}>
         <Text style={styles.valueText}>{safeValue(estudiante.grado)}</Text>
       </View>
@@ -284,7 +318,11 @@ const StudentInfoComponent = ({ estudiante }: { estudiante: any }) => (
   </View>
 );
 
-const TableHeaderComponent = () => (
+const TableHeaderComponent = ({
+  esCualitativo,
+}: {
+  esCualitativo: boolean;
+}) => (
   <View style={styles.tableHeader}>
     <View style={styles.tableColHeader1}>
       <Text style={[styles.labelText, { color: "#4472C4", fontSize: 7 }]}>
@@ -293,7 +331,7 @@ const TableHeaderComponent = () => (
     </View>
     <View style={styles.tableColHeader2}>
       <Text style={[styles.labelText, { color: "#4472C4", fontSize: 7 }]}>
-        NOTA
+        {esCualitativo ? "EVALUACIÓN" : "NOTA"}
       </Text>
     </View>
     <View style={styles.tableColHeader3}>
@@ -312,32 +350,58 @@ const TableHeaderComponent = () => (
 const AreaRowComponent = ({
   areaData,
   isLast,
+  esCualitativo,
 }: {
   areaData: AreaConPromedio;
   isLast: boolean;
+  esCualitativo: boolean;
 }) => {
   const { area, promedio, indicadores } = areaData;
-  const desempeño = getDesempenoTexto(promedio);
+
+  // Formatear nota según el tipo de evaluación
+  const notaFormateada = esCualitativo
+    ? promedio > 0
+      ? convertirNotaACualitativa(promedio)
+      : "N/A"
+    : promedio > 0
+      ? promedio.toFixed(1)
+      : "N/A";
+
+  const desempeño = esCualitativo
+    ? promedio > 0
+      ? obtenerNombreCalificacion(convertirNotaACualitativa(promedio))
+      : "N/A"
+    : getDesempenoTexto(promedio);
 
   return (
     <View style={{ width: "100%" }}>
       {/* Fila principal del área */}
       <View style={[styles.tableRow, { borderBottomWidth: 0 }]}>
         <View style={styles.tableCol1}>
-          <Text
-            style={[styles.labelText, { fontSize: 7, fontWeight: "bold" }]}
-          >
+          <Text style={[styles.labelText, { fontSize: 7, fontWeight: "bold" }]}>
             {area.nombre.toUpperCase()}
           </Text>
         </View>
         <View style={styles.tableCol2}>
-          <Text style={getDesempenoStyle(promedio)}>
-            {promedio > 0 ? promedio.toFixed(1) : "N/A"}
+          <Text
+            style={
+              esCualitativo
+                ? getCualitativoStyle(notaFormateada)
+                : getDesempenoStyle(promedio)
+            }
+          >
+            {notaFormateada}
           </Text>
         </View>
         <View style={styles.tableCol3}>
-          <Text style={getDesempenoStyle(promedio)}>
-            {promedio > 0 ? desempeño : "N/A"}
+          <Text
+            style={
+              esCualitativo
+                ? getCualitativoStyle(notaFormateada)
+                : getDesempenoStyle(promedio)
+            }
+          >
+            {desempeño}
           </Text>
         </View>
         <View style={styles.tableCol4}>
@@ -470,6 +534,11 @@ export const ReporteEstudiantePDF = ({
 }) => {
   const { estudiante, director, areas } = datos;
 
+  // Verificar si es cualitativo basándose en el grado del estudiante
+  const esCualitativo = useMemo(() => {
+    return verificarSiEsCualitativo(estudiante.grado);
+  }, [estudiante.grado]);
+
   // NUEVA distribución de páginas más simple y confiable
   const distribucionPaginas = useMemo(() => {
     if (!areas || areas.length === 0) {
@@ -500,21 +569,22 @@ export const ReporteEstudiantePDF = ({
 
   // Si no hay distribución válida, crear página básica
   if (distribucionPaginas.length === 0) {
-    console.log("📄 Generando página básica sin áreas");
-
     return (
       <Document>
         <Page wrap size="A4" style={styles.page}>
           <HeaderComponent />
           <View style={styles.contentWrapper}>
-            <StudentInfoComponent estudiante={estudiante} />
+            <StudentInfoComponent
+              esCualitativo={esCualitativo}
+              estudiante={estudiante}
+            />
             <View style={styles.pageBreakAvoid}>
               <Text style={styles.sectionHeader}>
                 INFORME DE DESEMPEÑO ACADEMICO
               </Text>
             </View>
             <View style={[styles.table, styles.pageBreakAvoid]}>
-              <TableHeaderComponent />
+              <TableHeaderComponent esCualitativo={esCualitativo} />
               <View style={styles.tableRow}>
                 <View style={{ width: "100%", padding: 20 }}>
                   <Text
@@ -543,6 +613,15 @@ export const ReporteEstudiantePDF = ({
 
         return (
           <Page key={`page-${indicePagina}`} wrap size="A4" style={styles.page}>
+            {esCualitativo && (
+              <View style={styles.backgroundImageContainer}>
+                <Image
+                  src="/backgroundCualitative.png"
+                  style={styles.backgroundImage}
+                />
+              </View>
+            )}
+
             {/* Header solo en la primera página */}
             {paginaData.esPrimeraPagina && <HeaderComponent />}
 
@@ -550,7 +629,10 @@ export const ReporteEstudiantePDF = ({
               {/* Información del estudiante solo en la primera página */}
               {paginaData.esPrimeraPagina && (
                 <>
-                  <StudentInfoComponent estudiante={estudiante} />
+                  <StudentInfoComponent
+                    esCualitativo={esCualitativo}
+                    estudiante={estudiante}
+                  />
                   <View style={styles.pageBreakAvoid}>
                     <Text style={styles.sectionHeader}>
                       INFORME DE DESEMPEÑO ACADEMICO
@@ -562,38 +644,39 @@ export const ReporteEstudiantePDF = ({
               {/* Tabla con las áreas de esta página */}
               <View style={[styles.table, styles.pageBreakAvoid]}>
                 {/* Header de tabla siempre presente */}
-                <TableHeaderComponent />
+                <TableHeaderComponent esCualitativo={esCualitativo} />
 
                 {/* Renderizar las áreas de esta página */}
                 {paginaData.areas.length > 0
                   ? paginaData.areas.map((areaData, indiceArea) => {
-                    const isLastInPage =
-                      indiceArea === paginaData.areas.length - 1;
-                    const isLastOverall = esUltimaPagina && isLastInPage;
+                      const isLastInPage =
+                        indiceArea === paginaData.areas.length - 1;
+                      const isLastOverall = esUltimaPagina && isLastInPage;
 
-                    return (
-                      <AreaRowComponent
-                        key={`area-${areaData.area.id}-page-${indicePagina}`}
-                        areaData={areaData}
-                        isLast={isLastOverall}
-                      />
-                    );
-                  })
+                      return (
+                        <AreaRowComponent
+                          key={`area-${areaData.area.id}-page-${indicePagina}`}
+                          areaData={areaData}
+                          esCualitativo={esCualitativo}
+                          isLast={isLastOverall}
+                        />
+                      );
+                    })
                   : /* Solo mostrar mensaje en primera página si no hay áreas */
-                  paginaData.esPrimeraPagina && (
-                    <View style={styles.tableRow}>
-                      <View style={{ width: "100%", padding: 20 }}>
-                        <Text
-                          style={[
-                            styles.noIndicadores,
-                            { fontSize: 9, color: "#666" },
-                          ]}
-                        >
-                          No hay calificaciones registradas para este período.
-                        </Text>
+                    paginaData.esPrimeraPagina && (
+                      <View style={styles.tableRow}>
+                        <View style={{ width: "100%", padding: 20 }}>
+                          <Text
+                            style={[
+                              styles.noIndicadores,
+                              { fontSize: 9, color: "#666" },
+                            ]}
+                          >
+                            No hay calificaciones registradas para este período.
+                          </Text>
+                        </View>
                       </View>
-                    </View>
-                  )}
+                    )}
               </View>
             </View>
 
@@ -607,14 +690,13 @@ export const ReporteEstudiantePDF = ({
 };
 
 // ==========================================
-// ESTILOS (sin cambios importantes)
+// ESTILOS ACTUALIZADOS
 // ==========================================
 const styles = StyleSheet.create({
   page: {
     paddingHorizontal: PAGE_CONFIG.MARGINS.LEFT,
     paddingTop: PAGE_CONFIG.MARGINS.TOP,
     paddingBottom: PAGE_CONFIG.MARGINS.BOTTOM,
-    backgroundColor: "#FFF",
     fontSize: 9,
   },
   headerContainer: {
@@ -630,6 +712,20 @@ const styles = StyleSheet.create({
     marginBottom: 2,
     color: "#fff",
     textAlign: "center",
+  },
+  backgroundImageContainer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: -1,
+  },
+  backgroundImage: {
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    opacity: 0.25,
   },
   subHeader: {
     fontSize: 9,
@@ -792,6 +888,43 @@ const styles = StyleSheet.create({
     fontSize: 9,
     textAlign: "center",
   },
+  // Nuevos estilos para evaluación cualitativa
+  dsValue: {
+    color: "#2E8B57",
+    backgroundColor: "#2E8B5715",
+    padding: 3,
+    borderRadius: 3,
+    fontSize: 9,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  daValue: {
+    color: "#007AFF",
+    backgroundColor: "#F0F7FF",
+    padding: 3,
+    borderRadius: 3,
+    fontSize: 9,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  dbValue: {
+    color: "#FF9500",
+    backgroundColor: "#FFF9F0",
+    padding: 3,
+    borderRadius: 3,
+    fontSize: 9,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  spValue: {
+    color: "#e60f0f",
+    backgroundColor: "#FDF1F1",
+    padding: 3,
+    borderRadius: 3,
+    fontSize: 9,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
   footer: {
     position: "absolute",
     fontSize: 9,
@@ -907,7 +1040,6 @@ interface ReporteEstudianteProps {
     grado: string;
     periodo: string;
     año: string;
-    puesto: string;
   };
   director: Maestro;
   areas: AreaConPromedio[];
@@ -924,6 +1056,21 @@ const getDesempenoStyle = (promedio: number) => {
   if (promedio >= 3.0) return styles.basicoValue;
 
   return styles.bajoValue;
+};
+
+const getCualitativoStyle = (calificacion: string) => {
+  switch (calificacion) {
+    case "DS":
+      return styles.dsValue;
+    case "DA":
+      return styles.daValue;
+    case "DB":
+      return styles.dbValue;
+    case "SP":
+      return styles.spValue;
+    default:
+      return styles.grayValue;
+  }
 };
 
 const getDesempenoTexto = (promedio: number) => {
@@ -949,14 +1096,13 @@ export const procesarDatosEstudiante = (
     return null;
   }
 
-  // ✅ Preparar datos del estudiante (siempre disponibles)
+  // ✅ Preparar datos del estudiante (siempre disponibles) - SIN PUESTO
   const datosEstudiante = {
     id: estudiante.id,
     nombre: estudiante.nombre_completo || "Sin nombre",
     documento: `${estudiante.tipo_documento || "N/A"}: ${estudiante.numero_identificacion || "N/A"}`,
     grado: estudiante.grado?.nombre || "Sin grado",
     periodo: periodo,
-    puesto: puesto,
     año: new Date().getFullYear().toString(),
     celular_padres: estudiante.celular_padres || "N/A",
     pension_activa: estudiante.pension_activa || false,
@@ -1059,17 +1205,10 @@ export const procesarDatosEstudiante = (
     promedioGeneral,
   };
 
-  console.log("📊 Datos procesados:", {
-    totalAreas: areas.length,
-    areasConIndicadores: areas.filter((a) => a.indicadores.length > 0).length,
-    totalIndicadores: areas.reduce((sum, a) => sum + a.indicadores.length, 0),
-    indicadoresDataRecibida: indicadoresData?.total || 0,
-  });
-
   return resultado;
 };
 
-// ✅ Función actualizada para generar el PDF con estructura GraphQL
+// ✅ Función actualizada para generar el PDF con estructura GraphQL - SIN PUESTO
 export const handleGenerateEstudiantePDF = async (
   infoEstudiante: Estudiante,
   calificaciones: Calificacion[],
@@ -1084,13 +1223,6 @@ export const handleGenerateEstudiantePDF = async (
 
       return;
     }
-
-    console.log("🚀 Generando PDF con:", {
-      estudiante: infoEstudiante.nombre_completo,
-      calificaciones: calificaciones.length,
-      indicadores: indicadoresData?.total || 0,
-      periodo,
-    });
 
     const datosReporte = procesarDatosEstudiante(
       calificaciones,
@@ -1116,13 +1248,12 @@ export const handleGenerateEstudiantePDF = async (
       numero_identificacion: "00000000",
     };
 
-    // ✅ Crear el objeto completo que cumple con ReporteEstudianteProps
+    // ✅ Crear el objeto completo que cumple con ReporteEstudianteProps - SIN PUESTO
     const datosCompletos: ReporteEstudianteProps = {
       estudiante: {
         nombre: datosReporte.estudiante.nombre,
         grado: datosReporte.estudiante.grado,
         periodo: String(datosReporte.estudiante.periodo),
-        puesto: String(datosReporte.estudiante.puesto),
         año: datosReporte.estudiante.año,
       },
       director: directorData,
@@ -1152,8 +1283,6 @@ export const handleGenerateEstudiantePDF = async (
       link.click();
       URL.revokeObjectURL(url);
     }
-
-    console.log("✅ PDF generado exitosamente");
   } catch (error: any) {
     const message =
       error.message ||

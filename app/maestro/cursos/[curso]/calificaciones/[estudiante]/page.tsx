@@ -64,6 +64,50 @@ export default function CalificacionesPage() {
   const params = useParams();
   const router = useRouter();
 
+  // Constantes para evaluación cualitativa
+  const GRADOS_CUALITATIVOS = ["PARVULOS", "PREJARDIN", "JARDIN", "TRANSICIÓN"];
+
+  const convertirNotaACualitativa = (nota: number): string => {
+    if (nota >= 4.6) return "DS"; // Desempeño Superior
+    if (nota >= 4.0) return "DA"; // Desempeño Alto
+    if (nota >= 3.5) return "DB"; // Desempeño Básico
+    if (nota >= 3.0) return "SP"; // Sigue en proceso
+
+    return "SP"; // Para notas menores a 3.0, también "Sigue en proceso"
+  };
+
+  const obtenerNombreCalificacion = (calificacion: string): string => {
+    switch (calificacion) {
+      case "DS":
+        return "Desempeño Superior";
+      case "DA":
+        return "Desempeño Alto";
+      case "DB":
+        return "Desempeño Básico";
+      case "SP":
+        return "Sigue en proceso";
+      default:
+        return "";
+    }
+  };
+
+  const obtenerColorCalificacionCualitativa = (
+    calificacion: string,
+  ): string => {
+    switch (calificacion) {
+      case "DS":
+        return "text-green-600 bg-green-50 border-green-200";
+      case "DA":
+        return "text-blue-600 bg-blue-50 border-blue-200";
+      case "DB":
+        return "text-orange-600 bg-orange-50 border-orange-200";
+      case "SP":
+        return "text-red-600 bg-red-50 border-red-200";
+      default:
+        return "text-gray-600 bg-gray-50 border-gray-200";
+    }
+  };
+
   // Estados principales
   const [periodoSeleccionado, setPeriodoSeleccionado] = useState(1);
   const [areaSeleccionada, setAreaSeleccionada] = useState<string | number>(
@@ -85,6 +129,16 @@ export default function CalificacionesPage() {
       fetchPolicy: "cache-and-network",
     },
   );
+
+  // Verificar si el grado es cualitativo
+  const esCualitativo = useMemo(() => {
+    if (!data?.obtenerCalificacionesEstudiante?.estudiante?.grado?.nombre)
+      return false;
+    const nombreGrado =
+      data.obtenerCalificacionesEstudiante.estudiante.grado.nombre.toUpperCase();
+
+    return GRADOS_CUALITATIVOS.includes(nombreGrado);
+  }, [data]);
 
   // Procesar datos de calificaciones
   const todasCalificaciones = useMemo(() => {
@@ -122,21 +176,25 @@ export default function CalificacionesPage() {
   // ✅ Opcional: Proteger el cálculo del promedio
   const promedioGeneral = useMemo(() => {
     if (!calificacionesFiltradas || calificacionesFiltradas.length === 0)
-      return "0.00";
+      return esCualitativo ? "SP" : "0.00";
 
     const notasConValor = calificacionesFiltradas.filter(
       (cal: Calificacion) => cal.notaFinal > 0,
     );
 
-    if (notasConValor.length === 0) return "0.00";
+    if (notasConValor.length === 0) return esCualitativo ? "SP" : "0.00";
 
     const suma = notasConValor.reduce(
       (acc: number, cal: Calificacion) => acc + cal.notaFinal,
       0,
     );
 
-    return (suma / notasConValor.length).toFixed(2);
-  }, [calificacionesFiltradas]);
+    const promedio = suma / notasConValor.length;
+
+    return esCualitativo
+      ? convertirNotaACualitativa(promedio)
+      : promedio.toFixed(2);
+  }, [calificacionesFiltradas, esCualitativo]);
 
   // Obtener áreas únicas disponibles
   const areasDisponibles = useMemo(() => {
@@ -154,8 +212,14 @@ export default function CalificacionesPage() {
     }));
   }, [todasCalificaciones]);
 
-  // Funciones auxiliares
+  // Funciones auxiliares adaptadas para cualitativo
   const obtenerColorNota = (nota: number) => {
+    if (esCualitativo) {
+      const calificacionCualitativa = convertirNotaACualitativa(nota);
+
+      return obtenerColorCalificacionCualitativa(calificacionCualitativa);
+    }
+
     if (nota >= 4.5) return "text-green-600 bg-green-50";
     if (nota >= 3.5) return "text-blue-600 bg-blue-50";
     if (nota >= 3.0) return "text-yellow-600 bg-yellow-50";
@@ -164,6 +228,12 @@ export default function CalificacionesPage() {
   };
 
   const obtenerDesempeno = (nota: number) => {
+    if (esCualitativo) {
+      const calificacionCualitativa = convertirNotaACualitativa(nota);
+
+      return obtenerNombreCalificacion(calificacionCualitativa);
+    }
+
     if (nota >= 4.5) return "Superior";
     if (nota >= 3.5) return "Alto";
     if (nota >= 3.0) return "Básico";
@@ -172,16 +242,53 @@ export default function CalificacionesPage() {
   };
 
   const getIconByGrade = (nota: number) => {
+    if (esCualitativo) {
+      const calificacionCualitativa = convertirNotaACualitativa(nota);
+
+      switch (calificacionCualitativa) {
+        case "DS":
+          return <Star className="w-5 h-5" />;
+        case "DA":
+          return <TrendingUp className="w-5 h-5" />;
+        case "DB":
+          return <BarChart3 className="w-5 h-5" />;
+        case "SP":
+          return <Circle className="w-5 h-5" />;
+        default:
+          return <Circle className="w-5 h-5" />;
+      }
+    }
+
     if (nota >= 4.0) return <Star className="w-5 h-5" />;
     if (nota >= 3.0) return <TrendingUp className="w-5 h-5" />;
 
     return <BarChart3 className="w-5 h-5" />;
   };
 
-  // Obtener estadísticas
+  const formatearNota = (nota: number): string => {
+    if (nota <= 0) return esCualitativo ? "--" : "S/N";
+
+    return esCualitativo ? convertirNotaACualitativa(nota) : nota.toFixed(1);
+  };
+
+  // Obtener estadísticas adaptadas para cualitativo
   const obtenerEstadisticas = () => {
     if (calificacionesFiltradas.length === 0) {
       return { excelente: 0, bueno: 0, porMejorar: 0 };
+    }
+
+    if (esCualitativo) {
+      return {
+        excelente: calificacionesFiltradas.filter(
+          (c: Calificacion) => convertirNotaACualitativa(c.notaFinal) === "DS",
+        ).length,
+        bueno: calificacionesFiltradas.filter((c: Calificacion) =>
+          ["DA", "DB"].includes(convertirNotaACualitativa(c.notaFinal)),
+        ).length,
+        porMejorar: calificacionesFiltradas.filter(
+          (c: Calificacion) => convertirNotaACualitativa(c.notaFinal) === "SP",
+        ).length,
+      };
     }
 
     return {
@@ -264,6 +371,11 @@ export default function CalificacionesPage() {
                   <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
                     <Award className="text-primary-500" size={28} />
                     Calificaciones
+                    {esCualitativo && (
+                      <span className="text-sm bg-purple-100 text-purple-700 px-2 py-1 rounded-full">
+                        Cualitativo
+                      </span>
+                    )}
                   </h1>
                 </div>
               </div>
@@ -296,12 +408,12 @@ export default function CalificacionesPage() {
                   variant="flat"
                   onPress={() =>
                     handleGenerateEstudiantePDF(
-                      data.obtenerCalificacionesEstudiante.estudiante, // ✅ Objeto estudiante completo
-                      todasCalificaciones, // ✅ Array de calificaciones (puede estar vacío)
-                      director, // ✅ Objeto director (puede ser null)
-                      periodoSeleccionado, // ✅ Período seleccionado
+                      data.obtenerCalificacionesEstudiante.estudiante,
+                      todasCalificaciones,
+                      director,
+                      periodoSeleccionado,
                       data.obtenerCalificacionesEstudiante.puesto.posicion,
-                      data.obtenerCalificacionesEstudiante.indicadores, // ✅ Indicadores
+                      data.obtenerCalificacionesEstudiante.indicadores,
                     )
                   }
                 >
@@ -357,17 +469,19 @@ export default function CalificacionesPage() {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-amber-50 rounded-lg">
-                    <ArmchairIcon className="text-amber-600" size={16} />
+                {!esCualitativo && (
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-amber-50 rounded-lg">
+                      <ArmchairIcon className="text-amber-600" size={16} />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Puesto</p>
+                      <p className="font-medium text-gray-800">
+                        {data.obtenerCalificacionesEstudiante.puesto.posicion}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Puesto</p>
-                    <p className="font-medium text-gray-800">
-                      {data.obtenerCalificacionesEstudiante.puesto.posicion}
-                    </p>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
           )}
@@ -458,7 +572,9 @@ export default function CalificacionesPage() {
                   <Award className="text-white" size={32} />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold">Promedio General</h2>
+                  <h2 className="text-xl font-bold">
+                    {esCualitativo ? "Evaluación General" : "Promedio General"}
+                  </h2>
                   <p className="text-white text-opacity-80">
                     Período {periodoSeleccionado}
                     {areaSeleccionada !== "todas" &&
@@ -469,8 +585,15 @@ export default function CalificacionesPage() {
               <div className="text-center">
                 <div className="text-4xl font-bold">{promedioGeneral}</div>
                 <div className="text-sm text-white text-opacity-80">
-                  Escala 1.0 - 5.0
+                  {esCualitativo
+                    ? "Evaluación Cualitativa"
+                    : "Escala 1.0 - 5.0"}
                 </div>
+                {esCualitativo && typeof promedioGeneral === "string" && (
+                  <div className="text-xs text-white text-opacity-70 mt-1">
+                    {obtenerNombreCalificacion(promedioGeneral)}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -511,131 +634,133 @@ export default function CalificacionesPage() {
                         </div>
                       </div>
                       <div
-                        className={`flex items-center gap-2 px-3 py-2 rounded-full ${obtenerColorNota(calificacion.notaFinal)}`}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-full border ${obtenerColorNota(calificacion.notaFinal)}`}
                       >
                         {getIconByGrade(calificacion.notaFinal)}
                         <span className="font-bold text-lg">
-                          {calificacion.notaFinal > 0
-                            ? calificacion.notaFinal.toFixed(1)
-                            : "S/N"}
+                          {formatearNota(calificacion.notaFinal)}
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="px-6 py-4">
-                    <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                      <Calendar size={16} />
-                      Evaluaciones del Período
-                    </h4>
-                    <div className="space-y-3">
-                      {calificacion.notas?.map((nota) => (
-                        <div
-                          key={nota.id}
-                          className="flex items-center justify-between p-3 bg-gray-50 rounded-xl"
-                        >
-                          <div className="flex-1">
-                            <p className="font-medium text-gray-800">
-                              {nota.nombre}
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              Porcentaje: {nota.porcentaje?.toFixed(1)}% •{" "}
-                              {nota.actividad_id}
-                            </p>
-                          </div>
+                  {!esCualitativo && (
+                    <div className="px-6 py-4">
+                      <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                        <Calendar size={16} />
+                        Evaluaciones del Período
+                      </h4>
+                      <div className="space-y-3">
+                        {calificacion.notas?.map((nota) => (
                           <div
-                            className={`px-3 py-1 rounded-full text-sm font-semibold ${obtenerColorNota(nota.valor)}`}
+                            key={nota.id}
+                            className="flex items-center justify-between p-3 bg-gray-50 rounded-xl"
                           >
-                            {nota.valor > 0 ? nota.valor.toFixed(1) : "S/N"}
+                            <div className="flex-1">
+                              <p className="font-medium text-gray-800">
+                                {nota.nombre}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                {!esCualitativo &&
+                                  `Porcentaje: ${nota.porcentaje?.toFixed(1)}% • `}
+                                {nota.actividad_id}
+                              </p>
+                            </div>
+                            <div
+                              className={`px-3 py-1 rounded-full text-sm font-semibold border ${obtenerColorNota(nota.valor)}`}
+                            >
+                              {formatearNota(nota.valor)}
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                    {/* SECCIÓN CORREGIDA: Indicadores de Evaluación */}
-                    {(() => {
-                      // Filtrar indicadores específicos para esta área y período
-                      const indicadoresArea =
-                        data.obtenerCalificacionesEstudiante.indicadores.lista.filter(
-                          (indicador: Indicador) =>
-                            indicador.area?.id === calificacion.area.id &&
-                            indicador.periodo === calificacion.periodo,
-                        );
+                        ))}
+                      </div>
 
-                      return (
-                        <div className="mt-6 pt-4 border-t border-gray-200">
-                          <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                            <Target size={16} />
-                            Indicadores de Logros ({indicadoresArea.length})
-                          </h4>
+                      {/* SECCIÓN CORREGIDA: Indicadores de Evaluación */}
+                      {(() => {
+                        // Filtrar indicadores específicos para esta área y período
+                        const indicadoresArea =
+                          data.obtenerCalificacionesEstudiante.indicadores.lista.filter(
+                            (indicador: Indicador) =>
+                              indicador.area?.id === calificacion.area.id &&
+                              indicador.periodo === calificacion.periodo,
+                          );
 
-                          {indicadoresArea.length > 0 ? (
-                            <div className="grid gap-2">
-                              {indicadoresArea.map(
-                                (indicador: Indicador, index: number) => (
-                                  <div
-                                    key={indicador.id}
-                                    className="flex items-start gap-3 p-3 bg-blue-50 rounded-xl border border-blue-100"
-                                  >
-                                    <div className="flex-shrink-0 mt-1">
-                                      <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                                        <span className="text-xs font-medium text-blue-600">
-                                          {index + 1}
-                                        </span>
+                        return (
+                          <div className="mt-6 pt-4 border-t border-gray-200">
+                            <h4 className="font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                              <Target size={16} />
+                              Indicadores de Logros ({indicadoresArea.length})
+                            </h4>
+
+                            {indicadoresArea.length > 0 ? (
+                              <div className="grid gap-2">
+                                {indicadoresArea.map(
+                                  (indicador: Indicador, index: number) => (
+                                    <div
+                                      key={indicador.id}
+                                      className="flex items-start gap-3 p-3 bg-blue-50 rounded-xl border border-blue-100"
+                                    >
+                                      <div className="flex-shrink-0 mt-1">
+                                        <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                                          <span className="text-xs font-medium text-blue-600">
+                                            {index + 1}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <div className="flex-1">
+                                        <p className="text-sm font-medium text-gray-800">
+                                          {indicador.nombre}
+                                        </p>
+                                        <p className="text-xs text-gray-600 mt-1">
+                                          Período {indicador.periodo} •{" "}
+                                          {calificacion.area?.nombre}
+                                        </p>
+                                      </div>
+                                      <div className="flex-shrink-0">
+                                        <Circle
+                                          className="text-blue-400"
+                                          size={16}
+                                        />
                                       </div>
                                     </div>
-                                    <div className="flex-1">
-                                      <p className="text-sm font-medium text-gray-800">
-                                        {indicador.nombre}
-                                      </p>
-                                      <p className="text-xs text-gray-600 mt-1">
-                                        Período {indicador.periodo} •{" "}
-                                        {calificacion.area?.nombre}
-                                      </p>
-                                    </div>
-                                    <div className="flex-shrink-0">
-                                      <Circle
-                                        className="text-blue-400"
-                                        size={16}
-                                      />
-                                    </div>
-                                  </div>
-                                ),
-                              )}
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2 text-gray-500">
-                              <Target size={16} />
-                              <span className="text-sm">
-                                No hay indicadores registrados para esta área en
-                                el período {calificacion.periodo}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })()}
-
-                    {/* Resumen de la nota final */}
-                    <div className="mt-4 pt-4 border-t border-gray-200">
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold text-gray-700">
-                          Nota Final:
-                        </span>
-                        <div className="text-right">
-                          <div
-                            className={`text-xl font-bold ${obtenerColorNota(calificacion.notaFinal).split(" ")[0]}`}
-                          >
-                            {calificacion.notaFinal > 0
-                              ? calificacion.notaFinal.toFixed(1)
-                              : "Sin Nota"}
+                                  ),
+                                )}
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2 text-gray-500">
+                                <Target size={16} />
+                                <span className="text-sm">
+                                  No hay indicadores registrados para esta área
+                                  en el período {calificacion.periodo}
+                                </span>
+                              </div>
+                            )}
                           </div>
-                          <div className="text-sm text-gray-600">
-                            {obtenerDesempeno(calificacion.notaFinal)}
+                        );
+                      })()}
+
+                      {/* Resumen de la nota final */}
+                      <div className="mt-4 pt-4 border-t border-gray-200">
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-gray-700">
+                            {esCualitativo
+                              ? "Evaluación Final:"
+                              : "Nota Final:"}
+                          </span>
+                          <div className="text-right">
+                            <div
+                              className={`text-xl font-bold ${obtenerColorNota(calificacion.notaFinal).split(" ")[0]}`}
+                            >
+                              {formatearNota(calificacion.notaFinal)}
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              {obtenerDesempeno(calificacion.notaFinal)}
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
+                  )}
                 </div>
               ))
             )}
@@ -649,7 +774,9 @@ export default function CalificacionesPage() {
                   {estadisticas.excelente}
                 </div>
                 <div className="text-green-700 text-sm font-medium">
-                  Excelente (≥ 4.0)
+                  {esCualitativo
+                    ? "Desempeño Superior (DS)"
+                    : "Excelente (≥ 4.0)"}
                 </div>
               </div>
               <div className="bg-white rounded-xl p-6 text-center shadow-sm">
@@ -657,7 +784,9 @@ export default function CalificacionesPage() {
                   {estadisticas.bueno}
                 </div>
                 <div className="text-blue-700 text-sm font-medium">
-                  Bueno (3.0-3.9)
+                  {esCualitativo
+                    ? "Desempeño Alto/Básico (DA/DB)"
+                    : "Bueno (3.0-3.9)"}
                 </div>
               </div>
               <div className="bg-white rounded-xl p-6 text-center shadow-sm">
@@ -665,7 +794,9 @@ export default function CalificacionesPage() {
                   {estadisticas.porMejorar}
                 </div>
                 <div className="text-red-700 text-sm font-medium">
-                  Por Mejorar (&lt; 3.0)
+                  {esCualitativo
+                    ? "Sigue en proceso (SP)"
+                    : "Por Mejorar (< 3.0)"}
                 </div>
               </div>
             </div>
