@@ -657,34 +657,34 @@ export const ReporteEstudiantePDF = ({
                 {/* Renderizar las áreas de esta página */}
                 {paginaData.areas.length > 0
                   ? paginaData.areas.map((areaData, indiceArea) => {
-                    const isLastInPage =
-                      indiceArea === paginaData.areas.length - 1;
-                    const isLastOverall = esUltimaPagina && isLastInPage;
+                      const isLastInPage =
+                        indiceArea === paginaData.areas.length - 1;
+                      const isLastOverall = esUltimaPagina && isLastInPage;
 
-                    return (
-                      <AreaRowComponent
-                        key={`area-${areaData.area.id}-page-${indicePagina}`}
-                        areaData={areaData}
-                        esCualitativo={esCualitativo}
-                        isLast={isLastOverall}
-                      />
-                    );
-                  })
+                      return (
+                        <AreaRowComponent
+                          key={`area-${areaData.area.id}-page-${indicePagina}`}
+                          areaData={areaData}
+                          esCualitativo={esCualitativo}
+                          isLast={isLastOverall}
+                        />
+                      );
+                    })
                   : /* Solo mostrar mensaje en primera página si no hay áreas */
-                  paginaData.esPrimeraPagina && (
-                    <View style={styles.tableRow}>
-                      <View style={{ width: "100%", padding: 20 }}>
-                        <Text
-                          style={[
-                            styles.noIndicadores,
-                            { fontSize: 9, color: "#666" },
-                          ]}
-                        >
-                          No hay calificaciones registradas para este período.
-                        </Text>
+                    paginaData.esPrimeraPagina && (
+                      <View style={styles.tableRow}>
+                        <View style={{ width: "100%", padding: 20 }}>
+                          <Text
+                            style={[
+                              styles.noIndicadores,
+                              { fontSize: 9, color: "#666" },
+                            ]}
+                          >
+                            No hay calificaciones registradas para este período.
+                          </Text>
+                        </View>
                       </View>
-                    </View>
-                  )}
+                    )}
               </View>
             </View>
 
@@ -1265,7 +1265,7 @@ export const handleGenerateEstudiantePDF = async (
         grado: datosReporte.estudiante.grado,
         periodo: String(datosReporte.estudiante.periodo),
         año: datosReporte.estudiante.año,
-        puesto: puesto
+        puesto: puesto,
       },
       director: directorData,
       areas: datosReporte.areas,

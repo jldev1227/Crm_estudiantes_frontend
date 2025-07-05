@@ -282,6 +282,7 @@ const SistemaCalificaciones = () => {
 
   const isCualitativo = useCallback(() => {
     // Verificar si el GRADO/CURSO es cualitativo, no el área
+
     return GRADOS_CUALITATIVOS.includes(curso?.nombre);
   }, [curso]);
 
@@ -520,23 +521,33 @@ const SistemaCalificaciones = () => {
         setCalificaciones(nuevasCalificaciones);
       } else {
         // Si no hay calificaciones para este período, usar configuración por defecto
-        const actividadesPorDefecto = incluirEvaluacionFinal
+        // Resetear actividades a las por defecto según el estado del checkbox
+        const actividadesPorDefecto = isCualitativo()
           ? [
               {
-                id: "final",
-                nombre: "Evaluación Final",
-                porcentaje: 30,
-                isFinal: true,
-              },
-            ]
-          : [
-              {
-                id: "act1",
-                nombre: "Actividad 1",
+                id: "nota-unica",
+                nombre: "Nota Única",
                 porcentaje: 100,
                 isFinal: false,
               },
-            ];
+            ]
+          : incluirEvaluacionFinal
+            ? [
+                {
+                  id: "final",
+                  nombre: "Evaluación Final",
+                  porcentaje: 30,
+                  isFinal: true,
+                },
+              ]
+            : [
+                {
+                  id: "act1",
+                  nombre: "Actividad 1",
+                  porcentaje: 100,
+                  isFinal: false,
+                },
+              ];
 
         setActividades(actividadesPorDefecto);
 
@@ -627,23 +638,32 @@ const SistemaCalificaciones = () => {
     setCalificaciones({});
 
     // Resetear actividades a las por defecto según el estado del checkbox
-    const actividadesPorDefecto = incluirEvaluacionFinal
+    const actividadesPorDefecto = isCualitativo()
       ? [
           {
-            id: "final",
-            nombre: "Evaluación Final",
-            porcentaje: 30,
-            isFinal: true,
-          },
-        ]
-      : [
-          {
-            id: "act1",
-            nombre: "Actividad 1",
+            id: "nota-unica",
+            nombre: "Nota Única",
             porcentaje: 100,
             isFinal: false,
           },
-        ];
+        ]
+      : incluirEvaluacionFinal
+        ? [
+            {
+              id: "final",
+              nombre: "Evaluación Final",
+              porcentaje: 30,
+              isFinal: true,
+            },
+          ]
+        : [
+            {
+              id: "act1",
+              nombre: "Actividad 1",
+              porcentaje: 100,
+              isFinal: false,
+            },
+          ];
 
     setActividades(actividadesPorDefecto);
 
@@ -1036,7 +1056,9 @@ const SistemaCalificaciones = () => {
                   Hay estudiantes con notas sin completar
                 </p>
                 <p className="text-sm mt-1">
-                  Las notas vacías serán calculadas como 0 al guardar
+                  {!isCualitativo
+                    ? "Las notas vacías serán calculadas como 0 al guardar"
+                    : 'Las notas vacías seran guardadas como "Sigue en Proceso"'}
                 </p>
               </div>
             </div>
@@ -1044,7 +1066,7 @@ const SistemaCalificaciones = () => {
         </Card>
       )}
 
-      {!porcentajes.esValido && (
+      {!porcentajes.esValido && !isCualitativo() && (
         <Card className="border border-orange-200 bg-orange-50">
           <CardBody className="py-4">
             <div className="flex items-start gap-3 text-orange-700">
@@ -1308,7 +1330,7 @@ const SistemaCalificaciones = () => {
             </Card>
           )}
 
-          {incluirEvaluacionFinal && (
+          {incluirEvaluacionFinal && !isCualitativo() && (
             <Card className="bg-green-50 border border-green-200 mb-4">
               <CardBody className="py-3">
                 <div className="flex items-center gap-2 text-green-700">
@@ -1783,7 +1805,7 @@ const SistemaCalificaciones = () => {
             <Button
               className="w-full sm:w-auto"
               color="primary"
-              isDisabled={!porcentajes.esValido}
+              isDisabled={!porcentajes.esValido && !isCualitativo()}
               isLoading={loading || guardandoCalificaciones}
               radius="sm"
               startContent={
@@ -1797,6 +1819,8 @@ const SistemaCalificaciones = () => {
                 ? "Guardando..."
                 : "Guardar Calificaciones"}
             </Button>
+
+            <p />
           </div>
         </CardBody>
       </Card>
