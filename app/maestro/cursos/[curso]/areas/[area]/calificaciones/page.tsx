@@ -1056,7 +1056,7 @@ const SistemaCalificaciones = () => {
                   Hay estudiantes con notas sin completar
                 </p>
                 <p className="text-sm mt-1">
-                  {!isCualitativo
+                  {!isCualitativo()
                     ? "Las notas vacías serán calculadas como 0 al guardar"
                     : 'Las notas vacías seran guardadas como "Sigue en Proceso"'}
                 </p>
