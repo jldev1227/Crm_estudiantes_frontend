@@ -572,6 +572,14 @@ export const ReporteEstudiantePDF = ({
     return (
       <Document>
         <Page wrap size="A4" style={styles.page}>
+          {esCualitativo && (
+            <View style={styles.backgroundImageContainer}>
+              <Image
+                src="/backgroundCualitative.png"
+                style={styles.backgroundImage}
+              />
+            </View>
+          )}
           <HeaderComponent />
           <View style={styles.contentWrapper}>
             <StudentInfoComponent
@@ -649,34 +657,34 @@ export const ReporteEstudiantePDF = ({
                 {/* Renderizar las áreas de esta página */}
                 {paginaData.areas.length > 0
                   ? paginaData.areas.map((areaData, indiceArea) => {
-                      const isLastInPage =
-                        indiceArea === paginaData.areas.length - 1;
-                      const isLastOverall = esUltimaPagina && isLastInPage;
+                    const isLastInPage =
+                      indiceArea === paginaData.areas.length - 1;
+                    const isLastOverall = esUltimaPagina && isLastInPage;
 
-                      return (
-                        <AreaRowComponent
-                          key={`area-${areaData.area.id}-page-${indicePagina}`}
-                          areaData={areaData}
-                          esCualitativo={esCualitativo}
-                          isLast={isLastOverall}
-                        />
-                      );
-                    })
+                    return (
+                      <AreaRowComponent
+                        key={`area-${areaData.area.id}-page-${indicePagina}`}
+                        areaData={areaData}
+                        esCualitativo={esCualitativo}
+                        isLast={isLastOverall}
+                      />
+                    );
+                  })
                   : /* Solo mostrar mensaje en primera página si no hay áreas */
-                    paginaData.esPrimeraPagina && (
-                      <View style={styles.tableRow}>
-                        <View style={{ width: "100%", padding: 20 }}>
-                          <Text
-                            style={[
-                              styles.noIndicadores,
-                              { fontSize: 9, color: "#666" },
-                            ]}
-                          >
-                            No hay calificaciones registradas para este período.
-                          </Text>
-                        </View>
+                  paginaData.esPrimeraPagina && (
+                    <View style={styles.tableRow}>
+                      <View style={{ width: "100%", padding: 20 }}>
+                        <Text
+                          style={[
+                            styles.noIndicadores,
+                            { fontSize: 9, color: "#666" },
+                          ]}
+                        >
+                          No hay calificaciones registradas para este período.
+                        </Text>
                       </View>
-                    )}
+                    </View>
+                  )}
               </View>
             </View>
 
@@ -1040,6 +1048,7 @@ interface ReporteEstudianteProps {
     grado: string;
     periodo: string;
     año: string;
+    puesto: number | null;
   };
   director: Maestro;
   areas: AreaConPromedio[];
@@ -1103,6 +1112,7 @@ export const procesarDatosEstudiante = (
     documento: `${estudiante.tipo_documento || "N/A"}: ${estudiante.numero_identificacion || "N/A"}`,
     grado: estudiante.grado?.nombre || "Sin grado",
     periodo: periodo,
+    puesto: puesto,
     año: new Date().getFullYear().toString(),
     celular_padres: estudiante.celular_padres || "N/A",
     pension_activa: estudiante.pension_activa || false,
@@ -1255,6 +1265,7 @@ export const handleGenerateEstudiantePDF = async (
         grado: datosReporte.estudiante.grado,
         periodo: String(datosReporte.estudiante.periodo),
         año: datosReporte.estudiante.año,
+        puesto: puesto
       },
       director: directorData,
       areas: datosReporte.areas,
