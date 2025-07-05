@@ -20,7 +20,7 @@ const PAGE_CONFIG = {
   WIDTH: 595, // 8.3 inches * 72
   MARGINS: {
     TOP: 30,
-    BOTTOM: 40, // Espacio para footer
+    BOTTOM: 0, // Espacio para footer
     LEFT: 40,
     RIGHT: 40,
   },
@@ -30,12 +30,12 @@ const PAGE_CONFIG = {
     STUDENT_INFO: 10, // Tabla de información del estudiante
     SECTION_TITLE: 40, // Título "INFORME DE DESEMPEÑO"
     TABLE_HEADER: 30, // Header de la tabla de asignaturas
-    AREA_ROW: 40, // Fila principal de cada área
+    AREA_ROW: 20, // Fila principal de cada área
     INDICATOR_BASE: 10, // Base para indicadores (header + padding)
-    INDICATOR_ITEM: 18, // Altura por cada indicador individual (aumentado)
-    NO_INDICATORS: 30, // Mensaje "sin indicadores"
+    INDICATOR_ITEM: 15, // Altura por cada indicador individual (aumentado)
+    NO_INDICATORS: 10, // Mensaje "sin indicadores"
     FOOTER: 20, // Footer con firma
-    SAFETY_MARGIN: 10, // Margen de seguridad adicional
+    SAFETY_MARGIN: 15, // Margen de seguridad adicional
   },
 };
 
@@ -287,22 +287,22 @@ const StudentInfoComponent = ({ estudiante }: { estudiante: any }) => (
 const TableHeaderComponent = () => (
   <View style={styles.tableHeader}>
     <View style={styles.tableColHeader1}>
-      <Text style={[styles.labelText, { color: "#4472C4", fontSize: 10 }]}>
+      <Text style={[styles.labelText, { color: "#4472C4", fontSize: 7 }]}>
         ASIGNATURA
       </Text>
     </View>
     <View style={styles.tableColHeader2}>
-      <Text style={[styles.labelText, { color: "#4472C4", fontSize: 10 }]}>
+      <Text style={[styles.labelText, { color: "#4472C4", fontSize: 7 }]}>
         NOTA
       </Text>
     </View>
     <View style={styles.tableColHeader3}>
-      <Text style={[styles.labelText, { color: "#4472C4", fontSize: 10 }]}>
+      <Text style={[styles.labelText, { color: "#4472C4", fontSize: 7 }]}>
         DESEMPEÑO
       </Text>
     </View>
     <View style={styles.tableColHeader4}>
-      <Text style={[styles.labelText, { color: "#4472C4", fontSize: 10 }]}>
+      <Text style={[styles.labelText, { color: "#4472C4", fontSize: 7 }]}>
         FALLAS
       </Text>
     </View>
@@ -325,7 +325,7 @@ const AreaRowComponent = ({
       <View style={[styles.tableRow, { borderBottomWidth: 0 }]}>
         <View style={styles.tableCol1}>
           <Text
-            style={[styles.labelText, { fontSize: 11, fontWeight: "bold" }]}
+            style={[styles.labelText, { fontSize: 7, fontWeight: "bold" }]}
           >
             {area.nombre.toUpperCase()}
           </Text>
@@ -435,7 +435,7 @@ const FooterComponent = ({ director }: { director: Maestro }) => (
           style={{
             color: "#000",
             marginBottom: 3,
-            fontSize: 10,
+            fontSize: 7,
             fontWeight: "bold",
           }}
         >
@@ -520,7 +520,7 @@ export const ReporteEstudiantePDF = ({
                   <Text
                     style={[
                       styles.noIndicadores,
-                      { fontSize: 12, color: "#666" },
+                      { fontSize: 9, color: "#666" },
                     ]}
                   >
                     No hay calificaciones o áreas disponibles para mostrar en
@@ -567,33 +567,33 @@ export const ReporteEstudiantePDF = ({
                 {/* Renderizar las áreas de esta página */}
                 {paginaData.areas.length > 0
                   ? paginaData.areas.map((areaData, indiceArea) => {
-                      const isLastInPage =
-                        indiceArea === paginaData.areas.length - 1;
-                      const isLastOverall = esUltimaPagina && isLastInPage;
+                    const isLastInPage =
+                      indiceArea === paginaData.areas.length - 1;
+                    const isLastOverall = esUltimaPagina && isLastInPage;
 
-                      return (
-                        <AreaRowComponent
-                          key={`area-${areaData.area.id}-page-${indicePagina}`}
-                          areaData={areaData}
-                          isLast={isLastOverall}
-                        />
-                      );
-                    })
+                    return (
+                      <AreaRowComponent
+                        key={`area-${areaData.area.id}-page-${indicePagina}`}
+                        areaData={areaData}
+                        isLast={isLastOverall}
+                      />
+                    );
+                  })
                   : /* Solo mostrar mensaje en primera página si no hay áreas */
-                    paginaData.esPrimeraPagina && (
-                      <View style={styles.tableRow}>
-                        <View style={{ width: "100%", padding: 20 }}>
-                          <Text
-                            style={[
-                              styles.noIndicadores,
-                              { fontSize: 12, color: "#666" },
-                            ]}
-                          >
-                            No hay calificaciones registradas para este período.
-                          </Text>
-                        </View>
+                  paginaData.esPrimeraPagina && (
+                    <View style={styles.tableRow}>
+                      <View style={{ width: "100%", padding: 20 }}>
+                        <Text
+                          style={[
+                            styles.noIndicadores,
+                            { fontSize: 9, color: "#666" },
+                          ]}
+                        >
+                          No hay calificaciones registradas para este período.
+                        </Text>
                       </View>
-                    )}
+                    </View>
+                  )}
               </View>
             </View>
 
@@ -615,7 +615,7 @@ const styles = StyleSheet.create({
     paddingTop: PAGE_CONFIG.MARGINS.TOP,
     paddingBottom: PAGE_CONFIG.MARGINS.BOTTOM,
     backgroundColor: "#FFF",
-    fontSize: 12,
+    fontSize: 9,
   },
   headerContainer: {
     flexDirection: "row",
@@ -625,14 +625,14 @@ const styles = StyleSheet.create({
   },
   header: {
     fontWeight: "bold",
-    fontSize: 13,
+    fontSize: 9,
     maxWidth: 300,
     marginBottom: 2,
     color: "#fff",
     textAlign: "center",
   },
   subHeader: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: "medium",
     textAlign: "center",
     color: "#fff",
@@ -700,9 +700,10 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   tableCol1: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
     width: "40%",
-    paddingVertical: 5,
-    paddingHorizontal: 5,
     borderRightWidth: 1,
     borderColor: "#E0E0E0",
     height: "100%",
@@ -710,8 +711,6 @@ const styles = StyleSheet.create({
   },
   tableCol2: {
     width: "20%",
-    paddingVertical: 5,
-    paddingHorizontal: 5,
     borderRightWidth: 1,
     borderColor: "#E0E0E0",
     height: "100%",
@@ -719,27 +718,26 @@ const styles = StyleSheet.create({
   },
   tableCol3: {
     width: "20%",
-    paddingVertical: 5,
-    paddingHorizontal: 5,
     borderRightWidth: 1,
     borderColor: "#E0E0E0",
     height: "100%",
     textAlign: "center",
   },
   tableCol4: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
     width: "20%",
-    paddingVertical: 5,
-    paddingHorizontal: 5,
     textAlign: "center",
     height: "100%",
   },
   labelText: {
-    fontSize: 12,
+    fontSize: 9,
     textAlign: "center",
     textTransform: "capitalize",
   },
   valueText: {
-    fontSize: 12,
+    fontSize: 9,
     textAlign: "center",
     textTransform: "capitalize",
   },
@@ -755,7 +753,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#2E8B5715",
     padding: 3,
     borderRadius: 3,
-    fontSize: 12,
+    fontSize: 9,
     fontWeight: "bold",
     textAlign: "center",
   },
@@ -764,7 +762,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F0F7FF",
     padding: 3,
     borderRadius: 3,
-    fontSize: 12,
+    fontSize: 9,
     fontWeight: "bold",
     textAlign: "center",
   },
@@ -773,7 +771,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF9F0",
     padding: 3,
     borderRadius: 3,
-    fontSize: 12,
+    fontSize: 9,
     fontWeight: "bold",
     textAlign: "center",
   },
@@ -782,7 +780,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FDF1F1",
     padding: 3,
     borderRadius: 3,
-    fontSize: 12,
+    fontSize: 9,
     fontWeight: "bold",
     textAlign: "center",
   },
@@ -791,7 +789,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F0F0F0",
     padding: 3,
     borderRadius: 3,
-    fontSize: 12,
+    fontSize: 9,
     textAlign: "center",
   },
   footer: {
@@ -815,7 +813,6 @@ const styles = StyleSheet.create({
   signatureLeft: {
     flex: 1,
     alignItems: "center",
-    marginRight: 20,
   },
   signatureLine: {
     borderBottomWidth: 1,
@@ -832,21 +829,21 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   indicadoresHeader: {
-    fontSize: 10,
+    fontSize: 7,
     fontWeight: "bold",
     color: "#4472C4",
     marginBottom: 4,
     textAlign: "left",
   },
   indicadorItem: {
-    fontSize: 10,
+    fontSize: 7,
     color: "#333",
     marginBottom: 2,
     paddingLeft: 8,
     textAlign: "left",
   },
   indicadorBullet: {
-    fontSize: 10,
+    fontSize: 7,
     color: "#4472C4",
     marginRight: 4,
   },
