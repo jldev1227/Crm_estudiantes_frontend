@@ -136,9 +136,41 @@ const calcularEspacioFijosPaginasAdicionales = (): number => {
   return PAGE_CONFIG.COMPONENT_HEIGHTS.TABLE_HEADER + 40; // Margen adicional
 };
 
-/**
- * NUEVA FUNCIÓN: Distribuir áreas de forma más inteligente
- */
+// Función para ordenar áreas con prioridad
+const ordenarAreasConPrioridad = (
+  areas: AreaConPromedio[],
+): AreaConPromedio[] => {
+  return areas.sort((a, b) => {
+    const nombreA = a.area?.nombre?.toUpperCase() || "";
+    const nombreB = b.area?.nombre?.toUpperCase() || "";
+
+    // Definir prioridades (menor número = mayor prioridad)
+    const getPrioridad = (nombre: string): number => {
+      if (nombre.includes("LENGUAJE") || nombre.includes("LENGUA")) return 1;
+      if (
+        nombre.includes("MATEMATICAS") ||
+        nombre.includes("MATEMÁTICAS") ||
+        nombre.includes("MATEMATICA")
+      )
+        return 2;
+
+      return 3; // Resto de áreas
+    };
+
+    const prioridadA = getPrioridad(nombreA);
+    const prioridadB = getPrioridad(nombreB);
+
+    // Si tienen diferentes prioridades, ordenar por prioridad
+    if (prioridadA !== prioridadB) {
+      return prioridadA - prioridadB;
+    }
+
+    // Si tienen la misma prioridad, ordenar alfabéticamente
+    return nombreA.localeCompare(nombreB);
+  });
+};
+
+// Modificación en la función distribuirAreasEnPaginas
 const distribuirAreasEnPaginas = (
   areas: AreaConPromedio[],
 ): Array<{
@@ -164,6 +196,9 @@ const distribuirAreasEnPaginas = (
     return [];
   }
 
+  // ⭐ AQUÍ SE APLICA EL ORDENAMIENTO CON PRIORIDAD
+  const areasOrdenadas = ordenarAreasConPrioridad(areasValidas);
+
   const paginas: Array<{ areas: AreaConPromedio[]; esPrimeraPagina: boolean }> =
     [];
   const espacioDisponibleTotal = calcularEspacioDisponible();
@@ -172,8 +207,9 @@ const distribuirAreasEnPaginas = (
   let espacioUsadoActual = calcularEspacioFijosPrimeraPagina();
   let esPrimeraPagina = true;
 
-  for (let i = 0; i < areasValidas.length; i++) {
-    const area = areasValidas[i];
+  // Usar areasOrdenadas en lugar de areasValidas
+  for (let i = 0; i < areasOrdenadas.length; i++) {
+    const area = areasOrdenadas[i];
     const alturaArea = calcularAlturaArea(area);
 
     // Calcular espacio disponible para contenido en esta página
