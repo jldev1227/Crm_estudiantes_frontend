@@ -31,8 +31,8 @@ const PAGE_CONFIG = {
     SECTION_TITLE: 40, // Título "INFORME DE DESEMPEÑO"
     TABLE_HEADER: 30, // Header de la tabla de asignaturas
     AREA_ROW: 20, // Fila principal de cada área
-    INDICATOR_BASE: 15, // Base para indicadores (header + padding)
-    INDICATOR_ITEM: 15, // Altura por cada indicador individual (aumentado)
+    INDICATOR_BASE: 18, // Base para indicadores (header + padding)
+    INDICATOR_ITEM: 18, // Altura por cada indicador individual (aumentado)
     NO_INDICATORS: 10, // Mensaje "sin indicadores"
     FOOTER: 20, // Footer con firma
     SAFETY_MARGIN: 27, // Margen de seguridad adicional
