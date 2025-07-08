@@ -805,14 +805,10 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   footer: {
-    position: "absolute",
     fontSize: 12,
-    bottom: 35,
-    left: 45,
-    right: 45,
     textAlign: "center",
     color: "#9E9E9E",
-    marginTop: 50,
+    marginBottom: 30,
   },
   signaturesContainer: {
     flexDirection: "row",
