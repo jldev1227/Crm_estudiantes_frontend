@@ -12,30 +12,36 @@ import {
 import { Area, Calificacion, Estudiante, Maestro } from "@/types";
 
 // ==========================================
-// CONFIGURACIÓN DE PÁGINA Y MÉTRICAS
+// CONFIGURACIÓN DE PÁGINA OFICIO Y MÉTRICAS
 // ==========================================
 const PAGE_CONFIG = {
-  // Dimensiones de página A4 en puntos (1 inch = 72 points)
-  HEIGHT: 842, // 11.7 inches * 72
-  WIDTH: 595, // 8.3 inches * 72
+  // Dimensiones de página OFICIO en puntos (1 inch = 72 points)
+  HEIGHT: 936, // 13 inches * 72 (altura del oficio)
+  WIDTH: 612, // 8.5 inches * 72 (ancho del oficio)
   MARGINS: {
-    TOP: 20,
-    BOTTOM: 0, // Espacio para footer
-    LEFT: 30,
-    RIGHT: 30,
+    TOP: 10,    // Reducido para compensar márgenes de impresora
+    BOTTOM: 10, // Reducido para compensar márgenes de impresora  
+    LEFT: 15,   // Reducido para compensar márgenes de impresora
+    RIGHT: 15,  // Reducido para compensar márgenes de impresora
   },
-  // Alturas estimadas de componentes (ajustadas más conservadoras)
+  // OPCIÓN ALTERNATIVA: Sin márgenes (descomenta si necesitas)
+  // MARGINS: {
+  //   TOP: 0,
+  //   BOTTOM: 0, 
+  //   LEFT: 0,
+  //   RIGHT: 0,
+  // },
   COMPONENT_HEIGHTS: {
-    HEADER: 140, // Header con logo (aumentado)
-    STUDENT_INFO: 0, // Tabla de información del estudiante
-    SECTION_TITLE: 40, // Título "INFORME DE DESEMPEÑO"
-    TABLE_HEADER: 30, // Header de la tabla de asignaturas
-    AREA_ROW: 20, // Fila principal de cada área
-    INDICATOR_BASE: 18, // Base para indicadores (header + padding)
-    INDICATOR_ITEM: 18, // Altura por cada indicador individual (aumentado)
-    NO_INDICATORS: 10, // Mensaje "sin indicadores"
-    FOOTER: 20, // Footer con firma
-    SAFETY_MARGIN: 27, // Margen de seguridad adicional
+    HEADER: 150, // Header con logo (más espacio por la altura extra)
+    STUDENT_INFO: 0,
+    SECTION_TITLE: 45, // Título "INFORME DE DESEMPEÑO"
+    TABLE_HEADER: 35, // Header de la tabla de asignaturas
+    AREA_ROW: 22, // Fila principal de cada área
+    INDICATOR_BASE: 20, // Base para indicadores (header + padding)
+    INDICATOR_ITEM: 20, // Altura por cada indicador individual
+    NO_INDICATORS: 12, // Mensaje "sin indicadores"
+    FOOTER: 25, // Footer con firma
+    SAFETY_MARGIN: 30, // Margen de seguridad adicional
   },
 };
 
@@ -73,70 +79,81 @@ const verificarSiEsCualitativo = (nombreGrado: string): boolean => {
 };
 
 // ==========================================
-// FUNCIONES DE CÁLCULO DE ALTURA MEJORADAS
+// FUNCIONES DE DISTRIBUCIÓN SIMPLIFICADAS
 // ==========================================
 
-/**
- * Calcula la altura estimada que ocuparán los indicadores de un área
- */
-const calcularAlturaIndicadores = (indicadores: IndicadorSimple[]): number => {
-  if (indicadores.length === 0) {
-    return PAGE_CONFIG.COMPONENT_HEIGHTS.NO_INDICATORS;
+// DISTRIBUCIÓN FORZADA ESPECÍFICA para máximo aprovechamiento
+const distribuirAreasEnPaginas = (
+  areas: AreaConPromedio[],
+): Array<{
+  areas: AreaConPromedio[];
+  esPrimeraPagina: boolean;
+}> => {
+  if (!areas || areas.length === 0) {
+    return [];
   }
 
-  // Calcular altura más conservadora considerando texto largo
-  const alturaBase = PAGE_CONFIG.COMPONENT_HEIGHTS.INDICATOR_BASE;
-  const alturaPorIndicador = PAGE_CONFIG.COMPONENT_HEIGHTS.INDICATOR_ITEM;
-
-  // Factor adicional para indicadores con texto muy largo
-  const factorTexto = indicadores.some((ind) => ind.nombre.length > 100)
-    ? 1.3
-    : 1.0;
-
-  return alturaBase + indicadores.length * alturaPorIndicador * factorTexto;
-};
-
-/**
- * Calcula la altura total de un área (fila principal + indicadores)
- */
-const calcularAlturaArea = (area: AreaConPromedio): number => {
-  const alturaFila = PAGE_CONFIG.COMPONENT_HEIGHTS.AREA_ROW;
-  const alturaIndicadores = calcularAlturaIndicadores(area.indicadores);
-
-  return (
-    alturaFila + alturaIndicadores + PAGE_CONFIG.COMPONENT_HEIGHTS.SAFETY_MARGIN
+  const areasValidas = areas.filter(
+    (area) => area.area?.nombre && (area.promedio > 0 || area.indicadores.length > 0),
   );
+
+  if (areasValidas.length === 0) {
+    return [];
+  }
+
+  // Aplicar ordenamiento con prioridad
+  const areasOrdenadas = ordenarAreasConPrioridad(areasValidas);
+  
+  console.log("🎯 Áreas ordenadas:", areasOrdenadas.map(a => `${a.area.nombre} (${a.indicadores.length} ind)`));
+
+  // DISTRIBUCIÓN ESPECÍFICA OPTIMIZADA
+  const totalAreas = areasOrdenadas.length;
+  
+  if (totalAreas <= 5) {
+    // Pocas áreas: una sola página
+    return [{
+      areas: areasOrdenadas,
+      esPrimeraPagina: true,
+    }];
+  } else if (totalAreas <= 9) {
+    // 6-9 áreas: dos páginas balanceadas
+    const puntoCorte = Math.ceil(totalAreas * 0.6); // 60% en primera página
+    return [
+      {
+        areas: areasOrdenadas.slice(0, puntoCorte),
+        esPrimeraPagina: true,
+      },
+      {
+        areas: areasOrdenadas.slice(puntoCorte),
+        esPrimeraPagina: false,
+      },
+    ];
+  } else {
+    // 10+ áreas: distribución en 3 páginas CONSERVADORA basada en evidencia real
+    // Basado en el análisis: la página 1 solo puede con 6 áreas + header
+    // Las otras páginas pueden con más contenido
+    
+    const primeraCorte = 6;  // CONSERVADOR: lo que realmente cabe en página 1
+    const segundaCorte = 10; // Balancear el resto
+    
+    return [
+      {
+        areas: areasOrdenadas.slice(0, primeraCorte), // 6 áreas
+        esPrimeraPagina: true,
+      },
+      {
+        areas: areasOrdenadas.slice(primeraCorte, segundaCorte), // 4 áreas
+        esPrimeraPagina: false,
+      },
+      {
+        areas: areasOrdenadas.slice(segundaCorte), // Resto
+        esPrimeraPagina: false,
+      },
+    ];
+  }
 };
 
-/**
- * Calcula el espacio disponible en una página
- */
-const calcularEspacioDisponible = (): number => {
-  return (
-    PAGE_CONFIG.HEIGHT - PAGE_CONFIG.MARGINS.TOP - PAGE_CONFIG.MARGINS.BOTTOM
-  );
-};
-
-/**
- * Calcula el espacio usado por los componentes fijos de la primera página
- */
-const calcularEspacioFijosPrimeraPagina = (): number => {
-  return (
-    PAGE_CONFIG.COMPONENT_HEIGHTS.HEADER +
-    PAGE_CONFIG.COMPONENT_HEIGHTS.STUDENT_INFO +
-    PAGE_CONFIG.COMPONENT_HEIGHTS.SECTION_TITLE +
-    PAGE_CONFIG.COMPONENT_HEIGHTS.TABLE_HEADER
-  );
-};
-
-/**
- * Calcula el espacio usado por los componentes fijos en páginas adicionales
- */
-const calcularEspacioFijosPaginasAdicionales = (): number => {
-  return PAGE_CONFIG.COMPONENT_HEIGHTS.TABLE_HEADER + 40; // Margen adicional
-};
-
-// Función para ordenar áreas con prioridad
+// Función para ordenar áreas con prioridad (mantenemos solo esta)
 const ordenarAreasConPrioridad = (
   areas: AreaConPromedio[],
 ): AreaConPromedio[] => {
@@ -170,99 +187,6 @@ const ordenarAreasConPrioridad = (
   });
 };
 
-// Modificación en la función distribuirAreasEnPaginas
-const distribuirAreasEnPaginas = (
-  areas: AreaConPromedio[],
-): Array<{
-  areas: AreaConPromedio[];
-  esPrimeraPagina: boolean;
-}> => {
-  // Validación inicial
-  if (!areas || areas.length === 0) {
-    console.log("⚠️ No hay áreas para distribuir");
-
-    return [];
-  }
-
-  // Filtrar áreas válidas
-  const areasValidas = areas.filter(
-    (area) =>
-      area.area?.nombre && (area.promedio > 0 || area.indicadores.length > 0),
-  );
-
-  if (areasValidas.length === 0) {
-    console.log("⚠️ No hay áreas válidas");
-
-    return [];
-  }
-
-  // ⭐ AQUÍ SE APLICA EL ORDENAMIENTO CON PRIORIDAD
-  const areasOrdenadas = ordenarAreasConPrioridad(areasValidas);
-
-  const paginas: Array<{ areas: AreaConPromedio[]; esPrimeraPagina: boolean }> =
-    [];
-  const espacioDisponibleTotal = calcularEspacioDisponible();
-
-  let paginaActual: AreaConPromedio[] = [];
-  let espacioUsadoActual = calcularEspacioFijosPrimeraPagina();
-  let esPrimeraPagina = true;
-
-  // Usar areasOrdenadas en lugar de areasValidas
-  for (let i = 0; i < areasOrdenadas.length; i++) {
-    const area = areasOrdenadas[i];
-    const alturaArea = calcularAlturaArea(area);
-
-    // Calcular espacio disponible para contenido en esta página
-    const espacioFijos = esPrimeraPagina
-      ? calcularEspacioFijosPrimeraPagina()
-      : calcularEspacioFijosPaginasAdicionales();
-
-    const espacioDisponibleParaContenido =
-      espacioDisponibleTotal - espacioFijos;
-    const espacioUsadoContenido = espacioUsadoActual - espacioFijos;
-
-    // Verificar si el área cabe en la página actual
-    if (
-      espacioUsadoContenido + alturaArea > espacioDisponibleParaContenido &&
-      paginaActual.length > 0
-    ) {
-      // No cabe, guardar página actual
-      paginas.push({
-        areas: [...paginaActual],
-        esPrimeraPagina: esPrimeraPagina,
-      });
-
-      // Iniciar nueva página
-      paginaActual = [area];
-      espacioUsadoActual =
-        calcularEspacioFijosPaginasAdicionales() + alturaArea;
-      esPrimeraPagina = false;
-    } else {
-      // Sí cabe, agregar a página actual
-      paginaActual.push(area);
-      espacioUsadoActual += alturaArea;
-    }
-  }
-
-  // Agregar la última página si tiene contenido
-  if (paginaActual.length > 0) {
-    paginas.push({
-      areas: [...paginaActual],
-      esPrimeraPagina: esPrimeraPagina,
-    });
-  }
-
-  // Asegurar que hay al menos una página
-  if (paginas.length === 0) {
-    paginas.push({
-      areas: [],
-      esPrimeraPagina: true,
-    });
-  }
-
-  return paginas;
-};
-
 // ==========================================
 // COMPONENTES REUTILIZABLES ACTUALIZADOS
 // ==========================================
@@ -272,11 +196,11 @@ const HeaderComponent = () => (
     <Image
       src={"/LOGO-WHITE.png"}
       style={{
-        width: 100,
-        height: 100,
+        width: 80,  // Logo aún más pequeño
+        height: 80, // Logo aún más pequeño
         position: "absolute",
         objectFit: "contain",
-        left: 10,
+        left: 8,
       }}
     />
     <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
@@ -308,7 +232,7 @@ const StudentInfoComponent = ({
   estudiante: any;
   esCualitativo: boolean;
 }) => (
-  <View style={[styles.table, styles.pageBreakAvoid]}>
+  <View style={[styles.table]}>
     <View style={[styles.tableRow, styles.flex]}>
       <View style={{ flex: 4 }}>
         <Text style={styles.labelText}>Nombre y Apellidos del Estudiante</Text>
@@ -360,22 +284,22 @@ const TableHeaderComponent = ({
 }) => (
   <View style={styles.tableHeader}>
     <View style={styles.tableColHeader1}>
-      <Text style={[styles.labelText, { color: "#4472C4", fontSize: 11 }]}>
+      <Text style={[styles.labelText, { color: "#4472C4", fontSize: 12 }]}>
         ASIGNATURA
       </Text>
     </View>
     <View style={styles.tableColHeader2}>
-      <Text style={[styles.labelText, { color: "#4472C4", fontSize: 11 }]}>
+      <Text style={[styles.labelText, { color: "#4472C4", fontSize: 12 }]}>
         {esCualitativo ? "EVALUACIÓN" : "NOTA"}
       </Text>
     </View>
     <View style={styles.tableColHeader3}>
-      <Text style={[styles.labelText, { color: "#4472C4", fontSize: 11 }]}>
+      <Text style={[styles.labelText, { color: "#4472C4", fontSize: 12 }]}>
         DESEMPEÑO
       </Text>
     </View>
     <View style={styles.tableColHeader4}>
-      <Text style={[styles.labelText, { color: "#4472C4", fontSize: 11 }]}>
+      <Text style={[styles.labelText, { color: "#4472C4", fontSize: 12 }]}>
         FALLAS
       </Text>
     </View>
@@ -409,12 +333,13 @@ const AreaRowComponent = ({
     : getDesempenoTexto(promedio);
 
   return (
-    <View style={{ width: "100%" }}>
+    // ⭐ Área como bloque atómico
+    <View style={{ width: "100%", borderBottomWidth: 1, borderBottomColor: "#E0E0E0" }}>
       {/* Fila principal del área */}
       <View style={[styles.tableRow, { borderBottomWidth: 0 }]}>
         <View style={styles.tableCol1}>
           <Text
-            style={[styles.labelText, { fontSize: 11, fontWeight: "bold" }]}
+            style={[styles.labelText, { fontSize: 12, fontWeight: "bold" }]}
           >
             {area.nombre.toUpperCase()}
           </Text>
@@ -446,50 +371,41 @@ const AreaRowComponent = ({
         </View>
       </View>
 
-      {/* Indicadores */}
+      {/* Indicadores - COMPACTOS */}
       {indicadores.length > 0 && (
         <View
-          style={[
-            styles.tableRow,
-            {
-              backgroundColor: "#f8f9fa",
-              borderBottomWidth: isLast ? 1 : 1,
-              borderBottomColor: "#E0E0E0",
-            },
-          ]}
+          style={{
+            backgroundColor: "#f8f9fa",
+            width: "100%",
+            paddingVertical: 3,
+            paddingHorizontal: 8,
+            borderLeftWidth: 3,
+            borderLeftColor: "#4472C4",
+          }}
         >
-          <View
-            style={{
-              width: "100%",
-              paddingVertical: 4,
-              paddingHorizontal: 12,
-              borderLeftWidth: 3,
-              borderLeftColor: "#4472C4",
-            }}
-          >
-            <Text style={[styles.indicadoresHeader, { marginBottom: 4 }]}>
-              Indicadores de Logros ({indicadores.length}):
-            </Text>
-            <View style={{ paddingLeft: 8 }}>
-              {indicadores.map((indicador, indIndex) => (
-                <View
-                  key={`indicador-${indicador.id}`}
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "flex-start",
-                  }}
+          <Text style={[styles.indicadoresHeader, { marginBottom: 2 }]}>
+            Indicadores de Logros ({indicadores.length}):
+          </Text>
+          <View style={{ paddingLeft: 6 }}>
+            {indicadores.map((indicador, indIndex) => (
+              <View
+                key={`indicador-${indicador.id}`}
+                style={{
+                  flexDirection: "row",
+                  alignItems: "flex-start",
+                  marginBottom: 1,
+                }}
+              >
+                <Text style={[styles.indicadorBullet, { marginTop: 0 }]}>
+                  {indIndex + 1}.
+                </Text>
+                <Text
+                  style={[styles.indicadorItem, { flex: 1, marginLeft: 3 }]}
                 >
-                  <Text style={[styles.indicadorBullet, { marginTop: 1 }]}>
-                    {indIndex + 1}.
-                  </Text>
-                  <Text
-                    style={[styles.indicadorItem, { flex: 1, marginLeft: 4 }]}
-                  >
-                    {indicador.nombre}
-                  </Text>
-                </View>
-              ))}
-            </View>
+                  {indicador.nombre}
+                </Text>
+              </View>
+            ))}
           </View>
         </View>
       )}
@@ -497,27 +413,17 @@ const AreaRowComponent = ({
       {/* Mensaje cuando no hay indicadores */}
       {indicadores.length === 0 && (
         <View
-          style={[
-            styles.tableRow,
-            {
-              backgroundColor: "#fafafa",
-              borderBottomWidth: isLast ? 1 : 1,
-              borderBottomColor: "#E0E0E0",
-            },
-          ]}
+          style={{
+            backgroundColor: "#fafafa",
+            width: "100%",
+            paddingVertical: 8,
+            paddingHorizontal: 14,
+          }}
         >
-          <View
-            style={{
-              width: "100%",
-              paddingVertical: 6,
-              paddingHorizontal: 12,
-            }}
-          >
-            <Text style={styles.noIndicadores}>
-              No hay indicadores registrados para esta área en el período
-              actual.
-            </Text>
-          </View>
+          <Text style={styles.noIndicadores}>
+            No hay indicadores registrados para esta área en el período
+            actual.
+          </Text>
         </View>
       )}
     </View>
@@ -535,13 +441,13 @@ const FooterComponent = ({ director }: { director: Maestro }) => (
           style={{
             color: "#000",
             marginBottom: 2,
-            fontSize: 11,
+            fontSize: 12,
             fontWeight: "bold",
           }}
         >
           {director.nombre_completo}
         </Text>
-        <Text style={{ color: "#666", marginBottom: 2, fontSize: 11 }}>
+        <Text style={{ color: "#666", marginBottom: 2, fontSize: 12 }}>
           Directora de curso
         </Text>
       </View>
@@ -565,76 +471,26 @@ export const ReporteEstudiantePDF = ({
     return verificarSiEsCualitativo(estudiante.grado);
   }, [estudiante.grado]);
 
-  // NUEVA distribución de páginas más simple y confiable
-  const distribucionPaginas = useMemo(() => {
+  // Simplemente ordenar las áreas, sin distribución manual
+  const areasOrdenadas = useMemo(() => {
     if (!areas || areas.length === 0) {
       console.log("⚠️ No hay áreas disponibles para el PDF");
-
       return [];
     }
 
-    const distribucion = distribuirAreasEnPaginas(areas);
-
-    // Filtrar páginas vacías por seguridad
-    const paginasConContenido = distribucion.filter(
-      (pagina) => pagina.esPrimeraPagina || pagina.areas.length > 0,
+    const areasValidas = areas.filter(
+      (area) =>
+        area.area?.nombre && (area.promedio > 0 || area.indicadores.length > 0),
     );
 
-    return paginasConContenido;
+    return ordenarAreasConPrioridad(areasValidas);
   }, [areas]);
 
   if (!datos) {
     return (
       <Document>
-        <Page size="A4" style={styles.page}>
+        <Page size={[PAGE_CONFIG.WIDTH, PAGE_CONFIG.HEIGHT]} style={styles.page}>
           <Text>No hay datos disponibles para generar el PDF</Text>
-        </Page>
-      </Document>
-    );
-  }
-
-  // Si no hay distribución válida, crear página básica
-  if (distribucionPaginas.length === 0) {
-    return (
-      <Document>
-        <Page wrap size="A4" style={styles.page}>
-          {esCualitativo && (
-            <View style={styles.backgroundImageContainer}>
-              <Image
-                src="/backgroundCualitative.png"
-                style={styles.backgroundImage}
-              />
-            </View>
-          )}
-          <HeaderComponent />
-          <View style={styles.contentWrapper}>
-            <StudentInfoComponent
-              esCualitativo={esCualitativo}
-              estudiante={estudiante}
-            />
-            <View style={styles.pageBreakAvoid}>
-              <Text style={styles.sectionHeader}>
-                INFORME DE DESEMPEÑO ACADEMICO
-              </Text>
-            </View>
-            <View style={[styles.table, styles.pageBreakAvoid]}>
-              <TableHeaderComponent esCualitativo={esCualitativo} />
-              <View style={styles.tableRow}>
-                <View style={{ width: "100%", padding: 20 }}>
-                  <Text
-                    style={[
-                      styles.noIndicadores,
-                      { fontSize: 11, color: "#666" },
-                    ]}
-                  >
-                    No hay calificaciones o áreas disponibles para mostrar en
-                    este período.
-                  </Text>
-                </View>
-              </View>
-            </View>
-          </View>
-          <FooterComponent director={director} />
         </Page>
       </Document>
     );
@@ -642,107 +498,97 @@ export const ReporteEstudiantePDF = ({
 
   return (
     <Document>
-      {distribucionPaginas.map((paginaData, indicePagina) => {
-        const esUltimaPagina = indicePagina === distribucionPaginas.length - 1;
+      {/* UNA SOLA PÁGINA CON FLUJO AUTOMÁTICO */}
+      <Page size={[PAGE_CONFIG.WIDTH, PAGE_CONFIG.HEIGHT]} style={styles.page}>
+        {esCualitativo && (
+          <View style={styles.backgroundImageContainer}>
+            <Image
+              src="/backgroundCualitative.png"
+              style={styles.backgroundImage}
+            />
+          </View>
+        )}
 
-        return (
-          <Page key={`page-${indicePagina}`} wrap size="A4" style={styles.page}>
-            {esCualitativo && (
-              <View style={styles.backgroundImageContainer}>
-                <Image
-                  src="/backgroundCualitative.png"
-                  style={styles.backgroundImage}
-                />
-              </View>
-            )}
+        {/* Header SOLO en primera página (NO fixed) */}
+        <HeaderComponent />
+        
+        {/* Info del estudiante SOLO en primera página (NO fixed) */}
+        <StudentInfoComponent
+          esCualitativo={esCualitativo}
+          estudiante={estudiante}
+        />
+        
+        <View>
+          <Text style={styles.sectionHeader}>
+            INFORME DE DESEMPEÑO ACADEMICO
+          </Text>
+        </View>
+        
+        {/* SOLO el header de tabla se repite (fixed) */}
+        <View fixed>
+          <TableHeaderComponent esCualitativo={esCualitativo} />
+        </View>
 
-            {/* Header solo en la primera página */}
-            {paginaData.esPrimeraPagina && <HeaderComponent />}
+        {/* Contenido que fluye automáticamente */}
+        <View style={styles.contentWrapper}>
+          {/* Todas las áreas en flujo natural */}
+          {areasOrdenadas.length > 0 ? (
+            areasOrdenadas.map((areaData, indiceArea) => {
+              const isLast = indiceArea === areasOrdenadas.length - 1;
 
-            <View style={styles.contentWrapper}>
-              {/* Información del estudiante solo en la primera página */}
-              {paginaData.esPrimeraPagina && (
-                <>
-                  <StudentInfoComponent
+              return (
+                <View key={`area-${areaData.area.id}`} wrap={false} style={styles.areaContainer}>
+                  <AreaRowComponent
+                    areaData={areaData}
                     esCualitativo={esCualitativo}
-                    estudiante={estudiante}
+                    isLast={isLast}
                   />
-                  <View style={styles.pageBreakAvoid}>
-                    <Text style={styles.sectionHeader}>
-                      INFORME DE DESEMPEÑO ACADEMICO
-                    </Text>
-                  </View>
-                </>
-              )}
-
-              {/* Tabla con las áreas de esta página */}
-              <View style={[styles.table, styles.pageBreakAvoid]}>
-                {/* Header de tabla siempre presente */}
-                <TableHeaderComponent esCualitativo={esCualitativo} />
-
-                {/* Renderizar las áreas de esta página */}
-                {paginaData.areas.length > 0
-                  ? paginaData.areas.map((areaData, indiceArea) => {
-                      const isLastInPage =
-                        indiceArea === paginaData.areas.length - 1;
-                      const isLastOverall = esUltimaPagina && isLastInPage;
-
-                      return (
-                        <AreaRowComponent
-                          key={`area-${areaData.area.id}-page-${indicePagina}`}
-                          areaData={areaData}
-                          esCualitativo={esCualitativo}
-                          isLast={isLastOverall}
-                        />
-                      );
-                    })
-                  : /* Solo mostrar mensaje en primera página si no hay áreas */
-                    paginaData.esPrimeraPagina && (
-                      <View style={styles.tableRow}>
-                        <View style={{ width: "100%", padding: 20 }}>
-                          <Text
-                            style={[
-                              styles.noIndicadores,
-                              { fontSize: 11, color: "#666" },
-                            ]}
-                          >
-                            No hay calificaciones registradas para este período.
-                          </Text>
-                        </View>
-                      </View>
-                    )}
+                </View>
+              );
+            })
+          ) : (
+            <View style={styles.tableRow}>
+              <View style={{ width: "100%", padding: 25 }}>
+                <Text
+                  style={[
+                    styles.noIndicadores,
+                    { fontSize: 12, color: "#666" },
+                  ]}
+                >
+                  No hay calificaciones registradas para este período.
+                </Text>
               </View>
             </View>
+          )}
+        </View>
 
-            {/* Footer solo en la última página */}
-            {esUltimaPagina && <FooterComponent director={director} />}
-          </Page>
-        );
-      })}
+        {/* Footer SOLO en la última página (NO fixed) */}
+        <FooterComponent director={director} />
+      </Page>
     </Document>
   );
 };
 
 // ==========================================
-// ESTILOS ACTUALIZADOS
+// ESTILOS ACTUALIZADOS PARA OFICIO
 // ==========================================
 const styles = StyleSheet.create({
   page: {
     paddingHorizontal: PAGE_CONFIG.MARGINS.LEFT,
     paddingTop: PAGE_CONFIG.MARGINS.TOP,
     paddingBottom: PAGE_CONFIG.MARGINS.BOTTOM,
-    fontSize: 11,
+    fontSize: 12, // Fuente ligeramente más grande para aprovechar el espacio
   },
   headerContainer: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#4e70be",
-    padding: 15,
+    padding: 8, // Padding aún más reducido para primera página
   },
   header: {
     fontWeight: "bold",
-    fontSize: 11,
-    maxWidth: 300,
+    fontSize: 12, // Fuente más pequeña
+    maxWidth: 350,
     marginBottom: 2,
     color: "#fff",
     textAlign: "center",
@@ -762,7 +608,7 @@ const styles = StyleSheet.create({
     opacity: 0.25,
   },
   subHeader: {
-    fontSize: 11,
+    fontSize: 10, // Fuente más pequeña
     fontWeight: "medium",
     textAlign: "center",
     color: "#fff",
@@ -796,8 +642,8 @@ const styles = StyleSheet.create({
   },
   tableColHeader1: {
     width: "40%",
-    paddingVertical: 3,
-    paddingHorizontal: 5,
+    paddingVertical: 4,
+    paddingHorizontal: 6,
     borderRightWidth: 1,
     borderColor: "#E0E0E0",
     fontWeight: "bold",
@@ -805,8 +651,8 @@ const styles = StyleSheet.create({
   },
   tableColHeader2: {
     width: "20%",
-    paddingVertical: 3,
-    paddingHorizontal: 5,
+    paddingVertical: 4,
+    paddingHorizontal: 6,
     borderRightWidth: 1,
     borderColor: "#E0E0E0",
     fontWeight: "bold",
@@ -814,8 +660,8 @@ const styles = StyleSheet.create({
   },
   tableColHeader3: {
     width: "20%",
-    paddingVertical: 3,
-    paddingHorizontal: 5,
+    paddingVertical: 4,
+    paddingHorizontal: 6,
     borderRightWidth: 1,
     borderColor: "#E0E0E0",
     fontWeight: "bold",
@@ -823,8 +669,8 @@ const styles = StyleSheet.create({
   },
   tableColHeader4: {
     width: "20%",
-    paddingVertical: 3,
-    paddingHorizontal: 5,
+    paddingVertical: 4,
+    paddingHorizontal: 6,
     textAlign: "center",
     fontWeight: "bold",
   },
@@ -861,12 +707,12 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   labelText: {
-    fontSize: 11,
+    fontSize: 12,
     textAlign: "center",
     textTransform: "capitalize",
   },
   valueText: {
-    fontSize: 11,
+    fontSize: 12,
     textAlign: "center",
     textTransform: "capitalize",
   },
@@ -875,105 +721,105 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 4,
+    padding: 2, // Padding ultra-compacto para primera página
   },
   superiorValue: {
     color: "#2E8B57",
     backgroundColor: "#2E8B5715",
-    padding: 3,
+    padding: 4,
     borderRadius: 3,
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "bold",
     textAlign: "center",
   },
   altoValue: {
     color: "#007AFF",
     backgroundColor: "#F0F7FF",
-    padding: 3,
+    padding: 4,
     borderRadius: 3,
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "bold",
     textAlign: "center",
   },
   basicoValue: {
     color: "#FF9500",
     backgroundColor: "#FFF9F0",
-    padding: 3,
+    padding: 4,
     borderRadius: 3,
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "bold",
     textAlign: "center",
   },
   bajoValue: {
     color: "#e60f0f",
     backgroundColor: "#FDF1F1",
-    padding: 3,
+    padding: 4,
     borderRadius: 3,
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "bold",
     textAlign: "center",
   },
   grayValue: {
     color: "#00000074",
     backgroundColor: "#F0F0F0",
-    padding: 3,
+    padding: 4,
     borderRadius: 3,
-    fontSize: 11,
+    fontSize: 12,
     textAlign: "center",
   },
   // Nuevos estilos para evaluación cualitativa
   dsValue: {
     color: "#2E8B57",
     backgroundColor: "#2E8B5715",
-    padding: 3,
+    padding: 4,
     borderRadius: 3,
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "bold",
     textAlign: "center",
   },
   daValue: {
     color: "#007AFF",
     backgroundColor: "#F0F7FF",
-    padding: 3,
+    padding: 4,
     borderRadius: 3,
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "bold",
     textAlign: "center",
   },
   dbValue: {
     color: "#FF9500",
     backgroundColor: "#FFF9F0",
-    padding: 3,
+    padding: 4,
     borderRadius: 3,
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "bold",
     textAlign: "center",
   },
   spValue: {
     color: "#e60f0f",
     backgroundColor: "#FDF1F1",
-    padding: 3,
+    padding: 4,
     borderRadius: 3,
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "bold",
     textAlign: "center",
   },
   footer: {
     position: "absolute",
-    fontSize: 11,
-    bottom: 30,
-    left: 40,
-    right: 40,
+    fontSize: 12,
+    bottom: 35,
+    left: 45,
+    right: 45,
     textAlign: "center",
     color: "#9E9E9E",
-    marginTop: 40,
+    marginTop: 50,
   },
   signaturesContainer: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
     width: "50%",
-    marginBottom: 10,
+    marginBottom: 12,
     margin: "auto", // Centrar el contenedor completo
   },
   signatureLeft: {
@@ -984,51 +830,54 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: "#000",
     width: "80%",
-    marginBottom: 5,
+    marginBottom: 6,
   },
   sectionHeader: {
-    fontSize: 11,
+    fontSize: 11, // Más compacto
     fontWeight: "bold",
     color: "#4472C4",
     textAlign: "center",
     backgroundColor: "#4472C415",
-    padding: 4,
+    padding: 3, // Padding reducido
   },
   indicadoresHeader: {
-    fontSize: 11,
+    fontSize: 11, // Más legible que 10
     fontWeight: "bold",
     color: "#4472C4",
     marginBottom: 2,
     textAlign: "left",
   },
   indicadorItem: {
-    fontSize: 11,
+    fontSize: 10, // Más legible que 9, pero aún compacto
     color: "#333",
-    marginBottom: 2,
-    paddingLeft: 8,
+    marginBottom: 1,
+    paddingLeft: 6,
     textAlign: "left",
+    lineHeight: 1.3, // Ligeramente más espacio
   },
   indicadorBullet: {
-    fontSize: 11,
+    fontSize: 10, // Más legible
     color: "#4472C4",
-    marginRight: 4,
+    marginRight: 3,
   },
   noIndicadores: {
-    fontSize: 8,
+    fontSize: 10,
     color: "#666",
     fontStyle: "italic",
     textAlign: "center",
-    paddingVertical: 4,
+    paddingVertical: 5,
   },
   signature: {
     borderBottomWidth: 1,
     borderColor: "#E0E0E0",
-    width: 200,
+    width: 220,
     margin: "auto",
-    marginBottom: 10,
+    marginBottom: 12,
   },
-  pageBreakAvoid: {
-    pageBreakInside: "avoid",
+  areaContainer: {
+    borderWidth: 1,
+    borderColor: "#E0E0E0",
+    marginBottom: 0,
   },
 });
 
