@@ -77,6 +77,14 @@ export default function TablaEstudiantes({
     }
   };
 
+  // Función para manejar el cambio de estado de pensión
+  const handleCalificaciones = (estudianteId: number) => {
+    // Llamar al callback si existe
+    if (onCalificacionesChange) {
+      onCalificacionesChange(estudianteId);
+    }
+  };
+
   // Función para calcular la edad a partir de fecha_nacimiento
   const calcularEdad = (fechaNacimiento: string): number => {
     try {
@@ -325,7 +333,7 @@ export default function TablaEstudiantes({
                         aria-label={`Cambiar estado de pensión para ${item.nombre_completo}`}
                         className="px-3 py-1 text-xs font-medium rounded bg-primary-500 text-white hover:bg-primary-700 transition-colors"
                         style={{ minHeight: 28 }}
-                        onClick={() => handlePension(item.id)}
+                        onClick={() => handleCalificaciones(item.id)}
                       >
                         Cambiar
                       </button>
