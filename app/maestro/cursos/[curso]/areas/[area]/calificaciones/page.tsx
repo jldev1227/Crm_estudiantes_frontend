@@ -129,6 +129,47 @@ const SistemaCalificaciones = () => {
     periodoSeleccionado,
   } = useMaestro();
 
+  const [editandoActividad, setEditandoActividad] = useState<string | null>(
+    null,
+  );
+  const [nombreTemporal, setNombreTemporal] = useState<string>("");
+
+  const iniciarEdicionActividad = (
+    actividadId: string,
+    nombreActual: string,
+  ) => {
+    setEditandoActividad(actividadId);
+    setNombreTemporal(nombreActual);
+  };
+
+  const cancelarEdicionActividad = () => {
+    setEditandoActividad(null);
+    setNombreTemporal("");
+  };
+
+  const guardarNombreActividad = (actividadId: string) => {
+    if (!nombreTemporal.trim()) {
+      toast.error("El nombre de la actividad no puede estar vacío");
+
+      return;
+    }
+
+    // Actualizar solo el nombre de la actividad, manteniendo todo lo demás
+    setActividades((prev) =>
+      prev.map((actividad) =>
+        actividad.id === actividadId
+          ? { ...actividad, nombre: nombreTemporal.trim() }
+          : actividad,
+      ),
+    );
+
+    // Limpiar el estado de edición
+    setEditandoActividad(null);
+    setNombreTemporal("");
+
+    toast.success("Nombre de actividad actualizado correctamente");
+  };
+
   const CONVERSION_CUALITATIVA: Record<ValorQualitative, number> = {
     DS: 5.0, // Desempeño Superior
     DA: 4.0, // Desempeño Alto
@@ -1389,7 +1430,31 @@ const SistemaCalificaciones = () => {
                             }
                           >
                             <TableCell className="font-medium">
-                              {actividad.nombre}
+                              {editandoActividad === actividad.id ? (
+                                <div className="flex items-center gap-2">
+                                  <Input
+                                    autoFocus
+                                    classNames={{
+                                      input: "text-sm",
+                                      inputWrapper: "min-h-[32px] h-8",
+                                    }}
+                                    size="sm"
+                                    value={nombreTemporal}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter") {
+                                        guardarNombreActividad(actividad.id);
+                                      } else if (e.key === "Escape") {
+                                        cancelarEdicionActividad();
+                                      }
+                                    }}
+                                    onValueChange={setNombreTemporal}
+                                  />
+                                </div>
+                              ) : (
+                                <div className="flex items-center justify-between">
+                                  <span>{actividad.nombre}</span>
+                                </div>
+                              )}
                             </TableCell>
                             <TableCell>
                               <Chip
@@ -1416,22 +1481,62 @@ const SistemaCalificaciones = () => {
                               </Chip>
                             </TableCell>
                             <TableCell>
-                              {!actividad.isFinal && (
-                                <Button
-                                  color="danger"
-                                  size="sm"
-                                  variant="light"
-                                  onPress={() =>
-                                    handleEliminarActividad(actividad.id)
-                                  }
-                                >
-                                  Eliminar
-                                </Button>
-                              )}
-                              {actividad.isFinal && (
-                                <span className="text-xs text-gray-500">
-                                  Use el checkbox para deshabilitarla
-                                </span>
+                              {editandoActividad === actividad.id ? (
+                                <div className="flex items-center gap-1">
+                                  <Button
+                                    color="success"
+                                    size="sm"
+                                    variant="flat"
+                                    onPress={() =>
+                                      guardarNombreActividad(actividad.id)
+                                    }
+                                  >
+                                    ✓
+                                  </Button>
+                                  <Button
+                                    color="danger"
+                                    size="sm"
+                                    variant="flat"
+                                    onPress={cancelarEdicionActividad}
+                                  >
+                                    ✕
+                                  </Button>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1">
+                                  {!actividad.isFinal && (
+                                    <>
+                                      <Button
+                                        color="primary"
+                                        size="sm"
+                                        variant="light"
+                                        onPress={() =>
+                                          iniciarEdicionActividad(
+                                            actividad.id,
+                                            actividad.nombre,
+                                          )
+                                        }
+                                      >
+                                        Editar
+                                      </Button>
+                                      <Button
+                                        color="danger"
+                                        size="sm"
+                                        variant="light"
+                                        onPress={() =>
+                                          handleEliminarActividad(actividad.id)
+                                        }
+                                      >
+                                        Eliminar
+                                      </Button>
+                                    </>
+                                  )}
+                                  {actividad.isFinal && (
+                                    <span className="text-xs text-gray-500">
+                                      Use el checkbox para deshabilitarla
+                                    </span>
+                                  )}
+                                </div>
                               )}
                             </TableCell>
                           </TableRow>
