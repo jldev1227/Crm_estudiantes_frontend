@@ -1,12 +1,10 @@
 "use client";
 
 interface PDFPREVIEWPROPS {
-  pdfUrl: string;
-  fileName: string;
   onRemove: () => void;
 }
 
-const NextPDFPreview = ({ pdfUrl, fileName, onRemove }: PDFPREVIEWPROPS) => {
+const NextPDFPreview = ({ onRemove }: PDFPREVIEWPROPS) => {
   return (
     <div className="relative aspect-square overflow-hidden rounded-t-lg bg-gray-100 cursor-pointer">
       <div className="w-full h-full flex flex-col items-center justify-center p-4">

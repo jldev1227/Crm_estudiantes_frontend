@@ -20,6 +20,8 @@ const PDFThumbnail: React.FC<PDFThumbnailProps> = ({ url, index }) => {
         (fileName.length > 15 ? "..." : "")
       );
     } catch (e) {
+      console.error(e);
+
       return `PDF ${index + 1}`;
     }
   };

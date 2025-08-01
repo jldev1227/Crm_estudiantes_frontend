@@ -104,8 +104,7 @@ export default function EstudiantesResponsive({
   const [sortField, setSortField] = useState<SortField>("nombre_completo");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [pensionFilter, setPensionFilter] = useState<PensionFilter>("todas");
-  const [calificacionesFilter, setCalificacioneFilter] =
-    useState<PensionFilter>("todas");
+  const [calificacionesFilter, _] = useState<PensionFilter>("todas");
   const [filtrando, setFiltrando] = useState(false);
 
   // Estado local de estudiantes para manipulación
@@ -258,11 +257,6 @@ export default function EstudiantesResponsive({
 
   const handlePensionFilterChange = (valor: PensionFilter) => {
     setPensionFilter(valor);
-    aplicarFiltros(estudiantes, busqueda, sortField, sortDirection, valor);
-  };
-
-  const handleCalificacionesFilterChange = (valor: CalificacionesFilter) => {
-    setCalificacioneFilter(valor);
     aplicarFiltros(estudiantes, busqueda, sortField, sortDirection, valor);
   };
 

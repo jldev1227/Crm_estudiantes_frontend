@@ -46,7 +46,7 @@ export default function CrearTareaPage() {
   // Mutación para crear tarea
   const [crearTarea] = useMutation(CREAR_TAREA, {
     refetchQueries: ["ObtenerTareas"], // Refresca la lista de tareas después de crear una nueva
-    onCompleted: (data) => {
+    onCompleted: () => {
       // Mostrar toast de confirmación
       toast.success(`¡Tarea "${formData.titulo}" creada con éxito!`, {
         duration: 4000,

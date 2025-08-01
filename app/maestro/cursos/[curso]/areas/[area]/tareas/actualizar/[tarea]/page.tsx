@@ -156,7 +156,7 @@ export default function ActualizarTareaPage() {
   const [uploadedUrls, setUploadedUrls] = useState<ArchivoTarea[]>([]);
 
   // GraphQL Queries y Mutations
-  const { data, loading: loadingTarea } = useQuery(OBTENER_TAREA, {
+  const { loading: loadingTarea } = useQuery(OBTENER_TAREA, {
     variables: { id: tarea_id },
     onCompleted: (data) => {
       if (data?.obtenerTarea) {
@@ -217,7 +217,7 @@ export default function ActualizarTareaPage() {
 
   const [actualizarTarea] = useMutation(ACTUALIZAR_TAREA, {
     refetchQueries: ["ObtenerTareasPorGradoYArea"],
-    onCompleted: (data) => {
+    onCompleted: () => {
       // Mostrar toast de éxito
       toast.success(`¡Tarea "${formData.nombre}" actualizada correctamente!`, {
         duration: 4000,

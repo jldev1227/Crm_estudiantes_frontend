@@ -47,7 +47,10 @@ export default function CalificacionesPage() {
   const cargarTodasCalificaciones = async (): Promise<void> => {
     try {
       setLoading(true);
+      console.log("Cargando calificaciones...");
       setError(null);
+
+      console.log(usuario);
 
       // Validación de permisos para ver calificaciones
       if (!usuario?.ver_calificaciones) {
@@ -70,11 +73,14 @@ export default function CalificacionesPage() {
       // Cargar calificaciones para todos los períodos y todas las áreas
       for (const periodo of periodos) {
         for (const area of areas) {
+          console.log(area);
           try {
             const calificacionArea = await obtenerCalificaciones(
               area.id,
               periodo,
             );
+
+            console.log(calificacionArea);
 
             // ✅ VERIFICACIÓN ROBUSTA DEL RESULTADO
             if (!calificacionArea) {

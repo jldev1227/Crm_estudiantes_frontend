@@ -198,6 +198,8 @@ export const EstudianteProvider: React.FC<{ children: React.ReactNode }> = ({
         },
       });
 
+      console.log(data);
+
       return data?.obtenerCalificacionesEstudiante.calificaciones || null;
     } catch (error) {
       console.error("Error obteniendo calificaciones:", error);

@@ -19,15 +19,15 @@ const PAGE_CONFIG = {
   HEIGHT: 936, // 13 inches * 72 (altura del oficio)
   WIDTH: 612, // 8.5 inches * 72 (ancho del oficio)
   MARGINS: {
-    TOP: 10,    // Reducido para compensar márgenes de impresora
-    BOTTOM: 10, // Reducido para compensar márgenes de impresora  
-    LEFT: 15,   // Reducido para compensar márgenes de impresora
-    RIGHT: 15,  // Reducido para compensar márgenes de impresora
+    TOP: 10, // Reducido para compensar márgenes de impresora
+    BOTTOM: 10, // Reducido para compensar márgenes de impresora
+    LEFT: 15, // Reducido para compensar márgenes de impresora
+    RIGHT: 15, // Reducido para compensar márgenes de impresora
   },
   // OPCIÓN ALTERNATIVA: Sin márgenes (descomenta si necesitas)
   // MARGINS: {
   //   TOP: 0,
-  //   BOTTOM: 0, 
+  //   BOTTOM: 0,
   //   LEFT: 0,
   //   RIGHT: 0,
   // },
@@ -82,77 +82,6 @@ const verificarSiEsCualitativo = (nombreGrado: string): boolean => {
 // FUNCIONES DE DISTRIBUCIÓN SIMPLIFICADAS
 // ==========================================
 
-// DISTRIBUCIÓN FORZADA ESPECÍFICA para máximo aprovechamiento
-const distribuirAreasEnPaginas = (
-  areas: AreaConPromedio[],
-): Array<{
-  areas: AreaConPromedio[];
-  esPrimeraPagina: boolean;
-}> => {
-  if (!areas || areas.length === 0) {
-    return [];
-  }
-
-  const areasValidas = areas.filter(
-    (area) => area.area?.nombre && (area.promedio > 0 || area.indicadores.length > 0),
-  );
-
-  if (areasValidas.length === 0) {
-    return [];
-  }
-
-  // Aplicar ordenamiento con prioridad
-  const areasOrdenadas = ordenarAreasConPrioridad(areasValidas);
-  
-  console.log("🎯 Áreas ordenadas:", areasOrdenadas.map(a => `${a.area.nombre} (${a.indicadores.length} ind)`));
-
-  // DISTRIBUCIÓN ESPECÍFICA OPTIMIZADA
-  const totalAreas = areasOrdenadas.length;
-  
-  if (totalAreas <= 5) {
-    // Pocas áreas: una sola página
-    return [{
-      areas: areasOrdenadas,
-      esPrimeraPagina: true,
-    }];
-  } else if (totalAreas <= 9) {
-    // 6-9 áreas: dos páginas balanceadas
-    const puntoCorte = Math.ceil(totalAreas * 0.6); // 60% en primera página
-    return [
-      {
-        areas: areasOrdenadas.slice(0, puntoCorte),
-        esPrimeraPagina: true,
-      },
-      {
-        areas: areasOrdenadas.slice(puntoCorte),
-        esPrimeraPagina: false,
-      },
-    ];
-  } else {
-    // 10+ áreas: distribución en 3 páginas CONSERVADORA basada en evidencia real
-    // Basado en el análisis: la página 1 solo puede con 6 áreas + header
-    // Las otras páginas pueden con más contenido
-    
-    const primeraCorte = 6;  // CONSERVADOR: lo que realmente cabe en página 1
-    const segundaCorte = 10; // Balancear el resto
-    
-    return [
-      {
-        areas: areasOrdenadas.slice(0, primeraCorte), // 6 áreas
-        esPrimeraPagina: true,
-      },
-      {
-        areas: areasOrdenadas.slice(primeraCorte, segundaCorte), // 4 áreas
-        esPrimeraPagina: false,
-      },
-      {
-        areas: areasOrdenadas.slice(segundaCorte), // Resto
-        esPrimeraPagina: false,
-      },
-    ];
-  }
-};
-
 // Función para ordenar áreas con prioridad (mantenemos solo esta)
 const ordenarAreasConPrioridad = (
   areas: AreaConPromedio[],
@@ -196,7 +125,7 @@ const HeaderComponent = () => (
     <Image
       src={"/LOGO-WHITE.png"}
       style={{
-        width: 80,  // Logo aún más pequeño
+        width: 80, // Logo aún más pequeño
         height: 80, // Logo aún más pequeño
         position: "absolute",
         objectFit: "contain",
@@ -308,11 +237,9 @@ const TableHeaderComponent = ({
 
 const AreaRowComponent = ({
   areaData,
-  isLast,
   esCualitativo,
 }: {
   areaData: AreaConPromedio;
-  isLast: boolean;
   esCualitativo: boolean;
 }) => {
   const { area, promedio, indicadores } = areaData;
@@ -334,7 +261,13 @@ const AreaRowComponent = ({
 
   return (
     // ⭐ Área como bloque atómico
-    <View style={{ width: "100%", borderBottomWidth: 1, borderBottomColor: "#E0E0E0" }}>
+    <View
+      style={{
+        width: "100%",
+        borderBottomWidth: 1,
+        borderBottomColor: "#E0E0E0",
+      }}
+    >
       {/* Fila principal del área */}
       <View style={[styles.tableRow, { borderBottomWidth: 0 }]}>
         <View style={styles.tableCol1}>
@@ -421,8 +354,7 @@ const AreaRowComponent = ({
           }}
         >
           <Text style={styles.noIndicadores}>
-            No hay indicadores registrados para esta área en el período
-            actual.
+            No hay indicadores registrados para esta área en el período actual.
           </Text>
         </View>
       )}
@@ -475,6 +407,7 @@ export const ReporteEstudiantePDF = ({
   const areasOrdenadas = useMemo(() => {
     if (!areas || areas.length === 0) {
       console.log("⚠️ No hay áreas disponibles para el PDF");
+
       return [];
     }
 
@@ -489,7 +422,10 @@ export const ReporteEstudiantePDF = ({
   if (!datos) {
     return (
       <Document>
-        <Page size={[PAGE_CONFIG.WIDTH, PAGE_CONFIG.HEIGHT]} style={styles.page}>
+        <Page
+          size={[PAGE_CONFIG.WIDTH, PAGE_CONFIG.HEIGHT]}
+          style={styles.page}
+        >
           <Text>No hay datos disponibles para generar el PDF</Text>
         </Page>
       </Document>
@@ -511,19 +447,19 @@ export const ReporteEstudiantePDF = ({
 
         {/* Header SOLO en primera página (NO fixed) */}
         <HeaderComponent />
-        
+
         {/* Info del estudiante SOLO en primera página (NO fixed) */}
         <StudentInfoComponent
           esCualitativo={esCualitativo}
           estudiante={estudiante}
         />
-        
+
         <View>
           <Text style={styles.sectionHeader}>
             INFORME DE DESEMPEÑO ACADEMICO
           </Text>
         </View>
-        
+
         {/* SOLO el header de tabla se repite (fixed) */}
         <View fixed>
           <TableHeaderComponent esCualitativo={esCualitativo} />
@@ -533,15 +469,16 @@ export const ReporteEstudiantePDF = ({
         <View style={styles.contentWrapper}>
           {/* Todas las áreas en flujo natural */}
           {areasOrdenadas.length > 0 ? (
-            areasOrdenadas.map((areaData, indiceArea) => {
-              const isLast = indiceArea === areasOrdenadas.length - 1;
-
+            areasOrdenadas.map((areaData) => {
               return (
-                <View key={`area-${areaData.area.id}`} wrap={false} style={styles.areaContainer}>
+                <View
+                  key={`area-${areaData.area.id}`}
+                  style={styles.areaContainer}
+                  wrap={false}
+                >
                   <AreaRowComponent
                     areaData={areaData}
                     esCualitativo={esCualitativo}
-                    isLast={isLast}
                   />
                 </View>
               );

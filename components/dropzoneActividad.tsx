@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useState, useEffect } from "react";
+import React, { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { Card, CardBody } from "@heroui/card";
 import { Spinner } from "@heroui/spinner";
@@ -12,25 +12,15 @@ interface DropzoneActividadProps {
   ) => void;
   maxFiles?: number;
   filesCount?: number; // Contador de archivos ya subidos
-  resetFiles?: boolean; // Prop para indicar si debe restablecer los archivos
 }
 
 const DropzoneActividad: React.FC<DropzoneActividadProps> = ({
   onFileUpload,
   maxFiles = 10,
   filesCount = 0, // Por defecto asumimos que no hay archivos
-  resetFiles = false,
 }) => {
-  const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
-
-  // Efecto para restablecer los archivos cuando resetFiles cambia a true
-  useEffect(() => {
-    if (resetFiles) {
-      setFiles([]);
-    }
-  }, [resetFiles]);
 
   // Esta función se ejecuta cuando se seleccionan archivos
   const onDrop = useCallback(
@@ -61,8 +51,6 @@ const DropzoneActividad: React.FC<DropzoneActividadProps> = ({
 
         return;
       }
-
-      setFiles((prevFiles) => [...prevFiles, ...newFiles]);
 
       try {
         setUploading(true);
