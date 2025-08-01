@@ -312,7 +312,6 @@ export default function Page() {
               <DropzoneActividad
                 filesCount={uploadedFiles.length}
                 maxFiles={10}
-                resetFiles={resetDropzone}
                 onFileUpload={handleFileUpload}
               />{" "}
               <p className="text-xs text-gray-500 mt-1">
@@ -336,11 +335,7 @@ export default function Page() {
                     className="border rounded-lg shadow-sm hover:shadow-md transition-shadow"
                   >
                     {file.tipo === "application/pdf" ? (
-                      <NextPDFPreview
-                        fileName={file.nombre}
-                        pdfUrl={file.url}
-                        onRemove={() => removeFile(index)}
-                      />
+                      <NextPDFPreview onRemove={() => removeFile(index)} />
                     ) : file.tipo.startsWith("image/") ? (
                       <div className="relative aspect-square">
                         <img

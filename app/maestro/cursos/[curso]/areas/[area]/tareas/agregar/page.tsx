@@ -310,11 +310,7 @@ export default function CrearTareaPage() {
                     className="border rounded-lg shadow-sm hover:shadow-md transition-shadow"
                   >
                     {file.tipo === "application/pdf" ? (
-                      <NextPDFPreview
-                        fileName={file.nombre}
-                        pdfUrl={file.url}
-                        onRemove={() => removeFile(index)}
-                      />
+                      <NextPDFPreview onRemove={() => removeFile(index)} />
                     ) : file.tipo.startsWith("image/") ? (
                       <div className="relative aspect-square">
                         <img

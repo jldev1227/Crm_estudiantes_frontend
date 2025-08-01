@@ -519,13 +519,7 @@ export default function ActualizarTareaPage() {
 
     // Renderizado según el tipo detectado
     if (archivo.tipo === "application/pdf") {
-      return (
-        <NextPDFPreview
-          fileName={archivo.nombre}
-          pdfUrl={archivo.url}
-          onRemove={() => onRemove(index)}
-        />
-      );
+      return <NextPDFPreview onRemove={() => onRemove(index)} />;
     } else if (esSVG || esImagen || intentarComoImagen) {
       return (
         <div className="relative aspect-square">
