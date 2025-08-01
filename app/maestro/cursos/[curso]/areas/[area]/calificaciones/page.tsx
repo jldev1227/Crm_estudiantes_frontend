@@ -892,20 +892,6 @@ const SistemaCalificaciones = () => {
       return;
     }
 
-    // Verificar que no se esté intentando crear múltiples evaluaciones finales
-    // SOLO verificar si ya existe una actividad con id "final"
-    const yaExisteEvaluacionFinal = actividades.some(
-      (act) => act.id === "final",
-    );
-
-    if (yaExisteEvaluacionFinal) {
-      toast.error(
-        "Ya existe una evaluación final. Use el checkbox para habilitarla/deshabilitarla.",
-      );
-
-      return;
-    }
-
     // Separar actividades regulares de la evaluación final
     const actividadesRegulares: Actividad[] = actividades.filter(
       (act) => act.id !== "final", // Cambio aquí: usar ID en lugar de isFinal
@@ -1163,16 +1149,25 @@ const SistemaCalificaciones = () => {
     >
       Estudiante
     </TableColumn>,
-    ...(actividades?.map((actividad) => (
-      <TableColumn key={actividad.id}>
-        <div className="text-center whitespace-normal px-1">
-          <div className="font-medium">{actividad.nombre}</div>
-          <div className="text-xs text-gray-500">
-            {actividad.porcentaje.toFixed(1)}%
+    ...(actividades
+      ?.sort((a, b) => {
+        // Primero ordena por tipo: regulares (false) antes que finales (true)
+        if (!a.isFinal && b.isFinal) return -1; // Regular antes que final
+        if (a.isFinal && !b.isFinal) return 1; // Final después que regular
+
+        // Si son del mismo tipo, ordena por nombre (opcional)
+        return a.nombre.localeCompare(b.nombre);
+      })
+      .map((actividad) => (
+        <TableColumn key={actividad.id}>
+          <div className="text-center whitespace-normal px-1">
+            <div className="font-medium">{actividad.nombre}</div>
+            <div className="text-xs text-gray-500">
+              {actividad.porcentaje.toFixed(1)}%
+            </div>
           </div>
-        </div>
-      </TableColumn>
-    )) || []),
+        </TableColumn>
+      )) || []),
     <TableColumn key="nota-final">Nota Final</TableColumn>,
   ];
 
@@ -1731,29 +1726,37 @@ const SistemaCalificaciones = () => {
                 Distribución Actual de Porcentajes
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
-                {actividades.map((actividad) => (
-                  <div
-                    key={actividad.id}
-                    className={`p-3 rounded-lg border ${
-                      actividad.isFinal
-                        ? "bg-blue-50 border-blue-200"
-                        : "bg-green-50 border-green-200"
-                    }`}
-                  >
-                    <div className="flex justify-between items-center">
-                      <span className="font-medium text-sm">
-                        {actividad.nombre}
-                      </span>
-                      <Chip
-                        color={actividad.isFinal ? "primary" : "success"}
-                        size="sm"
-                        variant="flat"
-                      >
-                        {actividad.porcentaje.toFixed(1)}%
-                      </Chip>
+                {actividades
+                  .sort((a, b) => {
+                    // Primero ordena por tipo: regulares (false) antes que finales (true)
+                    if (!a.isFinal && b.isFinal) return -1; // Regular antes que final
+                    if (a.isFinal && !b.isFinal) return 1; // Final después que regular
+
+                    return a.nombre.localeCompare(b.nombre); // Alfabético si son del mismo tipo
+                  })
+                  .map((actividad) => (
+                    <div
+                      key={actividad.id}
+                      className={`p-3 rounded-lg border ${
+                        actividad.isFinal
+                          ? "bg-blue-50 border-blue-200"
+                          : "bg-green-50 border-green-200"
+                      }`}
+                    >
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium text-sm">
+                          {actividad.nombre}
+                        </span>
+                        <Chip
+                          color={actividad.isFinal ? "primary" : "success"}
+                          size="sm"
+                          variant="flat"
+                        >
+                          {actividad.porcentaje.toFixed(1)}%
+                        </Chip>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
               </div>
 
               <div className="bg-gray-100 p-3 rounded-lg">
