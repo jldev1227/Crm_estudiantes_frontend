@@ -263,14 +263,14 @@ const SistemaCalificaciones = () => {
         if (data.guardarCalificaciones.success) {
           toast.success(
             data.guardarCalificaciones.mensaje ||
-              "Calificaciones guardadas con éxito",
+            "Calificaciones guardadas con éxito",
           );
           // Actualizar los datos desde el contexto
           obtenerCalificaciones(grado_id, area_id, periodoSeleccionado);
         } else {
           toast.error(
             data.guardarCalificaciones.mensaje ||
-              "Error al guardar calificaciones",
+            "Error al guardar calificaciones",
           );
         }
         setLoading(false);
@@ -611,30 +611,30 @@ const SistemaCalificaciones = () => {
         // Resetear actividades a las por defecto según el estado del checkbox
         const actividadesPorDefecto = isCualitativo()
           ? [
+            {
+              id: "nota-unica",
+              nombre: "Nota Única",
+              porcentaje: 100,
+              isFinal: false,
+            },
+          ]
+          : incluirEvaluacionFinal
+            ? [
               {
-                id: "nota-unica",
-                nombre: "Nota Única",
+                id: "final",
+                nombre: "Evaluación Final",
+                porcentaje: 30,
+                isFinal: true,
+              },
+            ]
+            : [
+              {
+                id: "act1",
+                nombre: "Actividad 1",
                 porcentaje: 100,
                 isFinal: false,
               },
-            ]
-          : incluirEvaluacionFinal
-            ? [
-                {
-                  id: "final",
-                  nombre: "Evaluación Final",
-                  porcentaje: 30,
-                  isFinal: true,
-                },
-              ]
-            : [
-                {
-                  id: "act1",
-                  nombre: "Actividad 1",
-                  porcentaje: 100,
-                  isFinal: false,
-                },
-              ];
+            ];
 
         setActividades(actividadesPorDefecto);
 
@@ -742,30 +742,30 @@ const SistemaCalificaciones = () => {
     // Resetear actividades a las por defecto según el estado del checkbox
     const actividadesPorDefecto = isCualitativo()
       ? [
+        {
+          id: "nota-unica",
+          nombre: "Nota Única",
+          porcentaje: 100,
+          isFinal: false,
+        },
+      ]
+      : incluirEvaluacionFinal
+        ? [
           {
-            id: "nota-unica",
-            nombre: "Nota Única",
+            id: "final",
+            nombre: "Evaluación Final",
+            porcentaje: 30,
+            isFinal: true,
+          },
+        ]
+        : [
+          {
+            id: "act1",
+            nombre: "Actividad 1",
             porcentaje: 100,
             isFinal: false,
           },
-        ]
-      : incluirEvaluacionFinal
-        ? [
-            {
-              id: "final",
-              nombre: "Evaluación Final",
-              porcentaje: 30,
-              isFinal: true,
-            },
-          ]
-        : [
-            {
-              id: "act1",
-              nombre: "Actividad 1",
-              porcentaje: 100,
-              isFinal: false,
-            },
-          ];
+        ];
 
     setActividades(actividadesPorDefecto);
 
@@ -977,21 +977,6 @@ const SistemaCalificaciones = () => {
       return;
     }
 
-    // Si no quedan actividades regulares pero hay evaluación final, crear una actividad por defecto
-    if (
-      nuevasActividadesRegulares.length === 0 &&
-      actividadesFinal.length > 0
-    ) {
-      const nuevaActividad: Actividad = {
-        id: "act1",
-        nombre: "Actividad 1",
-        porcentaje: 70, // 70% cuando hay evaluación final
-        isFinal: false,
-      };
-
-      nuevasActividadesRegulares.push(nuevaActividad);
-    }
-
     // Redistribuir porcentajes automáticamente
     const nuevasActividades = distribuirPorcentajes(
       nuevasActividadesRegulares,
@@ -1051,13 +1036,25 @@ const SistemaCalificaciones = () => {
     try {
       const calificacionesSubmit = estudiantes.map((estudiante) => ({
         estudiante_id: estudiante.id,
-        notas: actividades.map((actividad) => ({
-          actividad_id: actividad.id,
-          nombre: actividad.nombre,
-          valor: parseFloat(calificaciones[estudiante.id][actividad.id] || "0"),
-          porcentaje: actividad.porcentaje,
-        })),
+        notas: actividades.map((actividad) => {
+          const estudianteNotas = calificaciones[estudiante.id] || {};
+          const valorStr = estudianteNotas[actividad.id] || "0";
+
+          console.log({
+            estudiante_id: estudiante.id,
+            actividad_id: actividad.id,
+            valor: calificaciones?.[estudiante.id]?.[actividad.id]
+          });
+
+          return {
+            actividad_id: actividad.id,
+            nombre: actividad.nombre,
+            valor: parseFloat(valorStr),
+            porcentaje: actividad.porcentaje,
+          };
+        }),
       }));
+
 
       await guardarCalificaciones({
         variables: {
@@ -1737,11 +1734,10 @@ const SistemaCalificaciones = () => {
                   .map((actividad) => (
                     <div
                       key={actividad.id}
-                      className={`p-3 rounded-lg border ${
-                        actividad.isFinal
-                          ? "bg-blue-50 border-blue-200"
-                          : "bg-green-50 border-green-200"
-                      }`}
+                      className={`p-3 rounded-lg border ${actividad.isFinal
+                        ? "bg-blue-50 border-blue-200"
+                        : "bg-green-50 border-green-200"
+                        }`}
                     >
                       <div className="flex justify-between items-center">
                         <span className="font-medium text-sm">
@@ -1858,14 +1854,14 @@ const SistemaCalificaciones = () => {
                               selectedKeys={
                                 calificaciones[estudiante.id]?.[actividad.id]
                                   ? [
-                                      convertirNotaACualitativa(
-                                        parseFloat(
-                                          calificaciones[estudiante.id][
-                                            actividad.id
-                                          ],
-                                        ),
+                                    convertirNotaACualitativa(
+                                      parseFloat(
+                                        calificaciones[estudiante.id][
+                                        actividad.id
+                                        ],
                                       ),
-                                    ]
+                                    ),
+                                  ]
                                   : []
                               }
                               onSelectionChange={(keys) => {
@@ -1875,7 +1871,7 @@ const SistemaCalificaciones = () => {
 
                                 const valorNumerico =
                                   CONVERSION_CUALITATIVA[
-                                    valorCualitativo as ValorQualitative
+                                  valorCualitativo as ValorQualitative
                                   ];
 
                                 handleCalificacionChange(

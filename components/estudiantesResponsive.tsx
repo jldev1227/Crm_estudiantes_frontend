@@ -1,41 +1,28 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useMediaQuery } from "react-responsive";
-import { Card } from "@heroui/card";
-import { Input } from "@heroui/input";
-import { Select, SelectItem } from "@heroui/select";
+import React from "react";
+import { Pagination } from "@heroui/pagination";
 import { Button } from "@heroui/button";
-import {
-  Dropdown,
-  DropdownTrigger,
-  DropdownMenu,
-  DropdownItem,
-} from "@heroui/dropdown";
-import { Chip } from "@heroui/chip";
-import { useRouter, useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import { 
+  FileText, 
+  ChevronUp, 
+  ChevronDown, 
+  User, 
+  Calendar, 
+  Phone, 
+  CreditCard,
+  MoreHorizontal,
+  Eye,
+  Edit,
+  Trash2,
+  CheckCircle,
+  XCircle
+} from "lucide-react";
 
 import { Estudiante } from "@/types";
-import TablaEstudiantes from "@/components/TablaEstudiantes";
 
-const DocumentIcon = () => (
-  <svg
-    className="size-4"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={1.5}
-    viewBox="0 0 24 24"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
-
-// Opciones de filtrado y ordenamiento
+// Definimos interfaces para ordenamiento
 type SortField =
   | "nombre_completo"
   | "numero_identificacion"
@@ -44,742 +31,563 @@ type SortField =
   | "pension_activa"
   | "ver_calificaciones";
 type SortDirection = "asc" | "desc";
-type PensionFilter = "todas" | "activa" | "inactiva";
-type CalificacionesFilter = "todas" | "activa" | "inactiva";
 
-// Extender el tipo Estudiante para incluir pension_activa
-interface EstudianteConPension extends Estudiante {
-  pension_activa?: boolean;
-}
-
-// Calcular edad basada en fecha de nacimiento
-const calcularEdad = (fechaNacimiento: string): number => {
-  try {
-    const fechaNac = new Date(fechaNacimiento);
-    const hoy = new Date();
-
-    let edad = hoy.getFullYear() - fechaNac.getFullYear();
-    const mesActual = hoy.getMonth();
-    const diaActual = hoy.getDate();
-    const mesNacimiento = fechaNac.getMonth();
-    const diaNacimiento = fechaNac.getDate();
-
-    // Ajustar edad si aún no ha cumplido años en el año actual
-    if (
-      mesNacimiento > mesActual ||
-      (mesNacimiento === mesActual && diaNacimiento > diaActual)
-    ) {
-      edad--;
-    }
-
-    return edad > 0 ? edad : 0;
-  } catch (error) {
-    console.error("Error al calcular edad:", error);
-
-    return 0;
-  }
-};
-
-export default function EstudiantesResponsive({
-  estudiantes,
-  isAdmin,
-  isDirector,
-  isVisible,
-  handlePension,
-  handleCalificaciones,
-}: {
+interface TablaEstudiantesProps {
   estudiantes: Estudiante[];
   isAdmin?: boolean;
   isDirector?: boolean;
   isVisible?: boolean;
-  handlePension?: (id: number) => void;
-  handleCalificaciones?: (id: number) => void;
-}) {
+  onPensionChange?: (estudianteId: number) => void;
+  onCalificacionesChange?: (estudianteId: number) => void;
+  sortField?: SortField;
+  sortDirection?: SortDirection;
+  onSortChange?: (campo: SortField) => void;
+}
+
+export default function TablaEstudiantes({
+  estudiantes,
+  isAdmin,
+  isDirector,
+  isVisible,
+  onPensionChange,
+  onCalificacionesChange,
+  sortField = "nombre_completo",
+  sortDirection = "asc",
+  onSortChange,
+}: TablaEstudiantesProps) {
   const router = useRouter();
   const params = useParams();
-  const isDesktop = useMediaQuery({ minWidth: 992 });
+  const [page, setPage] = React.useState(1);
+  const [estudiantesState, setEstudiantesState] = React.useState<Estudiante[]>(estudiantes);
+  const [selectedRows, setSelectedRows] = React.useState<Set<number>>(new Set());
+  const [dropdownOpen, setDropdownOpen] = React.useState<number | null>(null);
+  const rowsPerPage = 10;
 
-  // Estados para búsqueda, filtrado y ordenamiento
-  const [busqueda, setBusqueda] = useState("");
-  const [sortField, setSortField] = useState<SortField>("nombre_completo");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
-  const [pensionFilter, setPensionFilter] = useState<PensionFilter>("todas");
-  const [calificacionesFilter, _] = useState<PensionFilter>("todas");
-  const [filtrando, setFiltrando] = useState(false);
-
-  // Estado local de estudiantes para manipulación
-  const [estudiantesFiltrados, setEstudiantesFiltrados] =
-    useState<EstudianteConPension[]>(estudiantes);
-
-  // Actualizar estudiantes cuando cambia el prop
-  useEffect(() => {
-    aplicarFiltros(
-      estudiantes,
-      busqueda,
-      sortField,
-      sortDirection,
-      pensionFilter,
-      calificacionesFilter,
-    );
+  // Actualizar estudiantesState cuando cambie el prop estudiantes
+  React.useEffect(() => {
+    setEstudiantesState(estudiantes);
   }, [estudiantes]);
 
-  // Función para aplicar todos los filtros y ordenamientos
-  const aplicarFiltros = (
-    listaEstudiantes: EstudianteConPension[],
-    terminoBusqueda: string,
-    campoOrden: SortField,
-    direccionOrden: SortDirection,
-    filtroPension?: PensionFilter,
-    filtroCalificaciones?: CalificacionesFilter,
-  ) => {
-    // Paso 1: Filtrar por término de búsqueda
-    let resultado = listaEstudiantes.filter((estudiante) => {
-      if (!terminoBusqueda.trim()) return true;
-
-      const termino = terminoBusqueda.toLowerCase();
-
-      return (
-        estudiante.nombre_completo.toLowerCase().includes(termino) ||
-        estudiante.numero_identificacion.toLowerCase().includes(termino)
-      );
-    });
-
-    // Paso 2: Filtrar por estado de pensión (solo para admin)
-    if (isAdmin && filtroPension !== "todas") {
-      resultado = resultado.filter((estudiante) => {
-        if (filtroPension === "activa")
-          return estudiante.pension_activa === true;
-        if (filtroPension === "inactiva")
-          return estudiante.pension_activa === false;
-
-        return true;
-      });
+  // Función para manejar el cambio de estado de pensión
+  const handlePension = (estudianteId: number) => {
+    if (onPensionChange) {
+      onPensionChange(estudianteId);
     }
-
-    // Paso 2: Filtrar por estado de calificaciones (solo para admin)
-    if (isAdmin && filtroCalificaciones !== "todas") {
-      resultado = resultado.filter((estudiante) => {
-        if (filtroCalificaciones === "activa")
-          return estudiante.pension_activa === true;
-        if (filtroCalificaciones === "inactiva")
-          return estudiante.pension_activa === false;
-
-        return true;
-      });
-    }
-
-    // Paso 3: Ordenar resultados
-    resultado.sort((a, b) => {
-      // Si el campo de ordenamiento es fecha_nacimiento, convertir a edades
-      if (campoOrden === "fecha_nacimiento") {
-        const edadA = calcularEdad(a.fecha_nacimiento);
-        const edadB = calcularEdad(b.fecha_nacimiento);
-
-        return direccionOrden === "asc" ? edadA - edadB : edadB - edadA;
-      }
-
-      // Si el campo de ordenamiento es pension_activa
-      if (campoOrden === "pension_activa" && isAdmin) {
-        const pensionA = a.pension_activa ? 1 : 0;
-        const pensionB = b.pension_activa ? 1 : 0;
-
-        return direccionOrden === "asc"
-          ? pensionA - pensionB
-          : pensionB - pensionA;
-      }
-
-      // Si el campo de ordenamiento es pension_activa
-      if (campoOrden === "ver_calificaciones" && isAdmin) {
-        const calificacionA = a.ver_calificaciones ? 1 : 0;
-        const calificacionB = b.ver_calificaciones ? 1 : 0;
-
-        return direccionOrden === "asc"
-          ? calificacionA - calificacionB
-          : calificacionB - calificacionA;
-      }
-
-      // Para otros campos, comparar strings
-      const valorA = String(a[campoOrden] || "").toLowerCase();
-      const valorB = String(b[campoOrden] || "").toLowerCase();
-
-      if (direccionOrden === "asc") {
-        return valorA.localeCompare(valorB);
-      } else {
-        return valorB.localeCompare(valorA);
-      }
-    });
-
-    setEstudiantesFiltrados(resultado);
-    setFiltrando(!!terminoBusqueda || filtroPension !== "todas");
   };
 
-  // Manejadores de eventos
-  const handleBusquedaChange = (valor: string) => {
-    setBusqueda(valor);
-    aplicarFiltros(
-      estudiantes,
-      valor,
-      sortField,
-      sortDirection,
-      pensionFilter,
-      calificacionesFilter,
-    );
+  // Función para manejar el cambio de estado de calificaciones
+  const handleCalificaciones = (estudianteId: number) => {
+    if (onCalificacionesChange) {
+      onCalificacionesChange(estudianteId);
+    }
   };
 
-  const handleSortChange = (campo: SortField) => {
-    // Si hacemos clic en el mismo campo, cambiamos la dirección
-    if (campo === sortField) {
-      const newDirection = sortDirection === "asc" ? "desc" : "asc";
+  // Función para calcular la edad a partir de fecha_nacimiento
+  const calcularEdad = (fechaNacimiento: string): number => {
+    try {
+      const fechaNac = new Date(fechaNacimiento);
+      const hoy = new Date();
 
-      setSortDirection(newDirection);
-      aplicarFiltros(
-        estudiantes,
-        busqueda,
-        campo,
-        newDirection,
-        pensionFilter,
-        calificacionesFilter,
-      );
+      let edad = hoy.getFullYear() - fechaNac.getFullYear();
+      const mesActual = hoy.getMonth();
+      const diaActual = hoy.getDate();
+      const mesNacimiento = fechaNac.getMonth();
+      const diaNacimiento = fechaNac.getDate();
+
+      if (
+        mesNacimiento > mesActual ||
+        (mesNacimiento === mesActual && diaNacimiento > diaActual)
+      ) {
+        edad--;
+      }
+
+      return edad > 0 ? edad : 0;
+    } catch (error) {
+      console.error("Error al calcular edad:", error);
+      return 0;
+    }
+  };
+
+  // Generar iniciales para avatar
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .substring(0, 2)
+      .toUpperCase();
+  };
+
+  // Generar color de avatar basado en el nombre
+  const getAvatarColor = (name: string) => {
+    const colors = [
+      'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500', 
+      'bg-indigo-500', 'bg-orange-500', 'bg-teal-500', 'bg-red-500'
+    ];
+    const index = name.charCodeAt(0) % colors.length;
+    return colors[index];
+  };
+
+  // Manejar selección de filas
+  const handleSelectRow = (id: number) => {
+    const newSelected = new Set(selectedRows);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
     } else {
-      // Si es un campo diferente, usamos ese campo con dirección ascendente
-      setSortField(campo);
-      setSortDirection("asc");
-      aplicarFiltros(
-        estudiantes,
-        busqueda,
-        campo,
-        "asc",
-        pensionFilter,
-        calificacionesFilter,
-      );
+      newSelected.add(id);
+    }
+    setSelectedRows(newSelected);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedRows.size === items.length) {
+      setSelectedRows(new Set());
+    } else {
+      setSelectedRows(new Set(items.map(item => item.id)));
     }
   };
 
-  const handlePensionFilterChange = (valor: PensionFilter) => {
-    setPensionFilter(valor);
-    aplicarFiltros(estudiantes, busqueda, sortField, sortDirection, valor);
-  };
+  // Definimos las columnas dinámicamente basadas en props
+  const columns = React.useMemo(() => {
+    const baseColumns = [
+      {
+        key: "estudiante",
+        label: "ESTUDIANTE",
+        sortable: true,
+        width: "min-w-0 flex-1",
+        hideOnMobile: false
+      },
+      {
+        key: "documento",
+        label: "DOCUMENTO",
+        sortable: true,
+        width: "w-32 xl:w-40",
+        hideOnMobile: true
+      },
+      {
+        key: "contacto",
+        label: "CONTACTO",
+        sortable: false,
+        width: "w-40 xl:w-48",
+        hideOnMobile: true
+      }
+    ];
 
-  const limpiarFiltros = () => {
-    setBusqueda("");
-    setPensionFilter("todas");
-    setSortField("nombre_completo");
-    setSortDirection("asc");
-    aplicarFiltros(estudiantes, "", "nombre_completo", "asc", "todas");
-  };
+    // Añadir columnas condicionales
+    if (isAdmin) {
+      baseColumns.push({
+        key: "pension",
+        label: "PENSIÓN",
+        sortable: true,
+        width: "w-28 xl:w-32",
+        hideOnMobile: true
+      });
+      
+      baseColumns.push({
+        key: "calificaciones_admin",
+        label: "VER NOTAS",
+        sortable: true,
+        width: "w-28 xl:w-32",
+        hideOnMobile: true
+      });
+    }
 
-  // Texto del ordenamiento actual para mostrar en botones móviles
-  const getSortLabel = () => {
-    const fieldLabels: Record<SortField, string> = {
-      nombre_completo: "Nombre",
-      numero_identificacion: "Documento",
-      tipo_documento: "Tipo Doc.",
-      fecha_nacimiento: "Edad",
-      pension_activa: "Pensión",
-      ver_calificaciones: "Puede ver Calificaciones",
+    if (isDirector && isVisible) {
+      baseColumns.push({
+        key: "calificaciones_director",
+        label: "CALIFICACIONES",
+        sortable: false,
+        width: "w-32",
+        hideOnMobile: true
+      });
+    }
+
+    baseColumns.push({
+      key: "actions",
+      label: "",
+      sortable: false,
+      width: "w-10",
+      hideOnMobile: true
+    });
+
+    return baseColumns;
+  }, [isAdmin, isDirector, isVisible]);
+
+  const pages = Math.ceil(estudiantesState.length / rowsPerPage);
+
+  const items = React.useMemo(() => {
+    const start = (page - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    return estudiantesState.slice(start, end);
+  }, [page, estudiantesState]);
+
+  // Función para manejar el ordenamiento de columnas
+  const handleSort = (key: string) => {
+    if (!onSortChange) return;
+    const sortableKeys = ["estudiante", "documento", "pension", "calificaciones_admin"];
+    if (!sortableKeys.includes(key)) return;
+    
+    // Mapear keys a campos reales
+    const keyMap: { [key: string]: SortField } = {
+      estudiante: "nombre_completo",
+      documento: "numero_identificacion",
+      pension: "pension_activa",
+      calificaciones_admin: "ver_calificaciones"
     };
-
-    return `${fieldLabels[sortField]} ${sortDirection === "asc" ? "↑" : "↓"}`;
+    
+    onSortChange(keyMap[key] || key as SortField);
   };
 
-  // Si no hay estudiantes, muestra un mensaje
-  if (estudiantes.length === 0) {
-    return <p>No hay estudiantes asociados al curso</p>;
-  }
+  // Función para renderizar flechas de ordenamiento
+  const renderSortArrow = (key: string) => {
+    const keyMap: { [key: string]: string } = {
+      estudiante: "nombre_completo",
+      documento: "numero_identificacion",
+      pension: "pension_activa",
+      calificaciones_admin: "ver_calificaciones"
+    };
+    
+    const realSortField = keyMap[key] || key;
+    const sortableKeys = ["estudiante", "documento", "pension", "calificaciones_admin"];
+    
+    if (realSortField !== (sortField as string) || !sortableKeys.includes(key)) {
+      return <ChevronUp className="w-3 h-3 text-gray-300" />;
+    }
 
-  // Componentes de interfaz de búsqueda y filtrado
-  const filtrosDesktop = (
-    <div className="bg-white p-4 rounded-lg shadow-sm mb-4 space-y-4">
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="flex-1">
-          <Input
-            className="w-full"
-            label="Buscar estudiante"
-            placeholder="Nombre o documento..."
-            startContent={
-              <svg
-                className="w-5 h-5 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={1.5}
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            }
-            value={busqueda}
-            onValueChange={handleBusquedaChange}
-          />
-        </div>
-
-        {isAdmin && (
-          <div className="w-full md:w-64">
-            <Select
-              label="Estado de pensión"
-              selectedKeys={[pensionFilter]}
-              onChange={(e) =>
-                handlePensionFilterChange(e.target.value as PensionFilter)
-              }
-            >
-              <SelectItem key="todas">Todas las pensiones</SelectItem>
-              <SelectItem key="activa">Pensión activa</SelectItem>
-              <SelectItem key="inactiva">Pensión inactiva</SelectItem>
-            </Select>
-          </div>
-        )}
-
-        <div className="w-full md:w-64">
-          <Select
-            label="Ordenar por"
-            selectedKeys={[sortField]}
-            onChange={(e) => handleSortChange(e.target.value as SortField)}
-          >
-            <SelectItem key="nombre_completo">Nombre completo</SelectItem>
-            <SelectItem key="numero_identificacion">
-              Número de documento
-            </SelectItem>
-            <SelectItem key="tipo_documento">Tipo de documento</SelectItem>
-            <SelectItem key="fecha_nacimiento">Edad</SelectItem>
-            {isAdmin ? (
-              <SelectItem key="pension_activa">Estado pensión</SelectItem>
-            ) : null}
-          </Select>
-        </div>
-
-        <div className="w-full md:w-48">
-          <Select
-            label="Dirección"
-            selectedKeys={[sortDirection]}
-            onChange={(e) => {
-              setSortDirection(e.target.value as SortDirection);
-              aplicarFiltros(
-                estudiantes,
-                busqueda,
-                sortField,
-                e.target.value as SortDirection,
-                pensionFilter,
-              );
-            }}
-          >
-            <SelectItem key="asc">Ascendente</SelectItem>
-            <SelectItem key="desc">Descendente</SelectItem>
-          </Select>
-        </div>
-      </div>
-
-      {filtrando && (
-        <div className="flex justify-between items-center">
-          <div className="flex gap-2 flex-wrap">
-            {busqueda && (
-              <Chip
-                color="primary"
-                variant="flat"
-                onClose={() => handleBusquedaChange("")}
-              >
-                Búsqueda: {busqueda}
-              </Chip>
-            )}
-
-            {isAdmin && pensionFilter !== "todas" && (
-              <Chip
-                color={pensionFilter === "activa" ? "success" : "danger"}
-                variant="flat"
-                onClose={() => handlePensionFilterChange("todas")}
-              >
-                Pensión: {pensionFilter === "activa" ? "Activa" : "Inactiva"}
-              </Chip>
-            )}
-
-            <Chip color="default" variant="flat">
-              Ordenado por: {getSortLabel()}
-            </Chip>
-          </div>
-
-          <Button
-            color="danger"
-            size="sm"
-            variant="flat"
-            onPress={limpiarFiltros}
-          >
-            Limpiar filtros
-          </Button>
-        </div>
-      )}
-    </div>
-  );
-
-  const filtrosMobile = (
-    <div className="bg-white p-4 rounded-lg shadow-sm mb-4 space-y-4">
-      <Input
-        placeholder="Buscar por nombre o documento..."
-        startContent={
-          <svg
-            className="w-5 h-5 text-gray-400"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={1.5}
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        }
-        value={busqueda}
-        onValueChange={handleBusquedaChange}
-      />
-
-      <div className="flex justify-between gap-2">
-        <Dropdown>
-          <DropdownTrigger>
-            <Button
-              className="flex-1"
-              color="primary"
-              startContent={
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={1.5}
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M3 7.5 7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              }
-              variant="flat"
-            >
-              Ordenar
-            </Button>
-          </DropdownTrigger>
-          <DropdownMenu aria-label="Opciones de ordenamiento">
-            <DropdownItem
-              key="nombre"
-              onPress={() => handleSortChange("nombre_completo")}
-            >
-              Nombre{" "}
-              {sortField === "nombre_completo" &&
-                (sortDirection === "asc" ? "↑" : "↓")}
-            </DropdownItem>
-            <DropdownItem
-              key="documento"
-              onPress={() => handleSortChange("numero_identificacion")}
-            >
-              Documento{" "}
-              {sortField === "numero_identificacion" &&
-                (sortDirection === "asc" ? "↑" : "↓")}
-            </DropdownItem>
-            <DropdownItem
-              key="tipo"
-              onPress={() => handleSortChange("tipo_documento")}
-            >
-              Tipo Doc.{" "}
-              {sortField === "tipo_documento" &&
-                (sortDirection === "asc" ? "↑" : "↓")}
-            </DropdownItem>
-            <DropdownItem
-              key="edad"
-              onPress={() => handleSortChange("fecha_nacimiento")}
-            >
-              Edad{" "}
-              {sortField === "fecha_nacimiento" &&
-                (sortDirection === "asc" ? "↑" : "↓")}
-            </DropdownItem>
-            {isAdmin ? (
-              <DropdownItem
-                key="pension"
-                onPress={() => handleSortChange("pension_activa")}
-              >
-                Pensión{" "}
-                {sortField === "pension_activa" &&
-                  (sortDirection === "asc" ? "↑" : "↓")}
-              </DropdownItem>
-            ) : null}
-            <DropdownItem
-              key="invertir"
-              className="text-primary"
-              onPress={() => {
-                const newDirection = sortDirection === "asc" ? "desc" : "asc";
-
-                setSortDirection(newDirection);
-                aplicarFiltros(
-                  estudiantes,
-                  busqueda,
-                  sortField,
-                  newDirection,
-                  pensionFilter,
-                );
-              }}
-            >
-              Invertir dirección ({sortDirection === "asc" ? "Asc ↑" : "Desc ↓"}
-              )
-            </DropdownItem>
-          </DropdownMenu>
-        </Dropdown>
-
-        {isAdmin && (
-          <Dropdown>
-            <DropdownTrigger>
-              <Button
-                className="flex-1"
-                color={
-                  pensionFilter !== "todas"
-                    ? pensionFilter === "activa"
-                      ? "success"
-                      : "danger"
-                    : "primary"
-                }
-                startContent={
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={1.5}
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                }
-                variant="flat"
-              >
-                Filtrar
-              </Button>
-            </DropdownTrigger>
-            <DropdownMenu aria-label="Opciones de filtro de pensión">
-              <DropdownItem
-                key="todas"
-                onPress={() => handlePensionFilterChange("todas")}
-              >
-                Todas las pensiones
-              </DropdownItem>
-              <DropdownItem
-                key="activa"
-                onPress={() => handlePensionFilterChange("activa")}
-              >
-                Pensión activa
-              </DropdownItem>
-              <DropdownItem
-                key="inactiva"
-                onPress={() => handlePensionFilterChange("inactiva")}
-              >
-                Pensión inactiva
-              </DropdownItem>
-            </DropdownMenu>
-          </Dropdown>
-        )}
-
-        {filtrando && (
-          <Button
-            className="flex-1"
-            color="danger"
-            startContent={
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={1.5}
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M6 18 18 6M6 6l12 12"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            }
-            variant="flat"
-            onPress={limpiarFiltros}
-          >
-            Limpiar
-          </Button>
-        )}
-      </div>
-
-      {filtrando && (
-        <div className="flex flex-wrap gap-2 mt-2">
-          {busqueda && (
-            <Chip
-              color="primary"
-              size="sm"
-              variant="flat"
-              onClose={() => handleBusquedaChange("")}
-            >
-              {busqueda}
-            </Chip>
-          )}
-
-          {isAdmin && pensionFilter !== "todas" && (
-            <Chip
-              color={pensionFilter === "activa" ? "success" : "danger"}
-              size="sm"
-              variant="flat"
-            >
-              {pensionFilter === "activa"
-                ? "Pensión activa"
-                : "Pensión inactiva"}
-            </Chip>
-          )}
-
-          <Chip color="default" size="sm" variant="flat">
-            {getSortLabel()}
-          </Chip>
-        </div>
-      )}
-    </div>
-  );
-
-  // Si es desktop, muestra la tabla con filtros
-  if (isDesktop) {
-    return (
-      <div>
-        {/* Filtros para escritorio */}
-        {filtrosDesktop}
-
-        {/* Tabla con estudiantes filtrados */}
-        <TablaEstudiantes
-          estudiantes={estudiantesFiltrados}
-          isAdmin={isAdmin}
-          isDirector={isDirector}
-          isVisible={isVisible}
-          sortDirection={sortDirection}
-          sortField={sortField}
-          onCalificacionesChange={handleCalificaciones}
-          onPensionChange={handlePension}
-          onSortChange={handleSortChange}
-        />
-      </div>
+    return sortDirection === "asc" ? (
+      <ChevronUp className="w-3 h-3 text-blue-500" />
+    ) : (
+      <ChevronDown className="w-3 h-3 text-blue-500" />
     );
-  }
+  };
 
-  // Si es móvil o tablet, muestra cards con filtros
   return (
-    <div>
-      {/* Filtros para móvil */}
-      {filtrosMobile}
-
-      {/* Mensaje con conteo de resultados */}
-      <p className="text-sm text-gray-500 mb-4">
-        Mostrando {estudiantesFiltrados.length} de {estudiantes.length}{" "}
-        estudiantes
-      </p>
-
-      {/* Cards de estudiantes */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {estudiantesFiltrados.map((estudiante: EstudianteConPension) => (
-          <Card
-            key={estudiante.id}
-            className="shadow-sm transition-shadow ease-in-out duration-500 bg-gray-50 hover:shadow-md"
-          >
-            <div className="space-y-2 p-4">
-              <div className="flex justify-between items-start">
-                <h3 className="font-bold text-lg">
-                  {estudiante.nombre_completo}
-                </h3>
-              </div>
-              {isAdmin && (
-                <div className="space-x-2">
-                  <Chip
-                    color={estudiante.pension_activa ? "success" : "danger"}
-                    size="sm"
-                    variant="flat"
-                  >
-                    {estudiante.pension_activa
-                      ? "Pensión activa"
-                      : "Pensión inactiva"}
-                  </Chip>
-                  <Chip
-                    color={estudiante.ver_calificaciones ? "success" : "danger"}
-                    size="sm"
-                    variant="flat"
-                  >
-                    {estudiante.ver_calificaciones
-                      ? "Calificaciones activa"
-                      : "Calificaciones inactiva"}
-                  </Chip>
-                </div>
-              )}
-
-              <div className="mt-2 space-y-1">
-                <p className="text-sm text-gray-600 flex items-center gap-1">
-                  <span className="font-medium">Tipo documento:</span>{" "}
-                  {estudiante.tipo_documento}
-                </p>
-                <p className="text-sm text-gray-600 flex items-center gap-1">
-                  <span className="font-medium">Documento:</span>{" "}
-                  {estudiante.numero_identificacion}
-                </p>
-                <p className="text-sm text-gray-600 flex items-center gap-1">
-                  <span className="font-medium">Edad:</span>{" "}
-                  {calcularEdad(estudiante.fecha_nacimiento)} años
-                </p>
-                <p className="text-sm text-gray-600 flex items-center gap-1">
-                  <span className="font-medium">Teléfono:</span>{" "}
-                  {estudiante.celular_padres}
-                </p>
-              </div>
-
-              {isAdmin && handlePension && (
-                <Button
-                  fullWidth
-                  className="mt-6"
-                  color={estudiante.pension_activa ? "danger" : "success"}
-                  variant="flat"
-                  onPress={() => handlePension(estudiante.id)}
-                >
-                  {estudiante.pension_activa ? "Desactivar" : "Activar"} pensión
-                </Button>
-              )}
-              {isAdmin && handleCalificaciones && (
-                <Button
-                  fullWidth
-                  className="mt-6"
-                  color={estudiante.ver_calificaciones ? "danger" : "success"}
-                  variant="flat"
-                  onPress={() => handleCalificaciones(estudiante.id)}
-                >
-                  {estudiante.ver_calificaciones ? "Desactivar" : "Activar"}{" "}
-                  calificaciones
-                </Button>
-              )}
-
-              {isAdmin ||
-                (isDirector && (
-                  <Button
-                    fullWidth
-                    className="mt-6"
-                    color="warning"
-                    variant="flat"
-                    onPress={() =>
-                      router.push(
-                        `${params.curso}/calificaciones/${estudiante.id}`,
-                      )
-                    }
-                  >
-                    <DocumentIcon />
-                    Ver calificaciones
-                  </Button>
-                ))}
+    <div className="w-full space-y-4">
+      {/* Header con acciones masivas */}
+      {selectedRows.size > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="bg-blue-100 p-2 rounded-lg">
+              <User className="w-5 h-5 text-blue-600" />
             </div>
-          </Card>
-        ))}
+            <div>
+              <p className="font-medium text-blue-800">
+                {selectedRows.size} estudiante(s) seleccionado(s)
+              </p>
+              <p className="text-sm text-blue-600">
+                Puedes realizar acciones masivas
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <button className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+              Exportar
+            </button>
+            <button className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
+              Eliminar
+            </button>
+            <button 
+              onClick={() => setSelectedRows(new Set())}
+              className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Tabla responsive */}
+      <div className="bg-white/70 backdrop-blur-sm border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+        <div className="overflow-x-auto">
+          <table className="min-w-full">
+            {/* Cabecera de la tabla */}
+            <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
+              <tr>
+                {columns.map((column) => (
+                  <th
+                    key={column.key}
+                    className={`${column.width} px-3 lg:px-4 xl:px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider ${
+                      column.hideOnMobile ? 'hidden lg:table-cell' : ''
+                    } ${
+                      column.sortable && onSortChange 
+                        ? "cursor-pointer hover:bg-gray-100 transition-colors" 
+                        : ""
+                    }`}
+                    scope="col"
+                    onClick={() => column.sortable ? handleSort(column.key) : null}
+                  >
+                    {column.key === "select" ? (
+                      <input
+                        type="checkbox"
+                        checked={selectedRows.size === items.length && items.length > 0}
+                        onChange={handleSelectAll}
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                    ) : (
+                      <div className="flex items-center space-x-1 group">
+                        <span className="truncate">{column.label}</span>
+                        {column.sortable && (
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                            {renderSortArrow(column.key)}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+
+            {/* Cuerpo de la tabla */}
+            <tbody className="divide-y divide-gray-100">
+              {items.map((item, index) => (
+                <tr 
+                  key={item.id} 
+                  className={`hover:bg-blue-50/50 transition-all duration-200 ${
+                    selectedRows.has(item.id) ? 'bg-blue-50 border-l-4 border-blue-500' : ''
+                  }`}
+                >
+                  {/* Información del estudiante */}
+                  <td className="px-3 lg:px-4 xl:px-6 py-3 min-w-0">
+                    <div className="space-y-1">
+                      <div className="font-semibold text-gray-900 text-sm lg:text-base truncate">
+                        {item.nombre_completo}
+                      </div>
+                      <div className="text-xs lg:text-sm text-gray-500">
+                        {/* En móvil mostramos el documento aquí */}
+                        <span className="lg:hidden flex items-center space-x-1">
+                          <CreditCard className="w-3 h-3" />
+                          <span>{item.tipo_documento}: {item.numero_identificacion}</span>
+                        </span>
+                        {/* En desktop mostramos edad */}
+                        <span className="hidden lg:flex items-center space-x-1">
+                          <Calendar className="w-3 h-3" />
+                          <span>{calcularEdad(item.fecha_nacimiento)} años</span>
+                        </span>
+                      </div>
+                      
+                      {/* Estados en móvil */}
+                      <div className="lg:hidden flex flex-wrap gap-1 mt-2">
+                        {isAdmin && (
+                          <>
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                              item.pension_activa 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                              {item.pension_activa ? (
+                                <CheckCircle className="w-3 h-3 mr-1" />
+                              ) : (
+                                <XCircle className="w-3 h-3 mr-1" />
+                              )}
+                              Pensión
+                            </span>
+                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                              item.ver_calificaciones 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                              {item.ver_calificaciones ? (
+                                <CheckCircle className="w-3 h-3 mr-1" />
+                              ) : (
+                                <XCircle className="w-3 h-3 mr-1" />
+                              )}
+                              Notas
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+
+                  {/* Documento (oculto en móvil) */}
+                  <td className="hidden lg:table-cell px-4 xl:px-6 py-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center space-x-2">
+                        <CreditCard className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        <span className="text-sm text-gray-700 font-medium">{item.tipo_documento}</span>
+                      </div>
+                      <div className="bg-gray-100 text-gray-800 text-xs font-mono px-2 py-1 rounded-lg inline-block">
+                        {item.numero_identificacion}
+                      </div>
+                    </div>
+                  </td>
+
+                  {/* Contacto */}
+                  <td className="hidden lg:table-cell px-3 lg:px-4 xl:px-6 py-3 min-w-0">
+                    <div className="space-y-1">
+                      <div className="flex items-center space-x-2 text-xs lg:text-sm">
+                        <Phone className="w-3 h-3 lg:w-4 lg:h-4 text-gray-400 flex-shrink-0" />
+                        <span className="text-gray-700">{item.celular_padres}</span>
+                      </div>
+                      <div className="hidden lg:flex items-center space-x-2 text-xs text-gray-500">
+                        <Calendar className="w-3 h-3" />
+                        <span>{item.fecha_nacimiento}</span>
+                      </div>
+                    </div>
+                  </td>
+
+                  {/* Pensión (oculto en móvil) */}
+                  {isAdmin && (
+                    <td className="hidden lg:table-cell px-4 xl:px-6 py-3">
+                      <div className="space-y-2">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                          item.pension_activa 
+                            ? 'bg-green-100 text-green-800 border border-green-200' 
+                            : 'bg-red-100 text-red-800 border border-red-200'
+                        }`}>
+                          {item.pension_activa ? (
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                          ) : (
+                            <XCircle className="w-3 h-3 mr-1" />
+                          )}
+                          {item.pension_activa ? 'Activa' : 'Inactiva'}
+                        </span>
+                        <button
+                          onClick={() => handlePension(item.id)}
+                          className="block w-full px-3 py-1 text-xs font-medium rounded bg-blue-500 text-white hover:bg-blue-600 transition-colors"
+                        >
+                          Cambiar
+                        </button>
+                      </div>
+                    </td>
+                  )}
+
+                  {/* Ver Calificaciones Admin (oculto en móvil) */}
+                  {isAdmin && (
+                    <td className="hidden lg:table-cell px-4 xl:px-6 py-3">
+                      <div className="space-y-2">
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                          item.ver_calificaciones 
+                            ? 'bg-green-100 text-green-800 border border-green-200' 
+                            : 'bg-red-100 text-red-800 border border-red-200'
+                        }`}>
+                          {item.ver_calificaciones ? (
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                          ) : (
+                            <XCircle className="w-3 h-3 mr-1" />
+                          )}
+                          {item.ver_calificaciones ? 'Activa' : 'Inactiva'}
+                        </span>
+                        <button
+                          onClick={() => handleCalificaciones(item.id)}
+                          className="block w-full px-3 py-1 text-xs font-medium rounded bg-green-500 text-white hover:bg-green-600 transition-colors"
+                        >
+                          Cambiar
+                        </button>
+                      </div>
+                    </td>
+                  )}
+
+                  {/* Calificaciones Director (oculto en móvil) */}
+                  {isDirector && isVisible && (
+                    <td className="hidden lg:table-cell px-4 xl:px-6 py-3">
+                      <Button
+                        color="warning"
+                        size="sm"
+                        variant="flat"
+                        startContent={<FileText className="w-4 h-4" />}
+                        onPress={() => router.push(`${params.curso}/calificaciones/${item.id}`)}
+                        className="hover:scale-105 transition-transform"
+                      >
+                        Ver
+                      </Button>
+                    </td>
+                  )}
+
+                  {/* Acciones */}
+                  <td className="hidden lg:table-cell px-3 lg:px-4 xl:px-6 py-3">
+                    <div className="relative">
+                      <button
+                        onClick={() => setDropdownOpen(dropdownOpen === item.id ? null : item.id)}
+                        className="p-1.5 lg:p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200"
+                      >
+                        <MoreHorizontal className="w-4 h-4 lg:w-5 lg:h-5" />
+                      </button>
+                      
+                      {dropdownOpen === item.id && (
+                        <div className="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-xl shadow-lg z-10 overflow-hidden">
+                          <button className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-3 transition-colors">
+                            <Eye className="w-4 h-4 text-blue-500" />
+                            <span>Ver detalles</span>
+                          </button>
+                          <button className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-3 transition-colors">
+                            <Edit className="w-4 h-4 text-green-500" />
+                            <span>Editar</span>
+                          </button>
+                          {isAdmin && (
+                            <>
+                              <hr className="border-gray-100" />
+                              <button 
+                                onClick={() => handlePension(item.id)}
+                                className="lg:hidden w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-3 transition-colors"
+                              >
+                                <CheckCircle className="w-4 h-4 text-blue-500" />
+                                <span>Cambiar Pensión</span>
+                              </button>
+                              <button 
+                                onClick={() => handleCalificaciones(item.id)}
+                                className="lg:hidden w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-3 transition-colors"
+                              >
+                                <FileText className="w-4 h-4 text-green-500" />
+                                <span>Cambiar Ver Notas</span>
+                              </button>
+                            </>
+                          )}
+                          {isDirector && isVisible && (
+                            <button 
+                              onClick={() => router.push(`${params.curso}/calificaciones/${item.id}`)}
+                              className="lg:hidden w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-3 transition-colors"
+                            >
+                              <FileText className="w-4 h-4 text-orange-500" />
+                              <span>Ver Calificaciones</span>
+                            </button>
+                          )}
+                          <hr className="border-gray-100" />
+                          <button className="w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50 flex items-center space-x-3 transition-colors">
+                            <Trash2 className="w-4 h-4" />
+                            <span>Eliminar</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Footer de la tabla */}
+        {items.length === 0 && (
+          <div className="text-center py-12">
+            <User className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500 font-medium">No hay estudiantes para mostrar</p>
+            <p className="text-gray-400 text-sm">Los estudiantes aparecerán aquí una vez que sean agregados</p>
+          </div>
+        )}
+      </div>
+
+      {/* Información de paginación y controles */}
+      <div className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
+        <div className="text-sm text-gray-600">
+          Mostrando {items.length === 0 ? 0 : (page - 1) * rowsPerPage + 1} a{" "}
+          {Math.min(page * rowsPerPage, estudiantesState.length)} de {estudiantesState.length} estudiantes
+        </div>
+        
+        {pages > 1 && (
+          <Pagination
+            initialPage={1}
+            page={page}
+            total={pages}
+            onChange={(p) => setPage(p)}
+            classNames={{
+              wrapper: "gap-0 overflow-visible h-8 rounded-xl border border-divider",
+              item: "w-8 h-8 text-small rounded-none bg-transparent",
+              cursor: "bg-gradient-to-b shadow-lg from-blue-500 to-blue-600 text-white font-bold",
+            }}
+          />
+        )}
       </div>
     </div>
   );

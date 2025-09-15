@@ -17,6 +17,14 @@ export type Estudiante = {
   grado: Grado;
 };
 
+export type EstudianteInput = {
+  tipo_documento: string;
+  numero_identificacion: number;
+  fecha_nacimiento: string;
+  nombre_completo: string;
+  celular_padres: number;
+}
+
 export type Maestro = {
   id: number;
   nombre_completo: string;

@@ -10,7 +10,10 @@ import { ACTUALIZAR_VER_CALIFICACIONES } from "../graphql/mutation/actualizarVer
 import { OBTENER_MAESTROS } from "../graphql/queries/obtenerMaestros";
 import { OBTENER_CALIFICACIONES } from "../graphql/queries/obtenerCalificaciones";
 
-import { Curso, Estudiante, Maestro, Nota } from "@/types";
+import { Curso, Estudiante, EstudianteInput, Maestro, Nota } from "@/types";
+import { OBTENER_ESTADISTICAS_ADMIN } from "../graphql/queries/ObtenerEstadisticasAdmin";
+import { OBTENER_ESTUDIANTES } from "../graphql/queries/obtenerEstudiantes";
+import { CREAR_ESTUDIANTE } from "../graphql/mutation/crearEstudiante";
 
 // Types para calificaciones
 interface CalificacionesGradoCompletoResponse {
@@ -105,21 +108,37 @@ interface EstadisticasGeneralesGrado {
   };
 }
 
+interface Estadisticas {
+  totalEstudiantes: number
+  totalMaestros: number
+  totalActividades: number
+  totalTareas: number
+  totalCalificaciones: number
+  totalGrados: number
+  totalAreas: number
+  totalUsuarios: number
+}
+
 interface AdminContextType {
   cursos: Curso[];
   curso: Curso | null;
   maestros: Maestro[];
+  estudiantes: Estudiante[];
+  estadisticas: Estadisticas;
   calificacionesGrado: CalificacionesGradoCompletoResponse | null; // Calificaciones completas del grado
   periodoSeleccionado: number;
   estaCargando: boolean;
   error: string | null;
   obtenerCursos: () => void;
+  obtenerEstadisticas: () => void;
   obtenerMaestros: () => void;
+  obtenerEstudiantes: () => void;
   obtenerCalificaciones: (
     grado_id: number,
     periodo: number,
   ) => Promise<CalificacionesGradoCompletoResponse | void>;
   obtenerCurso: (id: number) => void;
+  crearEstudiante: (curso: number, estudiante: EstudianteInput) => void;
   actualizarPension: (id: number) => void;
   actualizarVerCalificaciones: (id: number) => void;
   establecerPeriodo: (periodo: number) => void;
@@ -131,8 +150,19 @@ const initialState = {
   cursos: [],
   curso: null,
   maestros: [],
+  estudiantes: [],
   estaCargando: false,
   calificaciones: null, // Calificaciones completas del grado
+  estadisticas: {
+    totalEstudiantes: 0,
+    totalMaestros: 0,
+    totalActividades: 0,
+    totalTareas: 0,
+    totalCalificaciones: 0,
+    totalGrados: 0,
+    totalAreas: 0,
+    totalUsuarios: 0,
+  }, // estadisticas
   periodoSeleccionado: 1, // Periodo seleccionado por defecto
   error: null,
 };
@@ -171,6 +201,13 @@ const adminReducer = (state: any, action: any) => {
         estaCargando: false,
         error: null,
       };
+    case "OBTENER_ESTUDIANTES":
+      return {
+        ...state,
+        estudiantes: action.payload,
+        estaCargando: false,
+        error: null,
+      };
     case "OBTENER_CURSO_GENERAL":
       return {
         ...state,
@@ -182,6 +219,13 @@ const adminReducer = (state: any, action: any) => {
       return {
         ...state,
         calificaciones: action.payload,
+        estaCargando: false,
+        error: null,
+      };
+    case "OBTENER_ESTADISTICAS":
+      return {
+        ...state,
+        estadisticas: action.payload,
         estaCargando: false,
         error: null,
       };
@@ -213,9 +257,9 @@ const adminReducer = (state: any, action: any) => {
           estudiantes: state.curso.estudiantes.map((estudiante: Estudiante) =>
             estudiante.id === action.payload.id
               ? {
-                  ...estudiante,
-                  ver_calificaciones: !estudiante.ver_calificaciones,
-                }
+                ...estudiante,
+                ver_calificaciones: !estudiante.ver_calificaciones,
+              }
               : estudiante,
           ),
         },
@@ -268,6 +312,30 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
       dispatch({
         type: "SET_ERROR",
         payload: "Error al cargar los cursos",
+      });
+    }
+  };
+
+  // Función que ejecuta la query y despacha la acción para guardar las estadisticas
+  const obtenerEstadisticas = async () => {
+    dispatch({ type: "SET_LOADING", payload: true });
+
+    try {
+      const { data } = await client.query({
+        query: OBTENER_ESTADISTICAS_ADMIN,
+      });
+
+      console.log(data.obtenerEstadisticasAdmin)
+
+      dispatch({
+        type: "OBTENER_ESTADISTICAS",
+        payload: data.obtenerEstadisticasAdmin,
+      });
+    } catch (error) {
+      console.error("Error obteniendo estadisticas:", error);
+      dispatch({
+        type: "SET_ERROR",
+        payload: "Error al cargar las estadisticas",
       });
     }
   };
@@ -398,6 +466,68 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  // Funcion para obtener los estudiantes
+  const obtenerEstudiantes = async () => {
+    dispatch({ type: "SET_LOADING", payload: true });
+
+    try {
+      const { data } = await client.query({
+        query: OBTENER_ESTUDIANTES,
+      });
+
+      if( !data?.obtenerEstudiantes ) {
+        throw new Error("No se recibieron datos de estudiantes");
+      }
+
+      dispatch({
+        type: "OBTENER_ESTUDIANTES",
+        payload: data.obtenerEstudiantes,
+      });
+
+      return data.obtenerEstudiantes;
+    } catch (error) {
+      console.error("Error obteniendo estudiantes:", error);
+      dispatch({
+        type: "SET_ERROR",
+        payload: "Error al cargar los estudiantes",
+      });
+    }
+  }
+
+  
+  // Función que ejecuta la mutation y despacha la acción para actualizar la pension del estudiante
+ const crearEstudiante = async (estudianteNuevo: EstudianteInput) => {
+  dispatch({ type: "SET_LOADING", payload: true });
+
+  try {
+    console.log(estudianteNuevo)
+    const { data } = await client.mutate({
+      mutation: CREAR_ESTUDIANTE,
+      variables: {
+        nombre_completo: estudianteNuevo.nombre_completo,
+        celular_padres: estudianteNuevo.celular_padres,
+        numero_identificacion: estudianteNuevo.numero_identificacion,
+        fecha_nacimiento: estudianteNuevo.fecha_nacimiento,
+        tipo_documento: estudianteNuevo.tipo_documento,
+        password: estudianteNuevo.password,
+        grado_id: estudianteNuevo.grado_id
+      }, // ✅ Ahora coincide con la mutación
+    });
+
+    dispatch({
+      type: "CREAR_ESTUDIANTE",
+      payload: { id: data.registrarEstudiante.id }, // ⚠️ Cambiar de actualizarPension a registrarEstudiante
+    });
+  } catch (error) {
+    console.error("Error creando estudiante:", error);
+    dispatch({
+      type: "SET_ERROR",
+      payload: "Error al crear el estudiante",
+    });
+  }
+};
+
+
   // Función para establecer el periodo
   const establecerPeriodo = (periodo: number) => {
     dispatch({
@@ -417,6 +547,8 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
     cursos: state.cursos,
     curso: state.curso,
     maestros: state.maestros,
+    estudiantes: state.estudiantes,
+    estadisticas: state.estadisticas,
     estaCargando: state.estaCargando,
     calificacionesGrado: state.calificacionesGrado, // Calificaciones completas del grado
     periodoSeleccionado: state.periodoSeleccionado,
@@ -424,9 +556,12 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
 
     // Funciones
     obtenerCursos,
+    obtenerEstadisticas,
     obtenerCurso,
     obtenerCalificaciones, // Función principal para calificaciones
     obtenerMaestros,
+    obtenerEstudiantes,
+    crearEstudiante,
     actualizarPension,
     actualizarVerCalificaciones,
     establecerPeriodo,
