@@ -437,7 +437,7 @@ export const ReporteEstudiantePDF = ({
       {/* UNA SOLA PÁGINA CON FLUJO AUTOMÁTICO */}
       <Page size={[PAGE_CONFIG.WIDTH, PAGE_CONFIG.HEIGHT]} style={styles.page}>
         {esCualitativo && (
-          <View style={styles.backgroundImageContainer}>
+          <View fixed style={styles.backgroundImageContainer}>
             <Image
               src="/backgroundCualitative.png"
               style={styles.backgroundImage}
@@ -542,7 +542,7 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
     objectFit: "cover",
-    opacity: 0.25,
+    opacity: 0.5,
   },
   subHeader: {
     fontSize: 10, // Fuente más pequeña
