@@ -219,7 +219,7 @@ const TableHeaderComponent = ({
     </View>
     <View style={styles.tableColHeader2}>
       <Text style={[styles.labelText, { color: "#4472C4", fontSize: 12 }]}>
-        {esCualitativo ? "EVALUACIÓN" : "NOTA"}
+        {esCualitativo ? "VALORACIÓN" : "NOTA"}
       </Text>
     </View>
     <View style={styles.tableColHeader3}>
