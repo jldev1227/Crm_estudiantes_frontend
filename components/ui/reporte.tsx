@@ -62,11 +62,11 @@ const convertirNotaACualitativa = (nota: number): string => {
 const obtenerNombreCalificacion = (calificacion: string): string => {
   switch (calificacion) {
     case "DS":
-      return "Desempeño Superior";
+      return "Superior";
     case "DA":
-      return "Desempeño Alto";
+      return "Alto";
     case "DB":
-      return "Desempeño Básico";
+      return "Básico";
     case "SP":
       return "Sigue en proceso";
     default:
@@ -766,12 +766,14 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   sectionHeader: {
-    fontSize: 11, // Más compacto
+    fontSize: 12, // Más compacto
     fontWeight: "bold",
     color: "#4472C4",
     textAlign: "center",
     backgroundColor: "#4472C415",
-    padding: 3, // Padding reducido
+    padding: 5, // Padding reducido
+    borderColor: "#E0E0E0",
+    borderBottomWidth: 1,
   },
   indicadoresHeader: {
     fontSize: 11, // Más legible que 10
