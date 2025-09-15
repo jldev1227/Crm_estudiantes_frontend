@@ -154,7 +154,7 @@ export default function MaestroLayout({
           ) : (
             <SideMenu />
           )}
-          <div className="col-span-4 p-4 md:p-10">{children}</div>
+          <div className="col-span-4">{children}</div>
         </main>
       </ProtectedRoute>
     </AdminProvider>

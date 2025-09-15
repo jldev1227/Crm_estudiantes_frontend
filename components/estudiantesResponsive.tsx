@@ -760,23 +760,20 @@ export default function EstudiantesResponsive({
                 </Button>
               )}
 
-              {isAdmin ||
-                (isDirector && (
-                  <Button
-                    fullWidth
-                    className="mt-6"
-                    color="warning"
-                    variant="flat"
-                    onPress={() =>
-                      router.push(
-                        `${params.curso}/calificaciones/${estudiante.id}`,
-                      )
-                    }
-                  >
-                    <DocumentIcon />
-                    Ver calificaciones
-                  </Button>
-                ))}
+              <Button
+                fullWidth
+                className="mt-6"
+                color="warning"
+                variant="flat"
+                onPress={() =>
+                  router.push(
+                    `/admin/cursos/${params.curso}/calificaciones/${estudiante.id}`,
+                  )
+                }
+              >
+                <DocumentIcon />
+                Ver calificaciones
+              </Button>
             </div>
           </Card>
         ))}

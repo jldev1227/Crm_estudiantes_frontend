@@ -66,7 +66,7 @@ export default function Page() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="p-4 md:p-10 space-y-6">
       {/* Header */}
       <div className="space-y-4">
         <h1 className="text-2xl uppercase font-bold text-blue-600">

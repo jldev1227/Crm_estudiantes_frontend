@@ -167,7 +167,7 @@ export default function TablaEstudiantes({
     }
 
     // Añadimos la columna de calificaciones solo si el usuario es director
-    if (isDirector && isVisible) {
+    if (isAdmin || isDirector && isVisible) {
       baseColumns.push({
         key: "calificaciones",
         label: "CALIFICACIONES",
@@ -297,11 +297,10 @@ export default function TablaEstudiantes({
                   <td className="px-6 py-4 whitespace-nowrap text-sm align-middle">
                     <div className="flex items-center gap-3 min-h-[24px]">
                       <span
-                        className={`min-w-[70px] text-center px-2 inline-block text-xs leading-5 font-semibold rounded-full ${
-                          item.pension_activa
+                        className={`min-w-[70px] text-center px-2 inline-block text-xs leading-5 font-semibold rounded-full ${item.pension_activa
                             ? "bg-green-100 text-green-800"
                             : "bg-red-100 text-red-800"
-                        }`}
+                          }`}
                       >
                         {item.pension_activa ? "Activa" : "Inactiva"}
                       </span>
@@ -321,11 +320,10 @@ export default function TablaEstudiantes({
                   <td className="px-6 py-4 whitespace-nowrap text-sm align-middle">
                     <div className="flex items-center gap-3 min-h-[24px]">
                       <span
-                        className={`min-w-[70px] text-center px-2 inline-block text-xs leading-5 font-semibold rounded-full ${
-                          item.ver_calificaciones
+                        className={`min-w-[70px] text-center px-2 inline-block text-xs leading-5 font-semibold rounded-full ${item.ver_calificaciones
                             ? "bg-green-100 text-green-800"
                             : "bg-red-100 text-red-800"
-                        }`}
+                          }`}
                       >
                         {item.ver_calificaciones ? "Activa" : "Inactiva"}
                       </span>
@@ -341,7 +339,7 @@ export default function TablaEstudiantes({
                   </td>
                 )}
 
-                {isDirector && isVisible && (
+                {(isAdmin || (isDirector && isVisible)) && (
                   <td className="px-6 py-4 whitespace-nowrap text-sm align-middle">
                     <Button
                       color="warning"

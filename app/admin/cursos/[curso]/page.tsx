@@ -374,17 +374,6 @@ export default function CursoDashboard() {
                   </div>
                 </div>
               </div>
-              <div className="flex gap-2">
-                <Button
-                  color="primary"
-                  size="sm"
-                  startContent={<EyeIcon />}
-                  variant="flat"
-                  onPress={() => verMaestro(curso.director.id)}
-                >
-                  Ver Perfil
-                </Button>
-              </div>
             </div>
 
             {/* Progreso de carga académica del director */}
