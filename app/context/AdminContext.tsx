@@ -14,6 +14,9 @@ import { Curso, Estudiante, EstudianteInput, Maestro, Nota } from "@/types";
 import { OBTENER_ESTADISTICAS_ADMIN } from "../graphql/queries/ObtenerEstadisticasAdmin";
 import { OBTENER_ESTUDIANTES } from "../graphql/queries/obtenerEstudiantes";
 import { CREAR_ESTUDIANTE } from "../graphql/mutation/crearEstudiante";
+import { CAMBIAR_GRADO_ESTUDIANTE } from "../graphql/mutation/cambiarGradoEstudiante";
+import { CAMBIAR_GRADO_ESTUDIANTES_MASIVO } from "../graphql/mutation/cambiarGradoEstudiantesMasivo";
+import { OBTENER_CALIFICACIONES_GRADO_COMPLETO } from "../graphql/queries/obtenerCalificacionesGradoCompleto";
 
 // Types para calificaciones
 interface CalificacionesGradoCompletoResponse {
@@ -138,7 +141,9 @@ interface AdminContextType {
     periodo: number,
   ) => Promise<CalificacionesGradoCompletoResponse | void>;
   obtenerCurso: (id: number) => void;
-  crearEstudiante: (curso: number, estudiante: EstudianteInput) => void;
+  crearEstudiante: (estudiante: EstudianteInput) => void;
+  cambiarGradoEstudiante: (id: string, grado_id: string) => Promise<Estudiante | void>;
+  cambiarGradoEstudiantesMasivo: (estudiante_ids: string[], grado_id: string) => Promise<any>;
   actualizarPension: (id: number) => void;
   actualizarVerCalificaciones: (id: number) => void;
   establecerPeriodo: (periodo: number) => void;
@@ -263,6 +268,18 @@ const adminReducer = (state: any, action: any) => {
               : estudiante,
           ),
         },
+      };
+    case "CAMBIAR_GRADO_ESTUDIANTE":
+      return {
+        ...state,
+        estaCargando: false,
+        error: null,
+      };
+    case "CAMBIAR_GRADO_ESTUDIANTES_MASIVO":
+      return {
+        ...state,
+        estaCargando: false,
+        error: null,
       };
     case "ESTABLECER_PERIODO":
       return {
@@ -438,21 +455,25 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
   ): Promise<CalificacionesGradoCompletoResponse | void> => {
     dispatch({ type: "SET_LOADING", payload: true });
 
+    console.log(grado_id, periodo)
+
     try {
       const { data } = await client.query({
-        query: OBTENER_CALIFICACIONES,
+        query: OBTENER_CALIFICACIONES_GRADO_COMPLETO,
         variables: { grado_id, periodo },
         fetchPolicy: "network-only", // Para asegurar datos frescos
         errorPolicy: "all",
       });
 
-      if (data?.obtenerCalificaciones) {
+      console.log(data)
+
+      if (data?.obtenerCalificacionesGradoCompleto) {
         dispatch({
           type: "OBTENER_CALIFICACIONES_GRADO_COMPLETO",
-          payload: data.obtenerCalificaciones,
+          payload: data.obtenerCalificacionesGradoCompleto,
         });
 
-        return data.obtenerCalificaciones;
+        return data.obtenerCalificacionesGradoCompleto;
       } else {
         throw new Error("No se recibieron datos de calificaciones");
       }
@@ -509,7 +530,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
         numero_identificacion: estudianteNuevo.numero_identificacion,
         fecha_nacimiento: estudianteNuevo.fecha_nacimiento,
         tipo_documento: estudianteNuevo.tipo_documento,
-        password: estudianteNuevo.password,
+        password: estudianteNuevo.password || estudianteNuevo.numero_identificacion,
         grado_id: estudianteNuevo.grado_id
       }, // ✅ Ahora coincide con la mutación
     });
@@ -526,6 +547,58 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
     });
   }
 };
+
+  // Función para cambiar el grado de un estudiante individual
+  const cambiarGradoEstudiante = async (id: string, grado_id: string): Promise<Estudiante | void> => {
+    dispatch({ type: "SET_LOADING", payload: true });
+
+    try {
+      const { data } = await client.mutate({
+        mutation: CAMBIAR_GRADO_ESTUDIANTE,
+        variables: { id, grado_id },
+      });
+
+      dispatch({
+        type: "CAMBIAR_GRADO_ESTUDIANTE",
+        payload: data.cambiarGradoEstudiante,
+      });
+
+      return data.cambiarGradoEstudiante;
+    } catch (error) {
+      console.error("Error cambiando grado del estudiante:", error);
+      dispatch({
+        type: "SET_ERROR",
+        payload: "Error al cambiar el grado del estudiante",
+      });
+      throw error;
+    }
+  };
+
+  // Función para cambiar el grado de múltiples estudiantes
+  const cambiarGradoEstudiantesMasivo = async (estudiante_ids: string[], grado_id: string) => {
+    dispatch({ type: "SET_LOADING", payload: true });
+
+    try {
+      const { data } = await client.mutate({
+        mutation: CAMBIAR_GRADO_ESTUDIANTES_MASIVO,
+        variables: { estudiante_ids, grado_id },
+      });
+
+      dispatch({
+        type: "CAMBIAR_GRADO_ESTUDIANTES_MASIVO",
+        payload: data.cambiarGradoEstudiantesMasivo,
+      });
+
+      return data.cambiarGradoEstudiantesMasivo;
+    } catch (error) {
+      console.error("Error cambiando grado de estudiantes masivo:", error);
+      dispatch({
+        type: "SET_ERROR",
+        payload: "Error al cambiar el grado de los estudiantes",
+      });
+      throw error;
+    }
+  };
 
 
   // Función para establecer el periodo
@@ -562,6 +635,8 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
     obtenerMaestros,
     obtenerEstudiantes,
     crearEstudiante,
+    cambiarGradoEstudiante,
+    cambiarGradoEstudiantesMasivo,
     actualizarPension,
     actualizarVerCalificaciones,
     establecerPeriodo,

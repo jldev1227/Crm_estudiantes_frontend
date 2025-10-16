@@ -362,7 +362,7 @@ export default function CursoDashboard() {
                       </h4>
                       <div className="flex items-center space-x-2 text-sm text-gray-600 mt-1">
                         <Mail className="w-4 h-4" />
-                        <span>{curso.director.email}</span>
+                        <span className="truncate w-36" title={curso.director.email}>{curso.director.email}</span>
                       </div>
                       <div className="flex items-center gap-2 mt-2">
                         <Chip color="success" size="sm" variant="flat">

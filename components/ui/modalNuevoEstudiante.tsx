@@ -21,7 +21,7 @@ import { useDateFormatter } from "@react-aria/i18n";
 export default function ModalNuevoEstudiante() {
     const params = useParams()
     const { isOpen, onOpen, onOpenChange } = useDisclosure();
-    const { obtenerEstudiantes, estudiantes, crearEstudiante } = useAdmin();
+    const { obtenerEstudiantes, estudiantes, crearEstudiante, cambiarGradoEstudiante, cambiarGradoEstudiantesMasivo } = useAdmin();
     const [busqueda, setBusqueda] = useState("");
     const [gradoSeleccionado, setGradoSeleccionado] = useState<Number | string>('');
     const [selectedView, setSelectedView] = useState<'listado' | 'nuevo'>('listado');
@@ -33,6 +33,7 @@ export default function ModalNuevoEstudiante() {
     })
     const [fechaNacimiento, setFechaNacimiento] = useState<DateValue | null>(null);
     const [tipoDocumento, setTipoDocumento] = useState<string>('');
+    const [isLoading, setIsLoading] = useState(false);
 
     let formatter = useDateFormatter({
         year: "numeric",
@@ -112,19 +113,91 @@ export default function ModalNuevoEstudiante() {
         })
     }
 
-    const handleSubmit = async () => {
+    const handleSubmit = async (onClose: () => void) => {
+        setIsLoading(true);
 
-        if (!fechaNacimiento) return
+        try {
+            if (selectedView === 'listado') {
+                // Cambiar grado de estudiantes seleccionados
+                const gradoDestino = Array.isArray(params.curso) ? params.curso[0] : params.curso;
+                
+                if (!gradoDestino) {
+                    alert('Error: No se pudo identificar el grado destino');
+                    return;
+                }
 
-        const newEstudiante = {
-            ...formData,
-            tipo_documento: tipoDocumento,
-            fecha_nacimiento: fechaNacimiento.toString(),
-            password: formData.numero_identificacion,
-            grado_id: params.curso
+                if (estudiantesSelecteds.length === 0) {
+                    alert('Debe seleccionar al menos un estudiante');
+                    return;
+                }
+
+                if (estudiantesSelecteds.length === 1) {
+                    // Usar función individual
+                    await cambiarGradoEstudiante(
+                        estudiantesSelecteds[0].toString(), 
+                        gradoDestino
+                    );
+                    alert('Grado del estudiante cambiado exitosamente');
+                } else {
+                    // Usar función masiva
+                    const resultado = await cambiarGradoEstudiantesMasivo(
+                        estudiantesSelecteds.map(id => id.toString()), 
+                        gradoDestino
+                    );
+                    
+                    if (resultado) {
+                        alert(
+                            `Operación completada:\n` +
+                            `• ${resultado.total_exitosos} estudiantes cambiados exitosamente\n` +
+                            `• ${resultado.total_fallidos} estudiantes con errores`
+                        );
+                    }
+                }
+
+                // Limpiar selecciones
+                setEstudiantesSelecteds([]);
+                onClose();
+            } else {
+                // Crear nuevo estudiante
+                if (!fechaNacimiento) {
+                    alert('Debe seleccionar una fecha de nacimiento');
+                    return;
+                }
+
+                const gradoDestino = Array.isArray(params.curso) ? params.curso[0] : params.curso;
+                
+                if (!gradoDestino) {
+                    alert('Error: No se pudo identificar el grado destino');
+                    return;
+                }
+
+                const newEstudiante = {
+                    ...formData,
+                    tipo_documento: tipoDocumento,
+                    fecha_nacimiento: fechaNacimiento.toString(),
+                    password: formData.numero_identificacion,
+                    grado_id: gradoDestino
+                }
+
+                await crearEstudiante(newEstudiante);
+                alert('Estudiante creado exitosamente');
+                
+                // Limpiar formulario
+                setFormData({
+                    nombre_completo: '',
+                    numero_identificacion: '',
+                    celular_padres: '',
+                });
+                setFechaNacimiento(null);
+                setTipoDocumento('');
+                onClose();
+            }
+        } catch (error) {
+            console.error('Error en operación:', error);
+            alert('Error al realizar la operación');
+        } finally {
+            setIsLoading(false);
         }
-
-        await crearEstudiante(newEstudiante)
     }
 
     return (
@@ -255,6 +328,39 @@ export default function ModalNuevoEstudiante() {
                                         <div className="mt-4 text-sm text-gray-600 text-center">
                                             Mostrando {estudiantesOptions().length} de {estudiantes.filter(estudiante => estudiante.grado.id.toString() !== params.curso).length} estudiantes
                                         </div>
+
+                                        {/* Resumen de estudiantes seleccionados */}
+                                        {estudiantesSelecteds.length > 0 && (
+                                            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                                <h4 className="text-sm font-semibold text-blue-800 mb-2">
+                                                    Estudiantes seleccionados ({estudiantesSelecteds.length})
+                                                </h4>
+                                                <div className="space-y-2 max-h-32 overflow-y-auto">
+                                                    {estudiantesSelecteds.map(id => {
+                                                        const estudiante = estudiantes.find(est => est.id === id);
+                                                        return estudiante ? (
+                                                            <div key={id} className="flex items-center justify-between text-sm">
+                                                                <span className="text-blue-700 font-medium">
+                                                                    {estudiante.nombre_completo}
+                                                                </span>
+                                                                <Button 
+                                                                    onPress={() => handleDeleteStudent(id)} 
+                                                                    isIconOnly 
+                                                                    color="danger" 
+                                                                    size="sm"
+                                                                    variant="light"
+                                                                >
+                                                                    <X className="w-3 h-3" />
+                                                                </Button>
+                                                            </div>
+                                                        ) : null;
+                                                    })}
+                                                </div>
+                                                <div className="mt-2 text-xs text-blue-600">
+                                                    Los estudiantes seleccionados serán trasladados a este grado.
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
 
@@ -279,8 +385,7 @@ export default function ModalNuevoEstudiante() {
                                                 placeholder="Ingresa el número de identificación"
                                                 isRequired
                                                 onChange={handleChangeForm}
-                                                errorMessage="Por favor ingresa un número de identificación"
-                                                isInvalid={formData["numero_identificacion"]}
+                                                isInvalid={!formData.numero_identificacion && formData.numero_identificacion !== ''}
                                             />
                                             <Input
                                                 type="text"
@@ -309,7 +414,12 @@ export default function ModalNuevoEstudiante() {
                                 <Button color="danger" variant="light" onPress={onClose}>
                                     Cerrar
                                 </Button>
-                                <Button className="bg-blue-500 text-white" onPress={handleSubmit}>
+                                <Button 
+                                    className="bg-blue-500 text-white" 
+                                    onPress={() => handleSubmit(onClose)}
+                                    isLoading={isLoading}
+                                    isDisabled={isLoading}
+                                >
                                     {selectedView === 'listado' ? "Cambiar de Grado" : "Registrar"}
                                 </Button>
                             </ModalFooter>
