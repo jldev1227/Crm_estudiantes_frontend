@@ -1,8 +1,14 @@
 import { gql } from "@apollo/client";
 
 export const CAMBIAR_GRADO_ESTUDIANTES_MASIVO = gql`
-  mutation CambiarGradoEstudiantesMasivo($estudiante_ids: [ID!]!, $grado_id: ID!) {
-    cambiarGradoEstudiantesMasivo(estudiante_ids: $estudiante_ids, grado_id: $grado_id) {
+  mutation CambiarGradoEstudiantesMasivo(
+    $estudiante_ids: [ID!]!
+    $grado_id: ID!
+  ) {
+    cambiarGradoEstudiantesMasivo(
+      estudiante_ids: $estudiante_ids
+      grado_id: $grado_id
+    ) {
       exitosos {
         id
         tipo_documento

@@ -3,12 +3,12 @@ import { gql } from "@apollo/client";
 
 export const CREAR_ESTUDIANTE = gql`
   mutation RegistrarEstudiante(
-    $nombre_completo: String! 
-    $celular_padres: String! 
-    $tipo_documento: String! 
-    $numero_identificacion: String! 
-    $fecha_nacimiento: String! 
-    $grado_id: String! 
+    $nombre_completo: String!
+    $celular_padres: String!
+    $tipo_documento: String!
+    $numero_identificacion: String!
+    $fecha_nacimiento: String!
+    $grado_id: String!
     $password: String!
   ) {
     registrarEstudiante(

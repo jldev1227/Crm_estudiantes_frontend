@@ -4,20 +4,20 @@ import React from "react";
 import { Pagination } from "@heroui/pagination";
 import { Button } from "@heroui/button";
 import { useParams, useRouter } from "next/navigation";
-import { 
-  FileText, 
-  ChevronUp, 
-  ChevronDown, 
-  User, 
-  Calendar, 
-  Phone, 
+import {
+  FileText,
+  ChevronUp,
+  ChevronDown,
+  User,
+  Calendar,
+  Phone,
   CreditCard,
   MoreHorizontal,
   Eye,
   Edit,
   Trash2,
   CheckCircle,
-  XCircle
+  XCircle,
 } from "lucide-react";
 
 import { Estudiante } from "@/types";
@@ -58,8 +58,11 @@ export default function TablaEstudiantes({
   const router = useRouter();
   const params = useParams();
   const [page, setPage] = React.useState(1);
-  const [estudiantesState, setEstudiantesState] = React.useState<Estudiante[]>(estudiantes);
-  const [selectedRows, setSelectedRows] = React.useState<Set<number>>(new Set());
+  const [estudiantesState, setEstudiantesState] =
+    React.useState<Estudiante[]>(estudiantes);
+  const [selectedRows, setSelectedRows] = React.useState<Set<number>>(
+    new Set(),
+  );
   const [dropdownOpen, setDropdownOpen] = React.useState<number | null>(null);
   const rowsPerPage = 10;
 
@@ -104,6 +107,7 @@ export default function TablaEstudiantes({
       return edad > 0 ? edad : 0;
     } catch (error) {
       console.error("Error al calcular edad:", error);
+
       return 0;
     }
   };
@@ -111,9 +115,9 @@ export default function TablaEstudiantes({
   // Generar iniciales para avatar
   const getInitials = (name: string) => {
     return name
-      .split(' ')
-      .map(word => word[0])
-      .join('')
+      .split(" ")
+      .map((word) => word[0])
+      .join("")
       .substring(0, 2)
       .toUpperCase();
   };
@@ -121,16 +125,24 @@ export default function TablaEstudiantes({
   // Generar color de avatar basado en el nombre
   const getAvatarColor = (name: string) => {
     const colors = [
-      'bg-blue-500', 'bg-green-500', 'bg-purple-500', 'bg-pink-500', 
-      'bg-indigo-500', 'bg-orange-500', 'bg-teal-500', 'bg-red-500'
+      "bg-blue-500",
+      "bg-green-500",
+      "bg-purple-500",
+      "bg-pink-500",
+      "bg-indigo-500",
+      "bg-orange-500",
+      "bg-teal-500",
+      "bg-red-500",
     ];
     const index = name.charCodeAt(0) % colors.length;
+
     return colors[index];
   };
 
   // Manejar selección de filas
   const handleSelectRow = (id: number) => {
     const newSelected = new Set(selectedRows);
+
     if (newSelected.has(id)) {
       newSelected.delete(id);
     } else {
@@ -143,7 +155,7 @@ export default function TablaEstudiantes({
     if (selectedRows.size === items.length) {
       setSelectedRows(new Set());
     } else {
-      setSelectedRows(new Set(items.map(item => item.id)));
+      setSelectedRows(new Set(items.map((item) => item.id)));
     }
   };
 
@@ -155,22 +167,22 @@ export default function TablaEstudiantes({
         label: "ESTUDIANTE",
         sortable: true,
         width: "min-w-0 flex-1",
-        hideOnMobile: false
+        hideOnMobile: false,
       },
       {
         key: "documento",
         label: "DOCUMENTO",
         sortable: true,
         width: "w-32 xl:w-40",
-        hideOnMobile: true
+        hideOnMobile: true,
       },
       {
         key: "contacto",
         label: "CONTACTO",
         sortable: false,
         width: "w-40 xl:w-48",
-        hideOnMobile: true
-      }
+        hideOnMobile: true,
+      },
     ];
 
     // Añadir columnas condicionales
@@ -180,15 +192,15 @@ export default function TablaEstudiantes({
         label: "PENSIÓN",
         sortable: true,
         width: "w-28 xl:w-32",
-        hideOnMobile: true
+        hideOnMobile: true,
       });
-      
+
       baseColumns.push({
         key: "calificaciones_admin",
         label: "VER NOTAS",
         sortable: true,
         width: "w-28 xl:w-32",
-        hideOnMobile: true
+        hideOnMobile: true,
       });
     }
 
@@ -198,7 +210,7 @@ export default function TablaEstudiantes({
         label: "CALIFICACIONES",
         sortable: false,
         width: "w-32",
-        hideOnMobile: true
+        hideOnMobile: true,
       });
     }
 
@@ -207,7 +219,7 @@ export default function TablaEstudiantes({
       label: "",
       sortable: false,
       width: "w-10",
-      hideOnMobile: true
+      hideOnMobile: true,
     });
 
     return baseColumns;
@@ -218,24 +230,31 @@ export default function TablaEstudiantes({
   const items = React.useMemo(() => {
     const start = (page - 1) * rowsPerPage;
     const end = start + rowsPerPage;
+
     return estudiantesState.slice(start, end);
   }, [page, estudiantesState]);
 
   // Función para manejar el ordenamiento de columnas
   const handleSort = (key: string) => {
     if (!onSortChange) return;
-    const sortableKeys = ["estudiante", "documento", "pension", "calificaciones_admin"];
+    const sortableKeys = [
+      "estudiante",
+      "documento",
+      "pension",
+      "calificaciones_admin",
+    ];
+
     if (!sortableKeys.includes(key)) return;
-    
+
     // Mapear keys a campos reales
     const keyMap: { [key: string]: SortField } = {
       estudiante: "nombre_completo",
       documento: "numero_identificacion",
       pension: "pension_activa",
-      calificaciones_admin: "ver_calificaciones"
+      calificaciones_admin: "ver_calificaciones",
     };
-    
-    onSortChange(keyMap[key] || key as SortField);
+
+    onSortChange(keyMap[key] || (key as SortField));
   };
 
   // Función para renderizar flechas de ordenamiento
@@ -244,13 +263,21 @@ export default function TablaEstudiantes({
       estudiante: "nombre_completo",
       documento: "numero_identificacion",
       pension: "pension_activa",
-      calificaciones_admin: "ver_calificaciones"
+      calificaciones_admin: "ver_calificaciones",
     };
-    
+
     const realSortField = keyMap[key] || key;
-    const sortableKeys = ["estudiante", "documento", "pension", "calificaciones_admin"];
-    
-    if (realSortField !== (sortField as string) || !sortableKeys.includes(key)) {
+    const sortableKeys = [
+      "estudiante",
+      "documento",
+      "pension",
+      "calificaciones_admin",
+    ];
+
+    if (
+      realSortField !== (sortField as string) ||
+      !sortableKeys.includes(key)
+    ) {
       return <ChevronUp className="w-3 h-3 text-gray-300" />;
     }
 
@@ -286,9 +313,9 @@ export default function TablaEstudiantes({
             <button className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
               Eliminar
             </button>
-            <button 
-              onClick={() => setSelectedRows(new Set())}
+            <button
               className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+              onClick={() => setSelectedRows(new Set())}
             >
               Cancelar
             </button>
@@ -307,21 +334,25 @@ export default function TablaEstudiantes({
                   <th
                     key={column.key}
                     className={`${column.width} px-3 lg:px-4 xl:px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider ${
-                      column.hideOnMobile ? 'hidden lg:table-cell' : ''
+                      column.hideOnMobile ? "hidden lg:table-cell" : ""
                     } ${
-                      column.sortable && onSortChange 
-                        ? "cursor-pointer hover:bg-gray-100 transition-colors" 
+                      column.sortable && onSortChange
+                        ? "cursor-pointer hover:bg-gray-100 transition-colors"
                         : ""
                     }`}
                     scope="col"
-                    onClick={() => column.sortable ? handleSort(column.key) : null}
+                    onClick={() =>
+                      column.sortable ? handleSort(column.key) : null
+                    }
                   >
                     {column.key === "select" ? (
                       <input
-                        type="checkbox"
-                        checked={selectedRows.size === items.length && items.length > 0}
-                        onChange={handleSelectAll}
+                        checked={
+                          selectedRows.size === items.length && items.length > 0
+                        }
                         className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                        type="checkbox"
+                        onChange={handleSelectAll}
                       />
                     ) : (
                       <div className="flex items-center space-x-1 group">
@@ -341,10 +372,12 @@ export default function TablaEstudiantes({
             {/* Cuerpo de la tabla */}
             <tbody className="divide-y divide-gray-100">
               {items.map((item, index) => (
-                <tr 
-                  key={item.id} 
+                <tr
+                  key={item.id}
                   className={`hover:bg-blue-50/50 transition-all duration-200 ${
-                    selectedRows.has(item.id) ? 'bg-blue-50 border-l-4 border-blue-500' : ''
+                    selectedRows.has(item.id)
+                      ? "bg-blue-50 border-l-4 border-blue-500"
+                      : ""
                   }`}
                 >
                   {/* Información del estudiante */}
@@ -357,24 +390,30 @@ export default function TablaEstudiantes({
                         {/* En móvil mostramos el documento aquí */}
                         <span className="lg:hidden flex items-center space-x-1">
                           <CreditCard className="w-3 h-3" />
-                          <span>{item.tipo_documento}: {item.numero_identificacion}</span>
+                          <span>
+                            {item.tipo_documento}: {item.numero_identificacion}
+                          </span>
                         </span>
                         {/* En desktop mostramos edad */}
                         <span className="hidden lg:flex items-center space-x-1">
                           <Calendar className="w-3 h-3" />
-                          <span>{calcularEdad(item.fecha_nacimiento)} años</span>
+                          <span>
+                            {calcularEdad(item.fecha_nacimiento)} años
+                          </span>
                         </span>
                       </div>
-                      
+
                       {/* Estados en móvil */}
                       <div className="lg:hidden flex flex-wrap gap-1 mt-2">
                         {isAdmin && (
                           <>
-                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                              item.pension_activa 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-red-100 text-red-800'
-                            }`}>
+                            <span
+                              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                item.pension_activa
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-red-100 text-red-800"
+                              }`}
+                            >
                               {item.pension_activa ? (
                                 <CheckCircle className="w-3 h-3 mr-1" />
                               ) : (
@@ -382,11 +421,13 @@ export default function TablaEstudiantes({
                               )}
                               Pensión
                             </span>
-                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                              item.ver_calificaciones 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-red-100 text-red-800'
-                            }`}>
+                            <span
+                              className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                item.ver_calificaciones
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-red-100 text-red-800"
+                              }`}
+                            >
                               {item.ver_calificaciones ? (
                                 <CheckCircle className="w-3 h-3 mr-1" />
                               ) : (
@@ -405,7 +446,9 @@ export default function TablaEstudiantes({
                     <div className="space-y-1">
                       <div className="flex items-center space-x-2">
                         <CreditCard className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                        <span className="text-sm text-gray-700 font-medium">{item.tipo_documento}</span>
+                        <span className="text-sm text-gray-700 font-medium">
+                          {item.tipo_documento}
+                        </span>
                       </div>
                       <div className="bg-gray-100 text-gray-800 text-xs font-mono px-2 py-1 rounded-lg inline-block">
                         {item.numero_identificacion}
@@ -418,7 +461,9 @@ export default function TablaEstudiantes({
                     <div className="space-y-1">
                       <div className="flex items-center space-x-2 text-xs lg:text-sm">
                         <Phone className="w-3 h-3 lg:w-4 lg:h-4 text-gray-400 flex-shrink-0" />
-                        <span className="text-gray-700">{item.celular_padres}</span>
+                        <span className="text-gray-700">
+                          {item.celular_padres}
+                        </span>
                       </div>
                       <div className="hidden lg:flex items-center space-x-2 text-xs text-gray-500">
                         <Calendar className="w-3 h-3" />
@@ -431,21 +476,23 @@ export default function TablaEstudiantes({
                   {isAdmin && (
                     <td className="hidden lg:table-cell px-4 xl:px-6 py-3">
                       <div className="space-y-2">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                          item.pension_activa 
-                            ? 'bg-green-100 text-green-800 border border-green-200' 
-                            : 'bg-red-100 text-red-800 border border-red-200'
-                        }`}>
+                        <span
+                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                            item.pension_activa
+                              ? "bg-green-100 text-green-800 border border-green-200"
+                              : "bg-red-100 text-red-800 border border-red-200"
+                          }`}
+                        >
                           {item.pension_activa ? (
                             <CheckCircle className="w-3 h-3 mr-1" />
                           ) : (
                             <XCircle className="w-3 h-3 mr-1" />
                           )}
-                          {item.pension_activa ? 'Activa' : 'Inactiva'}
+                          {item.pension_activa ? "Activa" : "Inactiva"}
                         </span>
                         <button
-                          onClick={() => handlePension(item.id)}
                           className="block w-full px-3 py-1 text-xs font-medium rounded bg-blue-500 text-white hover:bg-blue-600 transition-colors"
+                          onClick={() => handlePension(item.id)}
                         >
                           Cambiar
                         </button>
@@ -457,21 +504,23 @@ export default function TablaEstudiantes({
                   {isAdmin && (
                     <td className="hidden lg:table-cell px-4 xl:px-6 py-3">
                       <div className="space-y-2">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                          item.ver_calificaciones 
-                            ? 'bg-green-100 text-green-800 border border-green-200' 
-                            : 'bg-red-100 text-red-800 border border-red-200'
-                        }`}>
+                        <span
+                          className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                            item.ver_calificaciones
+                              ? "bg-green-100 text-green-800 border border-green-200"
+                              : "bg-red-100 text-red-800 border border-red-200"
+                          }`}
+                        >
                           {item.ver_calificaciones ? (
                             <CheckCircle className="w-3 h-3 mr-1" />
                           ) : (
                             <XCircle className="w-3 h-3 mr-1" />
                           )}
-                          {item.ver_calificaciones ? 'Activa' : 'Inactiva'}
+                          {item.ver_calificaciones ? "Activa" : "Inactiva"}
                         </span>
                         <button
-                          onClick={() => handleCalificaciones(item.id)}
                           className="block w-full px-3 py-1 text-xs font-medium rounded bg-green-500 text-white hover:bg-green-600 transition-colors"
+                          onClick={() => handleCalificaciones(item.id)}
                         >
                           Cambiar
                         </button>
@@ -483,12 +532,16 @@ export default function TablaEstudiantes({
                   {isDirector && isVisible && (
                     <td className="hidden lg:table-cell px-4 xl:px-6 py-3">
                       <Button
+                        className="hover:scale-105 transition-transform"
                         color="warning"
                         size="sm"
-                        variant="flat"
                         startContent={<FileText className="w-4 h-4" />}
-                        onPress={() => router.push(`${params.curso}/calificaciones/${item.id}`)}
-                        className="hover:scale-105 transition-transform"
+                        variant="flat"
+                        onPress={() =>
+                          router.push(
+                            `${params.curso}/calificaciones/${item.id}`,
+                          )
+                        }
                       >
                         Ver
                       </Button>
@@ -499,12 +552,16 @@ export default function TablaEstudiantes({
                   <td className="hidden lg:table-cell px-3 lg:px-4 xl:px-6 py-3">
                     <div className="relative">
                       <button
-                        onClick={() => setDropdownOpen(dropdownOpen === item.id ? null : item.id)}
                         className="p-1.5 lg:p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200"
+                        onClick={() =>
+                          setDropdownOpen(
+                            dropdownOpen === item.id ? null : item.id,
+                          )
+                        }
                       >
                         <MoreHorizontal className="w-4 h-4 lg:w-5 lg:h-5" />
                       </button>
-                      
+
                       {dropdownOpen === item.id && (
                         <div className="absolute right-0 mt-2 w-44 bg-white border border-gray-200 rounded-xl shadow-lg z-10 overflow-hidden">
                           <button className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-3 transition-colors">
@@ -518,16 +575,16 @@ export default function TablaEstudiantes({
                           {isAdmin && (
                             <>
                               <hr className="border-gray-100" />
-                              <button 
-                                onClick={() => handlePension(item.id)}
+                              <button
                                 className="lg:hidden w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-3 transition-colors"
+                                onClick={() => handlePension(item.id)}
                               >
                                 <CheckCircle className="w-4 h-4 text-blue-500" />
                                 <span>Cambiar Pensión</span>
                               </button>
-                              <button 
-                                onClick={() => handleCalificaciones(item.id)}
+                              <button
                                 className="lg:hidden w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-3 transition-colors"
+                                onClick={() => handleCalificaciones(item.id)}
                               >
                                 <FileText className="w-4 h-4 text-green-500" />
                                 <span>Cambiar Ver Notas</span>
@@ -535,9 +592,13 @@ export default function TablaEstudiantes({
                             </>
                           )}
                           {isDirector && isVisible && (
-                            <button 
-                              onClick={() => router.push(`${params.curso}/calificaciones/${item.id}`)}
+                            <button
                               className="lg:hidden w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center space-x-3 transition-colors"
+                              onClick={() =>
+                                router.push(
+                                  `${params.curso}/calificaciones/${item.id}`,
+                                )
+                              }
                             >
                               <FileText className="w-4 h-4 text-orange-500" />
                               <span>Ver Calificaciones</span>
@@ -562,8 +623,12 @@ export default function TablaEstudiantes({
         {items.length === 0 && (
           <div className="text-center py-12">
             <User className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 font-medium">No hay estudiantes para mostrar</p>
-            <p className="text-gray-400 text-sm">Los estudiantes aparecerán aquí una vez que sean agregados</p>
+            <p className="text-gray-500 font-medium">
+              No hay estudiantes para mostrar
+            </p>
+            <p className="text-gray-400 text-sm">
+              Los estudiantes aparecerán aquí una vez que sean agregados
+            </p>
           </div>
         )}
       </div>
@@ -572,20 +637,23 @@ export default function TablaEstudiantes({
       <div className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
         <div className="text-sm text-gray-600">
           Mostrando {items.length === 0 ? 0 : (page - 1) * rowsPerPage + 1} a{" "}
-          {Math.min(page * rowsPerPage, estudiantesState.length)} de {estudiantesState.length} estudiantes
+          {Math.min(page * rowsPerPage, estudiantesState.length)} de{" "}
+          {estudiantesState.length} estudiantes
         </div>
-        
+
         {pages > 1 && (
           <Pagination
+            classNames={{
+              wrapper:
+                "gap-0 overflow-visible h-8 rounded-xl border border-divider",
+              item: "w-8 h-8 text-small rounded-none bg-transparent",
+              cursor:
+                "bg-gradient-to-b shadow-lg from-blue-500 to-blue-600 text-white font-bold",
+            }}
             initialPage={1}
             page={page}
             total={pages}
             onChange={(p) => setPage(p)}
-            classNames={{
-              wrapper: "gap-0 overflow-visible h-8 rounded-xl border border-divider",
-              item: "w-8 h-8 text-small rounded-none bg-transparent",
-              cursor: "bg-gradient-to-b shadow-lg from-blue-500 to-blue-600 text-white font-bold",
-            }}
           />
         )}
       </div>

@@ -8,9 +8,6 @@ import { OBTENER_CURSO_GENERAL } from "../graphql/queries/obtenerCursoGeneral";
 import { ACTUALIZAR_PENSION } from "../graphql/mutation/actualizarPension";
 import { ACTUALIZAR_VER_CALIFICACIONES } from "../graphql/mutation/actualizarVerCalificaciones";
 import { OBTENER_MAESTROS } from "../graphql/queries/obtenerMaestros";
-import { OBTENER_CALIFICACIONES } from "../graphql/queries/obtenerCalificaciones";
-
-import { Curso, Estudiante, EstudianteInput, Maestro, Nota } from "@/types";
 import { OBTENER_ESTADISTICAS_ADMIN } from "../graphql/queries/ObtenerEstadisticasAdmin";
 import { OBTENER_ESTUDIANTES } from "../graphql/queries/obtenerEstudiantes";
 import { CREAR_ESTUDIANTE } from "../graphql/mutation/crearEstudiante";
@@ -18,108 +15,40 @@ import { CAMBIAR_GRADO_ESTUDIANTE } from "../graphql/mutation/cambiarGradoEstudi
 import { CAMBIAR_GRADO_ESTUDIANTES_MASIVO } from "../graphql/mutation/cambiarGradoEstudiantesMasivo";
 import { OBTENER_CALIFICACIONES_GRADO_COMPLETO } from "../graphql/queries/obtenerCalificacionesGradoCompleto";
 
-// Types para calificaciones
+import { Curso, Estudiante, EstudianteInput, Maestro } from "@/types";
+
+// Tipos para la respuesta actual de obtenerCalificacionesGradoCompleto
 interface CalificacionesGradoCompletoResponse {
-  grado_id: string;
-  periodo: number;
-  grado: {
+  grado?: {
     id: string;
     nombre: string;
-    director?: {
-      id: string;
-      nombre_completo: string;
-    };
-  };
-  estudiantes: EstudianteConCalificacionesArea[];
-  area: AreaConCalificaciones;
-  estadisticas: EstadisticasGeneralesGrado;
-  actividades: ActividadCalificacion[];
+  } | null;
+  calificaciones: CalificacionItem[];
 }
 
-interface AreaConCalificaciones {
-  id: string;
-  nombre: string;
-  maestro?: {
+interface CalificacionItem {
+  area: {
     id: string;
-    nombre_completo: string;
+    nombre: string;
   };
-  actividades: ActividadCalificacion[];
-  estudiantes: EstudianteConCalificacionesArea[];
-  estadisticas: EstadisticasArea;
-}
-
-interface EstudianteConCalificacionesArea {
-  id: string;
-  tipo_documento: string;
-  numero_identificacion: string;
-  nombre_completo: string;
-  celular_padres?: string;
-  calificacion_id?: string;
-  nota_final_area: number;
-  nota_final: number;
-  estado: string;
-  estado_area: string;
-  notas: Nota[];
-  notas_area: NotaEstudiante[];
-}
-
-interface NotaEstudiante {
-  actividad_id: string;
-  nombre: string;
-  valor?: number;
-  porcentaje: number;
-  completada: boolean;
-}
-
-interface ActividadCalificacion {
-  id: string;
-  nombre: string;
-  porcentaje: number;
-  tipo: string;
-  orden?: number;
-  activa: boolean;
-}
-
-interface EstadisticasArea {
-  total_estudiantes: number;
-  calificados: number;
-  sin_calificar: number;
-  promedio_area: number;
-  aprobados: number;
-  reprobados: number;
-  porcentaje_aprobacion: number;
-}
-
-interface EstadisticasGeneralesGrado {
-  total_estudiantes: number;
-  total_areas: number;
-  promedio_general: number;
-  estudiantes_aprobados_todas_areas: number;
-  porcentaje_aprobacion_general: number;
-  promedio_area: number;
-  aprobados: number;
-  reprobados: number;
-  calificados: number;
-  porcentaje_aprobacion: number;
-  sin_calificar: number;
-  distribucion_notas: {
-    excelente: number;
-    sobresaliente: number;
-    aceptable: number;
-    insuficiente: number;
-    deficiente: number;
+  notaFinal: number;
+  estudiante: {
+    id: string;
+    tipo_documento?: string;
+    nombre_completo: string;
+    numero_identificacion?: string;
   };
 }
 
 interface Estadisticas {
-  totalEstudiantes: number
-  totalMaestros: number
-  totalActividades: number
-  totalTareas: number
-  totalCalificaciones: number
-  totalGrados: number
-  totalAreas: number
-  totalUsuarios: number
+  totalEstudiantes: number;
+  totalMaestros: number;
+  totalActividades: number;
+  totalTareas: number;
+  totalCalificaciones: number;
+  totalGrados: number;
+  totalAreas: number;
+  totalUsuarios: number;
 }
 
 interface AdminContextType {
@@ -142,8 +71,14 @@ interface AdminContextType {
   ) => Promise<CalificacionesGradoCompletoResponse | void>;
   obtenerCurso: (id: number) => void;
   crearEstudiante: (estudiante: EstudianteInput) => void;
-  cambiarGradoEstudiante: (id: string, grado_id: string) => Promise<Estudiante | void>;
-  cambiarGradoEstudiantesMasivo: (estudiante_ids: string[], grado_id: string) => Promise<any>;
+  cambiarGradoEstudiante: (
+    id: string,
+    grado_id: string,
+  ) => Promise<Estudiante | void>;
+  cambiarGradoEstudiantesMasivo: (
+    estudiante_ids: string[],
+    grado_id: string,
+  ) => Promise<any>;
   actualizarPension: (id: number) => void;
   actualizarVerCalificaciones: (id: number) => void;
   establecerPeriodo: (periodo: number) => void;
@@ -158,6 +93,7 @@ const initialState = {
   estudiantes: [],
   estaCargando: false,
   calificaciones: null, // Calificaciones completas del grado
+  calificacionesGrado: null,
   estadisticas: {
     totalEstudiantes: 0,
     totalMaestros: 0,
@@ -227,6 +163,13 @@ const adminReducer = (state: any, action: any) => {
         estaCargando: false,
         error: null,
       };
+    case "OBTENER_CALIFICACIONES_GRADO_COMPLETO":
+      return {
+        ...state,
+        calificacionesGrado: action.payload,
+        estaCargando: false,
+        error: null,
+      };
     case "OBTENER_ESTADISTICAS":
       return {
         ...state,
@@ -262,9 +205,9 @@ const adminReducer = (state: any, action: any) => {
           estudiantes: state.curso.estudiantes.map((estudiante: Estudiante) =>
             estudiante.id === action.payload.id
               ? {
-                ...estudiante,
-                ver_calificaciones: !estudiante.ver_calificaciones,
-              }
+                  ...estudiante,
+                  ver_calificaciones: !estudiante.ver_calificaciones,
+                }
               : estudiante,
           ),
         },
@@ -342,7 +285,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
         query: OBTENER_ESTADISTICAS_ADMIN,
       });
 
-      console.log(data.obtenerEstadisticasAdmin)
+      console.log(data.obtenerEstadisticasAdmin);
 
       dispatch({
         type: "OBTENER_ESTADISTICAS",
@@ -455,7 +398,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
   ): Promise<CalificacionesGradoCompletoResponse | void> => {
     dispatch({ type: "SET_LOADING", payload: true });
 
-    console.log(grado_id, periodo)
+    console.log(grado_id, periodo);
 
     try {
       const { data } = await client.query({
@@ -464,8 +407,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
         fetchPolicy: "network-only", // Para asegurar datos frescos
         errorPolicy: "all",
       });
-
-      console.log(data)
 
       if (data?.obtenerCalificacionesGradoCompleto) {
         dispatch({
@@ -496,7 +437,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
         query: OBTENER_ESTUDIANTES,
       });
 
-      if( !data?.obtenerEstudiantes ) {
+      if (!data?.obtenerEstudiantes) {
         throw new Error("No se recibieron datos de estudiantes");
       }
 
@@ -513,43 +454,46 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
         payload: "Error al cargar los estudiantes",
       });
     }
-  }
+  };
 
-  
   // Función que ejecuta la mutation y despacha la acción para actualizar la pension del estudiante
- const crearEstudiante = async (estudianteNuevo: EstudianteInput) => {
-  dispatch({ type: "SET_LOADING", payload: true });
+  const crearEstudiante = async (estudianteNuevo: EstudianteInput) => {
+    dispatch({ type: "SET_LOADING", payload: true });
 
-  try {
-    console.log(estudianteNuevo)
-    const { data } = await client.mutate({
-      mutation: CREAR_ESTUDIANTE,
-      variables: {
-        nombre_completo: estudianteNuevo.nombre_completo,
-        celular_padres: estudianteNuevo.celular_padres,
-        numero_identificacion: estudianteNuevo.numero_identificacion,
-        fecha_nacimiento: estudianteNuevo.fecha_nacimiento,
-        tipo_documento: estudianteNuevo.tipo_documento,
-        password: estudianteNuevo.password || estudianteNuevo.numero_identificacion,
-        grado_id: estudianteNuevo.grado_id
-      }, // ✅ Ahora coincide con la mutación
-    });
+    try {
+      console.log(estudianteNuevo);
+      const { data } = await client.mutate({
+        mutation: CREAR_ESTUDIANTE,
+        variables: {
+          nombre_completo: estudianteNuevo.nombre_completo,
+          celular_padres: estudianteNuevo.celular_padres,
+          numero_identificacion: estudianteNuevo.numero_identificacion,
+          fecha_nacimiento: estudianteNuevo.fecha_nacimiento,
+          tipo_documento: estudianteNuevo.tipo_documento,
+          password:
+            estudianteNuevo.password || estudianteNuevo.numero_identificacion,
+          grado_id: estudianteNuevo.grado_id,
+        }, // ✅ Ahora coincide con la mutación
+      });
 
-    dispatch({
-      type: "CREAR_ESTUDIANTE",
-      payload: { id: data.registrarEstudiante.id }, // ⚠️ Cambiar de actualizarPension a registrarEstudiante
-    });
-  } catch (error) {
-    console.error("Error creando estudiante:", error);
-    dispatch({
-      type: "SET_ERROR",
-      payload: "Error al crear el estudiante",
-    });
-  }
-};
+      dispatch({
+        type: "CREAR_ESTUDIANTE",
+        payload: { id: data.registrarEstudiante.id }, // ⚠️ Cambiar de actualizarPension a registrarEstudiante
+      });
+    } catch (error) {
+      console.error("Error creando estudiante:", error);
+      dispatch({
+        type: "SET_ERROR",
+        payload: "Error al crear el estudiante",
+      });
+    }
+  };
 
   // Función para cambiar el grado de un estudiante individual
-  const cambiarGradoEstudiante = async (id: string, grado_id: string): Promise<Estudiante | void> => {
+  const cambiarGradoEstudiante = async (
+    id: string,
+    grado_id: string,
+  ): Promise<Estudiante | void> => {
     dispatch({ type: "SET_LOADING", payload: true });
 
     try {
@@ -575,7 +519,10 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   // Función para cambiar el grado de múltiples estudiantes
-  const cambiarGradoEstudiantesMasivo = async (estudiante_ids: string[], grado_id: string) => {
+  const cambiarGradoEstudiantesMasivo = async (
+    estudiante_ids: string[],
+    grado_id: string,
+  ) => {
     dispatch({ type: "SET_LOADING", payload: true });
 
     try {
@@ -599,7 +546,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
       throw error;
     }
   };
-
 
   // Función para establecer el periodo
   const establecerPeriodo = (periodo: number) => {

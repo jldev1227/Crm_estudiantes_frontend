@@ -4,12 +4,12 @@ import { gql } from "@apollo/client";
 export const OBTENER_ESTUDIANTES = gql`
   query ObtenerEstudiantes {
     obtenerEstudiantes {
+      id
+      nombre_completo
+      grado {
         id
-        nombre_completo
-        grado {
-            id
-            nombre
-        }
+        nombre
+      }
     }
   }
 `;

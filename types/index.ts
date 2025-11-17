@@ -25,7 +25,7 @@ export type EstudianteInput = {
   celular_padres: string;
   password?: string;
   grado_id?: string;
-}
+};
 
 export type Maestro = {
   id: number;

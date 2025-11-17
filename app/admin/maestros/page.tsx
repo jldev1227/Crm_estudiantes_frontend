@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Users, Plus, Search, Filter, UserCheck, AlertCircle, Loader2, BookOpen, Award, Clock } from "lucide-react";
+import { Users, Plus, Search, AlertCircle, Loader2 } from "lucide-react";
 
 import { useAdmin } from "@/app/context/AdminContext";
 import MaestrosResponsive from "@/components/maestroResponsive";
@@ -15,19 +15,24 @@ export default function Page() {
     obtenerMaestros();
   }, []);
 
-  const filteredMaestros = maestros.filter(maestro =>
-    maestro.nombre_completo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    maestro.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredMaestros = maestros.filter(
+    (maestro) =>
+      maestro.nombre_completo
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      maestro.email?.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const LoadingState = () => (
     <div className="flex flex-col items-center justify-center py-16 space-y-4">
       <div className="relative">
-        <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full animate-pulse"></div>
+        <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full animate-pulse" />
         <Loader2 className="w-8 h-8 text-white absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 animate-spin" />
       </div>
       <div className="text-center">
-        <h3 className="text-lg font-semibold text-gray-700">Cargando maestros...</h3>
+        <h3 className="text-lg font-semibold text-gray-700">
+          Cargando maestros...
+        </h3>
         <p className="text-gray-500">Por favor espera un momento</p>
       </div>
     </div>
@@ -39,10 +44,13 @@ export default function Page() {
         <AlertCircle className="w-12 h-12 text-red-500" />
       </div>
       <div className="space-y-2">
-        <h3 className="text-xl font-semibold text-gray-700">No hay maestros registrados</h3>
+        <h3 className="text-xl font-semibold text-gray-700">
+          No hay maestros registrados
+        </h3>
         <p className="text-gray-500 max-w-md mx-auto">
-          Parece que aún no se han registrado maestros en el sistema. 
-          Comienza agregando el primer maestro para empezar a gestionar el equipo docente.
+          Parece que aún no se han registrado maestros en el sistema. Comienza
+          agregando el primer maestro para empezar a gestionar el equipo
+          docente.
         </p>
       </div>
       <button className="inline-flex items-center space-x-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-blue-500/25">
@@ -67,7 +75,8 @@ export default function Page() {
                 Gestión de Maestros
               </h1>
               <p className="text-gray-600 mt-1">
-                Administra el equipo docente, asigna cursos y consulta información detallada
+                Administra el equipo docente, asigna cursos y consulta
+                información detallada
               </p>
             </div>
           </div>
@@ -86,9 +95,7 @@ export default function Page() {
                   <span className="font-medium">
                     {filteredMaestros.length} resultado(s) encontrado(s)
                   </span>
-                  {searchTerm && (
-                    <span> para "{searchTerm}"</span>
-                  )}
+                  {searchTerm && <span> para &quot;{searchTerm}&quot;</span>}
                 </p>
               </div>
             )}
@@ -100,14 +107,16 @@ export default function Page() {
               <Search className="w-8 h-8 text-gray-400" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-700">No se encontraron resultados</h3>
+              <h3 className="text-lg font-semibold text-gray-700">
+                No se encontraron resultados
+              </h3>
               <p className="text-gray-500">
-                No hay maestros que coincidan con "{searchTerm}"
+                No hay maestros que coincidan con &quot;{searchTerm}&quot;
               </p>
             </div>
             <button
-              onClick={() => setSearchTerm("")}
               className="text-blue-600 hover:text-blue-700 font-medium"
+              onClick={() => setSearchTerm("")}
             >
               Limpiar búsqueda
             </button>

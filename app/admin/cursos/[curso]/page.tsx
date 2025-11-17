@@ -11,18 +11,16 @@ import {
   Users,
   BookOpen,
   User,
-  Eye,
   Plus,
   FileText,
   Award,
-  Clock,
   Mail,
   Settings,
   BarChart3,
   ChevronRight,
   AlertCircle,
   CheckCircle,
-  Search
+  Search,
 } from "lucide-react";
 
 import EstudiantesResponsive from "@/components/estudiantesResponsive";
@@ -37,7 +35,9 @@ export default function CursoDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedView, setSelectedView] = useState<'overview' | 'areas' | 'students'>('overview');
+  const [selectedView, setSelectedView] = useState<
+    "overview" | "areas" | "students"
+  >("overview");
 
   const {
     obtenerCurso,
@@ -121,9 +121,12 @@ export default function CursoDashboard() {
   const filteredAreas = useMemo(() => {
     if (!curso?.areas) return [];
 
-    return curso.areas.filter((area: any) =>
-      area.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      area.maestro.nombre_completo.toLowerCase().includes(searchTerm.toLowerCase())
+    return curso.areas.filter(
+      (area: any) =>
+        area.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        area.maestro.nombre_completo
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()),
     );
   }, [curso?.areas, searchTerm]);
 
@@ -163,7 +166,7 @@ export default function CursoDashboard() {
         color: "text-orange-600",
         bgColor: "bg-orange-50",
         borderColor: "border-orange-200",
-      }
+      },
     ];
   }, [estadisticas]);
 
@@ -189,11 +192,13 @@ export default function CursoDashboard() {
   const LoadingState = () => (
     <div className="flex flex-col items-center justify-center py-16 space-y-4">
       <div className="relative">
-        <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full animate-pulse"></div>
+        <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full animate-pulse" />
         <GraduationCap className="w-8 h-8 text-white absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
       </div>
       <div className="text-center">
-        <h3 className="text-lg font-semibold text-gray-700">Cargando curso...</h3>
+        <h3 className="text-lg font-semibold text-gray-700">
+          Cargando curso...
+        </h3>
         <p className="text-gray-500">Por favor espera un momento</p>
       </div>
     </div>
@@ -206,7 +211,9 @@ export default function CursoDashboard() {
         <AlertCircle className="w-12 h-12 text-red-500" />
       </div>
       <div className="space-y-2">
-        <h3 className="text-xl font-semibold text-gray-700">Error al cargar el curso</h3>
+        <h3 className="text-xl font-semibold text-gray-700">
+          Error al cargar el curso
+        </h3>
         <p className="text-gray-500 max-w-md mx-auto">{error}</p>
       </div>
       <Button
@@ -221,9 +228,9 @@ export default function CursoDashboard() {
 
   // Navigation tabs
   const navigationTabs = [
-    { key: 'overview', label: 'Resumen', icon: BarChart3 },
-    { key: 'areas', label: 'Áreas', icon: BookOpen },
-    { key: 'students', label: 'Estudiantes', icon: Users }
+    { key: "overview", label: "Resumen", icon: BarChart3 },
+    { key: "areas", label: "Áreas", icon: BookOpen },
+    { key: "students", label: "Estudiantes", icon: Users },
   ];
 
   if (!shouldRender) {
@@ -249,8 +256,12 @@ export default function CursoDashboard() {
           <GraduationCap className="w-12 h-12 text-gray-400" />
         </div>
         <div className="space-y-2">
-          <h3 className="text-xl font-semibold text-gray-700">Curso no encontrado</h3>
-          <p className="text-gray-500">Verifica que el ID del curso sea correcto</p>
+          <h3 className="text-xl font-semibold text-gray-700">
+            Curso no encontrado
+          </h3>
+          <p className="text-gray-500">
+            Verifica que el ID del curso sea correcto
+          </p>
         </div>
       </div>
     );
@@ -270,7 +281,8 @@ export default function CursoDashboard() {
                 {curso.nombre}
               </h1>
               <p className="text-gray-600 mt-1">
-                Dashboard del curso • {estadisticas?.totalEstudiantes} estudiantes
+                Dashboard del curso • {estadisticas?.totalEstudiantes}{" "}
+                estudiantes
               </p>
             </div>
           </div>
@@ -279,22 +291,24 @@ export default function CursoDashboard() {
             <Tooltip content="Configuración del curso">
               <Button
                 isIconOnly
+                className="hover:scale-110 transition-transform"
                 color="default"
                 variant="flat"
-                className="hover:scale-110 transition-transform"
               >
                 <Settings className="w-5 h-5" />
               </Button>
             </Tooltip>
             <Tooltip content="Ver reportes">
               <Button
-                color="primary"
-                variant="flat"
-                startContent={<FileText className="w-5 h-5" />}
-                onPress={() => router.push(`/admin/cursos/${curso?.id}/calificaciones`)}
                 className="hover:scale-105 transition-transform"
+                color="primary"
+                startContent={<FileText className="w-5 h-5" />}
+                variant="flat"
+                onPress={() =>
+                  router.push(`/admin/cursos/${curso?.id}/calificaciones`)
+                }
               >
-                Reportes
+                Calificaciones
               </Button>
             </Tooltip>
           </div>
@@ -308,14 +322,18 @@ export default function CursoDashboard() {
               className={`${stat.bgColor} ${stat.borderColor} border rounded-2xl p-4 hover:scale-105 transition-all duration-300 hover:shadow-lg group`}
             >
               <div className="flex items-center justify-between mb-2">
-                <div className={`${stat.bgColor.replace('50', '100')} p-2 rounded-xl group-hover:scale-110 transition-transform duration-300`}>
+                <div
+                  className={`${stat.bgColor.replace("50", "100")} p-2 rounded-xl group-hover:scale-110 transition-transform duration-300`}
+                >
                   <stat.icon className={`w-5 h-5 ${stat.color}`} />
                 </div>
               </div>
               <div className={`text-2xl font-bold ${stat.color} mb-1`}>
                 {stat.value}
               </div>
-              <div className="text-sm text-gray-600 font-medium">{stat.label}</div>
+              <div className="text-sm text-gray-600 font-medium">
+                {stat.label}
+              </div>
             </div>
           ))}
         </div>
@@ -325,14 +343,16 @@ export default function CursoDashboard() {
           <div className="flex flex-col sm:flex-row space-x-2">
             {navigationTabs.map((tab) => {
               const Icon = tab.icon;
+
               return (
                 <button
                   key={tab.key}
+                  className={`flex items-center space-x-2 px-4 py-3 rounded-xl transition-all duration-300 font-medium ${
+                    selectedView === tab.key
+                      ? "bg-blue-500 text-white shadow-lg"
+                      : "text-gray-600 hover:bg-gray-100"
+                  }`}
                   onClick={() => setSelectedView(tab.key as any)}
-                  className={`flex items-center space-x-2 px-4 py-3 rounded-xl transition-all duration-300 font-medium ${selectedView === tab.key
-                      ? 'bg-blue-500 text-white shadow-lg'
-                      : 'text-gray-600 hover:bg-gray-100'
-                    }`}
                 >
                   <Icon className="w-5 h-5" />
                   <span>{tab.label}</span>
@@ -345,7 +365,7 @@ export default function CursoDashboard() {
 
       {/* Content Sections */}
       <div className="bg-white/60 backdrop-blur-sm border border-gray-200 rounded-2xl overflow-hidden">
-        {selectedView === 'overview' && (
+        {selectedView === "overview" && (
           <div className="p-6 space-y-6">
             {/* Director Section */}
             {curso.director && (
@@ -362,7 +382,12 @@ export default function CursoDashboard() {
                       </h4>
                       <div className="flex items-center space-x-2 text-sm text-gray-600 mt-1">
                         <Mail className="w-4 h-4" />
-                        <span className="truncate w-36" title={curso.director.email}>{curso.director.email}</span>
+                        <span
+                          className="truncate w-36"
+                          title={curso.director.email}
+                        >
+                          {curso.director.email}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2 mt-2">
                         <Chip color="success" size="sm" variant="flat">
@@ -379,7 +404,9 @@ export default function CursoDashboard() {
 
                   <div className="space-y-3">
                     <div className="text-right">
-                      <div className="text-sm text-gray-600">Carga Académica</div>
+                      <div className="text-sm text-gray-600">
+                        Carga Académica
+                      </div>
                       <div className="text-lg font-bold text-green-600">
                         {estadisticas?.porcentajeDirector}%
                       </div>
@@ -403,7 +430,10 @@ export default function CursoDashboard() {
               </h3>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {areasPorMaestro.map((grupo: any, index: number) => (
-                  <div key={index} className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-lg transition-all duration-300">
+                  <div
+                    key={index}
+                    className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-lg transition-all duration-300"
+                  >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <div>
@@ -417,18 +447,23 @@ export default function CursoDashboard() {
                               </Chip>
                             )}
                             <Chip color="default" size="sm" variant="flat">
-                              {grupo.areas.length} área{grupo.areas.length !== 1 ? 's' : ''}
+                              {grupo.areas.length} área
+                              {grupo.areas.length !== 1 ? "s" : ""}
                             </Chip>
                           </div>
                         </div>
                       </div>
                       <Button
                         isIconOnly
+                        className="hover:scale-110 transition-transform"
                         color="primary"
                         size="sm"
                         variant="light"
-                        onPress={() => router.push(`/admin/maestros/${grupo.maestro.id}/perfil`)}
-                        className="hover:scale-110 transition-transform"
+                        onPress={() =>
+                          router.push(
+                            `/admin/maestros/${grupo.maestro.id}/perfil`,
+                          )
+                        }
                       >
                         <ChevronRight className="w-4 h-4" />
                       </Button>
@@ -460,24 +495,24 @@ export default function CursoDashboard() {
           </div>
         )}
 
-        {selectedView === 'areas' && (
+        {selectedView === "areas" && (
           <div className="p-6 space-y-6">
             {/* Search Bar */}
             <div className="flex flex-col sm:flex-row sm:justify-between items-center gap-3">
               <div className="relative flex-1 w-full">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
-                  type="text"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/80"
                   placeholder="Buscar áreas o maestros..."
+                  type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/80"
                 />
               </div>
               <Button
+                className="w-full sm:w-auto hover:scale-105 transition-transform"
                 color="primary"
                 startContent={<Plus className="w-5 h-5" />}
-                className="w-full sm:w-auto hover:scale-105 transition-transform"
               >
                 Nueva Área
               </Button>
@@ -489,42 +524,27 @@ export default function CursoDashboard() {
                 <div
                   key={area.id}
                   className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-lg transition-all duration-300 hover:scale-105 cursor-pointer"
-                  onClick={() => router.push(`/admin/cursos/${curso?.id}/areas/${area.id}`)}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() =>
+                    router.push(`/admin/cursos/${curso?.id}/areas/${area.id}`)
+                  }
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      router.push(
+                        `/admin/cursos/${curso?.id}/areas/${area.id}`,
+                      );
+                    }
+                  }}
                 >
                   <div className="flex items-center justify-between mb-3">
                     <Chip
+                      className="font-medium"
                       color={getColorArea(area.nombre)}
                       variant="flat"
-                      className="font-medium"
                     >
                       {area.nombre}
                     </Chip>
-                    <div className="flex space-x-1">
-                      <Button
-                        isIconOnly
-                        color="primary"
-                        size="sm"
-                        variant="light"
-                        onPress={(e) => {
-                          e.stopPropagation();
-                          router.push(`/admin/cursos/${curso?.id}/areas/${area.id}`);
-                        }}
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        isIconOnly
-                        color="success"
-                        size="sm"
-                        variant="light"
-                        onPress={(e) => {
-                          e.stopPropagation();
-                          router.push(`/maestro/cursos/${curso.id}/areas/${area.id}/actividades/nueva`);
-                        }}
-                      >
-                        <Plus className="w-4 h-4" />
-                      </Button>
-                    </div>
                   </div>
 
                   <div className="space-y-2">
@@ -545,7 +565,7 @@ export default function CursoDashboard() {
           </div>
         )}
 
-        {selectedView === 'students' && (
+        {selectedView === "students" && (
           <div className="p-6">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-2 mb-6">
               <h3 className="text-lg font-semibold text-gray-800 flex items-center">
@@ -557,9 +577,9 @@ export default function CursoDashboard() {
 
             <EstudiantesResponsive
               estudiantes={curso.estudiantes}
-              handleCalificaciones={actualizarVerCalificaciones}
-              handlePension={actualizarPension}
               isAdmin={true}
+              onCalificacionesChange={actualizarVerCalificaciones}
+              onPensionChange={actualizarPension}
             />
           </div>
         )}

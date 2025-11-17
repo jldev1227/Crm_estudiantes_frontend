@@ -4,14 +4,14 @@ import { gql } from "@apollo/client";
 export const OBTENER_ESTADISTICAS_ADMIN = gql`
   query ObtenerEstadisticasAdmin {
     obtenerEstadisticasAdmin {
-        totalEstudiantes
-        totalMaestros
-        totalActividades
-        totalTareas
-        totalCalificaciones
-        totalGrados
-        totalAreas
-        totalUsuarios
+      totalEstudiantes
+      totalMaestros
+      totalActividades
+      totalTareas
+      totalCalificaciones
+      totalGrados
+      totalAreas
+      totalUsuarios
     }
   }
 `;
