@@ -1063,6 +1063,7 @@ export const handleGenerateEstudiantePDF = async (
       celular: "Sin teléfono",
       tipo_documento: "CC",
       numero_identificacion: "00000000",
+      grados_asignados: [],
     };
 
     // ✅ Crear el objeto completo que cumple con ReporteEstudianteProps - SIN PUESTO

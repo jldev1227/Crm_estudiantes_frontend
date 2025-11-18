@@ -55,6 +55,14 @@ export default function SideMenu() {
   const pathname = usePathname();
   const router = useRouter();
 
+  // Tipado de ítems de menú
+  type NavbarItemType = {
+    label: string;
+    href: string;
+    icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+    description: string;
+  };
+
   // Cierra el menú cuando cambia la ruta
   useEffect(() => {
     setIsMenuOpen(false);
@@ -64,7 +72,7 @@ export default function SideMenu() {
     }
   }, [pathname]);
 
-  const menuItemsEstudiante = [
+  const menuItemsEstudiante: NavbarItemType[] = [
     {
       label: "Materias",
       href: "/estudiante/materias",
@@ -91,7 +99,7 @@ export default function SideMenu() {
     },
   ];
 
-  const menuItemsMaestro = [
+  const menuItemsMaestro: NavbarItemType[] = [
     {
       label: "Cursos",
       href: "/maestro/cursos",
@@ -100,7 +108,7 @@ export default function SideMenu() {
     },
   ];
 
-  const menuItemsAdmin = [
+  const menuItemsAdmin: NavbarItemType[] = [
     {
       label: "Cursos",
       href: "/admin/cursos",
@@ -140,7 +148,13 @@ export default function SideMenu() {
     }, 0);
   };
 
-  const NavbarItem_Custom = ({ item, isMobile = false }) => {
+  const NavbarItem_Custom = ({
+    item,
+    isMobile = false,
+  }: {
+    item: NavbarItemType;
+    isMobile?: boolean;
+  }) => {
     const Icon = item.icon;
     const isActive = pathname === item.href;
 
