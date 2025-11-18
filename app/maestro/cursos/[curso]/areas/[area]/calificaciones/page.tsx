@@ -6,20 +6,20 @@ import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 import { Select, SelectItem } from "@heroui/select";
 import { Checkbox } from "@heroui/checkbox";
-import {
-  Table,
-  TableHeader,
-  TableColumn,
-  TableBody,
-  TableRow,
-  TableCell,
-} from "@heroui/table";
 import { toast } from "react-hot-toast";
 import { useParams, useRouter } from "next/navigation";
 import { CheckCircle, Plus, Trash2, XCircle } from "lucide-react";
 import { Card, CardHeader, CardBody } from "@heroui/card";
 import { Chip } from "@heroui/chip";
 import { Divider } from "@heroui/divider";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableColumn,
+  TableHeader,
+  TableRow,
+} from "@heroui/table";
 
 import { Calificacion, Estudiante } from "@/types";
 import { GUARDAR_CALIFICACIONES } from "@/app/graphql/mutation/guardarCalificaciones";
@@ -94,6 +94,10 @@ const CalculatorIcon = () => (
     />
   </svg>
 );
+
+// Estilos tipo glass minimalista (inspirado en Apple)
+const GLASS_CARD =
+  "bg-white/60 dark:bg-zinc-900/50 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-lg ring-1 ring-black/5";
 
 type Actividad = {
   id: string;
@@ -1136,41 +1140,17 @@ const SistemaCalificaciones = () => {
 
   // Verificar porcentajes
   const porcentajes = verificarPorcentajes();
+  const actividadesOrdenadas = actividades.slice().sort((a, b) => {
+    if (!a.isFinal && b.isFinal) return -1;
+    if (a.isFinal && !b.isFinal) return 1;
 
-  // SOLUCIÓN 4: Definir todas las columnas en un array
-  const allColumns = [
-    <TableColumn
-      key="estudiante"
-      className="bg-gray-50 sticky left-0 z-10 min-w-[150px]"
-    >
-      Estudiante
-    </TableColumn>,
-    ...(actividades
-      ?.sort((a, b) => {
-        // Primero ordena por tipo: regulares (false) antes que finales (true)
-        if (!a.isFinal && b.isFinal) return -1; // Regular antes que final
-        if (a.isFinal && !b.isFinal) return 1; // Final después que regular
-
-        // Si son del mismo tipo, ordena por nombre (opcional)
-        return a.nombre.localeCompare(b.nombre);
-      })
-      .map((actividad) => (
-        <TableColumn key={actividad.id}>
-          <div className="text-center whitespace-normal px-1">
-            <div className="font-medium">{actividad.nombre}</div>
-            <div className="text-xs text-gray-500">
-              {actividad.porcentaje.toFixed(1)}%
-            </div>
-          </div>
-        </TableColumn>
-      )) || []),
-    <TableColumn key="nota-final">Nota Final</TableColumn>,
-  ];
+    return a.nombre.localeCompare(b.nombre);
+  });
 
   return (
-    <div className="space-y-6 p-4 md:p-10">
+    <div className="space-y-6 p-4 mx-auto">
       {/* Header Card */}
-      <Card className="shadow-sm">
+      <Card className={GLASS_CARD}>
         <CardHeader className="pb-3">
           <div className="flex flex-col gap-4 md:flex-row justify-between items-start md:items-center w-full">
             <div>
@@ -1211,7 +1191,7 @@ const SistemaCalificaciones = () => {
       {/* Alertas y Mensajes */}
       {error ||
         (errorIndicadores && (
-          <Card className="border border-red-200 bg-red-50">
+          <Card className={`${GLASS_CARD} border-red-200/40 bg-red-50/50`}>
             <CardBody className="py-3">
               <div className="flex items-center gap-2 text-red-700">
                 <XCircle className="w-5 h-5" />
@@ -1224,7 +1204,7 @@ const SistemaCalificaciones = () => {
         ))}
 
       {hayNotasSinCompletar() && (
-        <Card className="border border-yellow-200 bg-yellow-50">
+        <Card className={`${GLASS_CARD} border-yellow-200/40 bg-yellow-50/50`}>
           <CardBody className="py-3">
             <div className="flex items-start gap-2 text-yellow-700">
               <WarningIcon />
@@ -1244,7 +1224,7 @@ const SistemaCalificaciones = () => {
       )}
 
       {!porcentajes.esValido && !isCualitativo() && (
-        <Card className="border border-orange-200 bg-orange-50">
+        <Card className={`${GLASS_CARD} border-orange-200/40 bg-orange-50/50`}>
           <CardBody className="py-4">
             <div className="flex items-start gap-3 text-orange-700">
               <div className="flex-1">
@@ -1252,7 +1232,7 @@ const SistemaCalificaciones = () => {
                   ⚠️ Los porcentajes no están correctamente distribuidos
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
-                  <div className="bg-white p-2 rounded border">
+                  <div className="bg-white/70 dark:bg-zinc-900/40 backdrop-blur-md p-2 rounded border border-white/20">
                     <span className="text-xs text-gray-600">
                       Actividades regulares
                     </span>
@@ -1260,7 +1240,7 @@ const SistemaCalificaciones = () => {
                       {porcentajes.totalRegulares.toFixed(1)}%
                     </p>
                   </div>
-                  <div className="bg-white p-2 rounded border">
+                  <div className="bg-white/70 dark:bg-zinc-900/40 backdrop-blur-md p-2 rounded border border-white/20">
                     <span className="text-xs text-gray-600">
                       Evaluación final
                     </span>
@@ -1268,7 +1248,7 @@ const SistemaCalificaciones = () => {
                       {porcentajes.totalFinal.toFixed(1)}%
                     </p>
                   </div>
-                  <div className="bg-white p-2 rounded border">
+                  <div className="bg-white/70 dark:bg-zinc-900/40 backdrop-blur-md p-2 rounded border border-white/20">
                     <span className="text-xs text-gray-600">Total</span>
                     <p className="font-semibold">
                       {porcentajes.total.toFixed(1)}% / 100%
@@ -1290,7 +1270,7 @@ const SistemaCalificaciones = () => {
         </Card>
       )}
 
-      <Card className="shadow-sm">
+      <Card className={GLASS_CARD}>
         <CardHeader className="pb-3">
           <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 w-full">
             <div>
@@ -1395,7 +1375,7 @@ const SistemaCalificaciones = () => {
 
       {/* Gestión de Actividades */}
 
-      <Card className="shadow-sm">
+      <Card className={GLASS_CARD}>
         <CardHeader className="pb-3">
           {!isCualitativo() && (
             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 w-full">
@@ -1452,7 +1432,9 @@ const SistemaCalificaciones = () => {
         <CardBody className="pt-4">
           {/* Información sobre la evaluación final */}
           {!incluirEvaluacionFinal && !isCualitativo() && (
-            <Card className="bg-blue-50 border border-blue-300 mb-4">
+            <Card
+              className={`${GLASS_CARD} bg-blue-50/50 border border-blue-300/40 mb-4`}
+            >
               <CardBody className="py-3">
                 <div className="flex items-center gap-2 text-blue-700">
                   <svg
@@ -1481,7 +1463,9 @@ const SistemaCalificaciones = () => {
           )}
 
           {isCualitativo() && (
-            <Card className="bg-purple-50 border border-purple-300 mb-4">
+            <Card
+              className={`${GLASS_CARD} bg-purple-50/50 border border-purple-300/40 mb-4`}
+            >
               <CardBody className="py-3">
                 <div className="flex items-center gap-2 text-purple-700">
                   <svg
@@ -1508,7 +1492,9 @@ const SistemaCalificaciones = () => {
           )}
 
           {incluirEvaluacionFinal && !isCualitativo() && (
-            <Card className="bg-green-50 border border-green-200 mb-4">
+            <Card
+              className={`${GLASS_CARD} bg-green-50/50 border border-green-200/40 mb-4`}
+            >
               <CardBody className="py-3">
                 <div className="flex items-center gap-2 text-green-700">
                   <svg
@@ -1535,7 +1521,9 @@ const SistemaCalificaciones = () => {
 
           {editando && !isCualitativo() && (
             <div className="mb-6">
-              <Card className="bg-gray-50 border">
+              <Card
+                className={`${GLASS_CARD} bg-gray-50/60 border border-gray-200/40`}
+              >
                 <CardBody className="p-4">
                   <h3 className="text-lg font-semibold mb-4 text-gray-800">
                     Actividades Configuradas
@@ -1755,7 +1743,7 @@ const SistemaCalificaciones = () => {
                   ))}
               </div>
 
-              <div className="bg-gray-100 p-3 rounded-lg">
+              <div className="bg-white/60 dark:bg-zinc-900/40 backdrop-blur-md p-3 rounded-lg border border-white/20">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
                   <div className="flex justify-between">
                     <span className="text-gray-600">
@@ -1788,8 +1776,8 @@ const SistemaCalificaciones = () => {
         </CardBody>
       </Card>
 
-      {/* Tabla de Calificaciones */}
-      <Card className="shadow-sm">
+      {/* Registro de Calificaciones - Diseño en tarjetas (sin tablas) */}
+      <Card className={GLASS_CARD}>
         <CardHeader className="pb-3">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 w-full">
             <div>
@@ -1797,8 +1785,8 @@ const SistemaCalificaciones = () => {
                 Registro de Calificaciones
               </h2>
               <p className="text-sm text-gray-600 mt-1">
-                Ingresa las calificaciones de cada estudiante para todas las
-                actividades
+                Ingresa las calificaciones de cada estudiante en un formato
+                compacto y amigable para móvil.
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -1808,210 +1796,364 @@ const SistemaCalificaciones = () => {
             </div>
           </div>
         </CardHeader>
-
         <Divider />
-
         <CardBody className="pt-4">
           {estudiantes.length > 0 ? (
-            <div>
-              <Table
-                isHeaderSticky
-                removeWrapper
-                aria-label="Tabla de calificaciones"
-                classNames={{
-                  base: "max-h-[600px]",
-                  table: "min-h-[150px] min-w-[640px]",
-                  th: "bg-gray-50 text-gray-700 font-semibold",
-                }}
-              >
-                <TableHeader>{allColumns}</TableHeader>
-                <TableBody>
-                  {estudiantes.map((estudiante) => {
-                    const allCells = [
-                      <TableCell
-                        key="estudiante"
-                        className="font-medium sticky left-0 bg-white min-w-[150px] border-r"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span>{estudiante.nombre_completo}</span>
+            <>
+              {/* Card mode (mobile) */}
+              <div className="block md:hidden">
+                <div className="grid grid-cols-1 gap-4">
+                  {estudiantes.map((estudiante) => (
+                    <div
+                      key={estudiante.id}
+                      className="rounded-xl border border-white/20 bg-white/60 dark:bg-zinc-900/40 backdrop-blur-md p-4 shadow-sm"
+                    >
+                      {/* Cabecera del estudiante */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="font-semibold text-gray-900 truncate">
+                            {estudiante.nombre_completo}
+                          </p>
                         </div>
-                      </TableCell>,
-                      ...(actividades?.map((actividad) => (
-                        <TableCell
-                          key={`${estudiante.id}-${actividad.id}`}
-                          className="text-center"
-                        >
+                        <div className="shrink-0">
                           {isCualitativo() ? (
-                            <Select
-                              aria-label="Calificación cualitativa"
-                              classNames={{
-                                base: "min-w-[80px]",
-                                trigger: "h-10 min-h-[40px] text-center",
-                                value: "text-center font-medium",
-                                popoverContent: "min-w-[120px]",
-                              }}
-                              placeholder="--"
-                              selectedKeys={
-                                calificaciones[estudiante.id]?.[actividad.id]
-                                  ? [
-                                      convertirNotaACualitativa(
-                                        parseFloat(
-                                          calificaciones[estudiante.id][
-                                            actividad.id
-                                          ],
-                                        ),
-                                      ),
-                                    ]
-                                  : []
-                              }
-                              onSelectionChange={(keys) => {
-                                const valorCualitativo = Array.from(
-                                  keys,
-                                )[0] as string;
-
-                                const valorNumerico =
-                                  CONVERSION_CUALITATIVA[
-                                    valorCualitativo as ValorQualitative
-                                  ];
-
-                                handleCalificacionChange(
-                                  estudiante.id,
-                                  actividad.id,
-                                  valorNumerico?.toString() || "",
-                                );
-                              }}
-                            >
-                              <SelectItem
-                                key="DS"
-                                textValue="DS - Desempeño Superior"
-                              >
-                                <div className="flex items-center justify-between w-full">
-                                  <span className="font-medium text-green-600">
-                                    DS
-                                  </span>
-                                  <span className="text-xs text-gray-500">
-                                    Superior
-                                  </span>
-                                </div>
-                              </SelectItem>
-                              <SelectItem
-                                key="DA"
-                                textValue="DA - Desempeño Alto"
-                              >
-                                <div className="flex items-center justify-between w-full">
-                                  <span className="font-medium text-blue-600">
-                                    DA
-                                  </span>
-                                  <span className="text-xs text-gray-500">
-                                    Alto
-                                  </span>
-                                </div>
-                              </SelectItem>
-                              <SelectItem
-                                key="DB"
-                                textValue="DB - Desempeño Básico"
-                              >
-                                <div className="flex items-center justify-between w-full">
-                                  <span className="font-medium text-warning-600">
-                                    DB
-                                  </span>
-                                  <span className="text-xs text-gray-500">
-                                    Básico
-                                  </span>
-                                </div>
-                              </SelectItem>
-                              <SelectItem
-                                key="SP"
-                                textValue="SP - Sigue en proceso"
-                              >
-                                <div className="flex items-center justify-between w-full">
-                                  <span className="font-medium text-red-600">
-                                    SP
-                                  </span>
-                                  <span className="text-xs text-gray-500">
-                                    Sigue en proceso
-                                  </span>
-                                </div>
-                              </SelectItem>
-                            </Select>
-                          ) : (
-                            <input
-                              className="w-16 p-2 border rounded-md text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                              max="5"
-                              min="0"
-                              step="0.1"
-                              type="number"
-                              value={
-                                calificaciones[estudiante.id]?.[actividad.id] ||
-                                ""
-                              }
-                              onChange={(e) =>
-                                handleCalificacionChange(
-                                  estudiante.id,
-                                  actividad.id,
-                                  e.target.value,
-                                )
-                              }
-                            />
-                          )}
-                        </TableCell>
-                      )) || []),
-                      <TableCell
-                        key="nota-final"
-                        className="text-center font-bold"
-                      >
-                        {isCualitativo() ? (
-                          <Chip
-                            color={obtenerColorCalificacion(
-                              convertirNotaACualitativa(
-                                calcularNotaFinal(estudiante.id),
-                              ),
-                            )}
-                            size="sm"
-                            variant="flat"
-                          >
-                            <span
-                              title={obtenerNombreCalificacion(
+                            <Chip
+                              color={obtenerColorCalificacion(
                                 convertirNotaACualitativa(
                                   calcularNotaFinal(estudiante.id),
                                 ),
                               )}
+                              size="sm"
+                              variant="flat"
                             >
                               {convertirNotaACualitativa(
                                 calcularNotaFinal(estudiante.id),
                               )}
-                            </span>
-                          </Chip>
-                        ) : (
-                          <Chip
-                            color={
-                              calcularNotaFinal(estudiante.id) >= 3.5
-                                ? "success"
-                                : calcularNotaFinal(estudiante.id) >= 3.0
-                                  ? "warning"
-                                  : "danger"
-                            }
-                            size="sm"
-                            variant="flat"
-                          >
-                            {calcularNotaFinal(estudiante.id)}
-                          </Chip>
-                        )}
-                      </TableCell>,
-                    ];
+                            </Chip>
+                          ) : (
+                            <Chip
+                              color={
+                                calcularNotaFinal(estudiante.id) >= 3.5
+                                  ? "success"
+                                  : calcularNotaFinal(estudiante.id) >= 3.0
+                                    ? "warning"
+                                    : "danger"
+                              }
+                              size="sm"
+                              variant="flat"
+                            >
+                              {calcularNotaFinal(estudiante.id)}
+                            </Chip>
+                          )}
+                        </div>
+                      </div>
 
-                    return (
-                      <TableRow
-                        key={estudiante.id}
-                        className="hover:bg-gray-50"
-                      >
-                        {allCells}
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
+                      {/* Controles de actividades */}
+                      <div className="mt-4 space-y-3">
+                        {actividadesOrdenadas.map((actividad) => (
+                          <div
+                            key={actividad.id}
+                            className="rounded-lg border border-white/20 bg-white/50 dark:bg-zinc-900/30 backdrop-blur p-3"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium text-gray-800 truncate">
+                                  {actividad.nombre}
+                                </p>
+                                {!isCualitativo() && (
+                                  <p className="text-[11px] text-gray-500">
+                                    {actividad.porcentaje.toFixed(1)}%
+                                    {actividad.isFinal
+                                      ? " • Evaluación Final"
+                                      : ""}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="shrink-0">
+                                {isCualitativo() ? (
+                                  <Select
+                                    aria-label="Calificación cualitativa"
+                                    classNames={{
+                                      base: "min-w-[96px]",
+                                      trigger: "h-9 min-h-[36px]",
+                                      value: "text-center font-medium",
+                                      popoverContent: "min-w-[140px]",
+                                    }}
+                                    placeholder="--"
+                                    selectedKeys={
+                                      calificaciones[estudiante.id]?.[
+                                        actividad.id
+                                      ]
+                                        ? [
+                                            convertirNotaACualitativa(
+                                              parseFloat(
+                                                calificaciones[estudiante.id][
+                                                  actividad.id
+                                                ],
+                                              ),
+                                            ),
+                                          ]
+                                        : []
+                                    }
+                                    variant="bordered"
+                                    onSelectionChange={(keys) => {
+                                      const valorCualitativo = Array.from(
+                                        keys,
+                                      )[0] as string;
+                                      const valorNumerico =
+                                        CONVERSION_CUALITATIVA[
+                                          valorCualitativo as ValorQualitative
+                                        ];
+
+                                      handleCalificacionChange(
+                                        estudiante.id,
+                                        actividad.id,
+                                        valorNumerico?.toString() || "",
+                                      );
+                                    }}
+                                  >
+                                    <SelectItem
+                                      key="DS"
+                                      textValue="DS - Desempeño Superior"
+                                    >
+                                      <div className="flex items-center justify-between w-full">
+                                        <span className="font-medium text-green-600">
+                                          DS
+                                        </span>
+                                        <span className="text-xs text-gray-500">
+                                          Superior
+                                        </span>
+                                      </div>
+                                    </SelectItem>
+                                    <SelectItem
+                                      key="DA"
+                                      textValue="DA - Desempeño Alto"
+                                    >
+                                      <div className="flex items-center justify-between w-full">
+                                        <span className="font-medium text-blue-600">
+                                          DA
+                                        </span>
+                                        <span className="text-xs text-gray-500">
+                                          Alto
+                                        </span>
+                                      </div>
+                                    </SelectItem>
+                                    <SelectItem
+                                      key="DB"
+                                      textValue="DB - Desempeño Básico"
+                                    >
+                                      <div className="flex items-center justify-between w-full">
+                                        <span className="font-medium text-warning-600">
+                                          DB
+                                        </span>
+                                        <span className="text-xs text-gray-500">
+                                          Básico
+                                        </span>
+                                      </div>
+                                    </SelectItem>
+                                    <SelectItem
+                                      key="SP"
+                                      textValue="SP - Sigue en proceso"
+                                    >
+                                      <div className="flex items-center justify-between w-full">
+                                        <span className="font-medium text-red-600">
+                                          SP
+                                        </span>
+                                        <span className="text-xs text-gray-500">
+                                          Sigue en proceso
+                                        </span>
+                                      </div>
+                                    </SelectItem>
+                                  </Select>
+                                ) : (
+                                  <input
+                                    className="w-20 h-9 px-2 border border-gray-300 rounded-md text-center bg-white/90 dark:bg-zinc-900/40 shadow-inner focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    max={5}
+                                    min={0}
+                                    step={0.1}
+                                    type="number"
+                                    value={
+                                      calificaciones[estudiante.id]?.[
+                                        actividad.id
+                                      ] || ""
+                                    }
+                                    onChange={(e) =>
+                                      handleCalificacionChange(
+                                        estudiante.id,
+                                        actividad.id,
+                                        e.target.value,
+                                      )
+                                    }
+                                  />
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Canvas table (desktop) */}
+              <div className="hidden md:block">
+                <div className="overflow-auto rounded-xl border border-white/20 bg-white/40 dark:bg-zinc-900/30 backdrop-blur">
+                  <table className="min-w-[900px] w-full text-sm">
+                    <thead className="sticky top-0 z-10 bg-white/70 dark:bg-zinc-900/60 backdrop-blur">
+                      <tr>
+                        <th className="text-left px-4 py-3 font-semibold text-gray-700 sticky left-0 bg-white/70 dark:bg-zinc-900/60 backdrop-blur z-20 min-w-[200px]">
+                          Estudiante
+                        </th>
+                        {actividadesOrdenadas.map((actividad) => (
+                          <th
+                            key={actividad.id}
+                            className="px-3 py-3 text-center font-semibold text-gray-700 whitespace-nowrap"
+                          >
+                            <div className="flex flex-col items-center gap-1 max-w-[230px]">
+                              <span
+                                className="block w-full truncate"
+                                title={actividad.nombre}
+                              >
+                                {actividad.nombre &&
+                                actividad.nombre.length > 30
+                                  ? `${actividad.nombre.slice(0, 30)}…`
+                                  : actividad.nombre}
+                              </span>
+                              {!isCualitativo() && (
+                                <span className="text-[11px] text-gray-500">
+                                  {actividad.porcentaje.toFixed(1)}%
+                                </span>
+                              )}
+                            </div>
+                          </th>
+                        ))}
+                        <th className="px-3 py-3 text-center font-semibold text-gray-700 whitespace-nowrap">
+                          Nota Final
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {estudiantes.map((estudiante) => (
+                        <tr
+                          key={estudiante.id}
+                          className="odd:bg-white/40 even:bg-white/20 dark:odd:bg-zinc-900/20"
+                        >
+                          <td className="px-4 py-3 font-medium text-gray-900 sticky left-0 bg-white/60 dark:bg-zinc-900/40 backdrop-blur z-10">
+                            {estudiante.nombre_completo}
+                          </td>
+                          {actividadesOrdenadas.map((actividad) => (
+                            <td
+                              key={`${estudiante.id}-${actividad.id}`}
+                              className="px-3 py-2 text-center"
+                            >
+                              {isCualitativo() ? (
+                                <Select
+                                  aria-label="Calificación cualitativa"
+                                  classNames={{
+                                    base: "min-w-[100px]",
+                                    trigger: "h-9 min-h-[36px]",
+                                    value: "text-center font-medium",
+                                  }}
+                                  placeholder="--"
+                                  selectedKeys={
+                                    calificaciones[estudiante.id]?.[
+                                      actividad.id
+                                    ]
+                                      ? [
+                                          convertirNotaACualitativa(
+                                            parseFloat(
+                                              calificaciones[estudiante.id][
+                                                actividad.id
+                                              ],
+                                            ),
+                                          ),
+                                        ]
+                                      : []
+                                  }
+                                  variant="bordered"
+                                  onSelectionChange={(keys) => {
+                                    const valorCualitativo = Array.from(
+                                      keys,
+                                    )[0] as string;
+                                    const valorNumerico =
+                                      CONVERSION_CUALITATIVA[
+                                        valorCualitativo as ValorQualitative
+                                      ];
+
+                                    handleCalificacionChange(
+                                      estudiante.id,
+                                      actividad.id,
+                                      valorNumerico?.toString() || "",
+                                    );
+                                  }}
+                                >
+                                  <SelectItem key="DS">DS</SelectItem>
+                                  <SelectItem key="DA">DA</SelectItem>
+                                  <SelectItem key="DB">DB</SelectItem>
+                                  <SelectItem key="SP">SP</SelectItem>
+                                </Select>
+                              ) : (
+                                <input
+                                  className="w-20 h-9 px-2 border border-gray-300 rounded-md text-center bg-white/90 dark:bg-zinc-900/40 shadow-inner focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  max={5}
+                                  min={0}
+                                  step={0.1}
+                                  type="number"
+                                  value={
+                                    calificaciones[estudiante.id]?.[
+                                      actividad.id
+                                    ] || ""
+                                  }
+                                  onChange={(e) =>
+                                    handleCalificacionChange(
+                                      estudiante.id,
+                                      actividad.id,
+                                      e.target.value,
+                                    )
+                                  }
+                                />
+                              )}
+                            </td>
+                          ))}
+                          <td className="px-3 py-2 text-center">
+                            {isCualitativo() ? (
+                              <Chip
+                                color={obtenerColorCalificacion(
+                                  convertirNotaACualitativa(
+                                    calcularNotaFinal(estudiante.id),
+                                  ),
+                                )}
+                                size="sm"
+                                variant="flat"
+                              >
+                                {convertirNotaACualitativa(
+                                  calcularNotaFinal(estudiante.id),
+                                )}
+                              </Chip>
+                            ) : (
+                              <Chip
+                                color={
+                                  calcularNotaFinal(estudiante.id) >= 3.5
+                                    ? "success"
+                                    : calcularNotaFinal(estudiante.id) >= 3.0
+                                      ? "warning"
+                                      : "danger"
+                                }
+                                size="sm"
+                                variant="flat"
+                              >
+                                {calcularNotaFinal(estudiante.id)}
+                              </Chip>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
           ) : (
             <div className="text-center py-12">
               <div className="text-gray-400 mb-4">
@@ -2041,7 +2183,7 @@ const SistemaCalificaciones = () => {
       </Card>
 
       {/* Botones de Acción */}
-      <Card className="shadow-sm">
+      <Card className={GLASS_CARD}>
         <CardBody className="py-4">
           <div className="flex flex-col sm:flex-row sm:justify-end gap-3">
             <Button

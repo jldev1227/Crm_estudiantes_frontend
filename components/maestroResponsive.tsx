@@ -423,7 +423,11 @@ export default function MaestrosResponsive({
                   </p>
                   <p className="text-sm text-gray-600 flex items-center gap-1">
                     <span className="font-medium">Curso asignado:</span>{" "}
-                    {maestro.celular}
+                    {maestro.grados_asignados.length > 0
+                      ? maestro.grados_asignados
+                          .map((grado) => grado.nombre_grado)
+                          .join(", ")
+                      : "No asignado"}
                   </p>
                 </div>
               </div>

@@ -1,10 +1,10 @@
 "use client";
 
-import { Divider } from "@heroui/divider";
 import Link from "next/link";
 import { useMediaQuery } from "react-responsive";
 import { useRouter } from "next/navigation";
 import { Button } from "@heroui/button";
+import { Home, BookOpen, User, LogOut } from "lucide-react";
 
 import { MaestroProvider } from "../context/MaestroContext";
 import { useAuth } from "../context/AuthContext";
@@ -28,134 +28,148 @@ export default function MaestroLayout({
     }
   };
 
-  // Modificado para no esperar un evento específico
   const handleLogoutClick = () => {
-    // Primero cerrar el menú y los modales
     handleLinkClick();
-
-    // Usar setTimeout para asegurar que la navegación ocurra después de actualizar el estado
     setTimeout(() => {
       router.push("/cerrar-sesion");
     }, 0);
   };
 
+  const menuItems = [
+    {
+      href: "/maestro",
+      icon: Home,
+      label: "Inicio",
+      description: "Panel principal",
+    },
+    {
+      href: "/maestro/cursos",
+      icon: BookOpen,
+      label: "Cursos",
+      description: "Gestión de cursos",
+    },
+    {
+      href: "/maestro/perfil",
+      icon: User,
+      label: "Perfil",
+      description: "Información personal",
+    },
+  ];
+
+  const SidebarContent = () => (
+    <div className="h-full flex flex-col relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-primary-500 via-primary-600 to-primary-700" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+      <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/5 rounded-full blur-2xl animate-pulse" />
+      <div className="absolute top-1/3 -left-8 w-24 h-24 bg-white/5 rounded-full blur-xl animate-pulse delay-1000" />
+
+      <div className="relative z-10 h-full flex flex-col">
+        <div className="bg-white/10 backdrop-blur-sm border-b border-white/20">
+          <div className="bg-white m-4 rounded-2xl shadow-xl overflow-hidden">
+            <img
+              alt="Logo"
+              className="w-full h-auto object-contain"
+              src="/LOGO.png"
+              style={{ maxHeight: "160px" }}
+            />
+          </div>
+        </div>
+
+        <div className="p-6 border-b border-white/10">
+          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+            <div className="flex items-center space-x-3 mb-3">
+              <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse" />
+              <h1 className="text-xl font-bold text-white">¡Bienvenido!</h1>
+            </div>
+            <h2 className="text-white/90 text-sm font-medium">
+              {usuario?.nombre_completo || "Usuario"}
+            </h2>
+            <div className="mt-3 flex items-center text-xs text-white/60">
+              <span>Rol: {usuario?.rol || "No especificado"}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 p-6 overflow-y-auto scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
+          <nav className="space-y-3">
+            {menuItems.map((item, index) => {
+              const Icon = item.icon as any;
+
+              return (
+                <Link
+                  key={item.href}
+                  className="group flex items-center space-x-4 p-4 rounded-2xl transition-all duration-300 hover:bg-white/10 hover:backdrop-blur-sm hover:scale-105 hover:shadow-lg border border-transparent hover:border-white/20"
+                  href={item.href}
+                  style={{ animationDelay: `${index * 100}ms` }}
+                  onClick={handleLinkClick}
+                >
+                  <div className="bg-white/10 p-2.5 rounded-xl group-hover:bg-white/20 transition-all duration-300 group-hover:scale-110">
+                    <Icon className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-white font-medium group-hover:text-white transition-colors">
+                      {item.label}
+                    </p>
+                    <p className="text-white/60 text-xs group-hover:text-white/80 transition-colors">
+                      {item.description}
+                    </p>
+                  </div>
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="w-2 h-2 bg-white rounded-full" />
+                  </div>
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+
+        <div className="p-6 border-t border-white/10">
+          <Button
+            fullWidth
+            className="bg-red-500/20 backdrop-blur-sm border border-red-400/30 hover:bg-red-500/30 transition-all duration-300 hover:scale-105 hover:shadow-lg text-red-200 hover:text-red-100"
+            variant="faded"
+            onPress={handleLogoutClick}
+          >
+            <div className="flex items-center justify-center space-x-3">
+              <LogOut className="w-5 h-5" />
+              <span className="font-medium">Cerrar Sesión</span>
+            </div>
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <MaestroProvider>
       <ProtectedRoute allowedRoles={["maestro"]}>
-        <main
-          className={`${isDesktopOrLaptop ? "grid grid-cols-5" : ""} h-screen`}
-        >
-          {isDesktopOrLaptop ? (
-            <div className="bg-gradient-to-r from-primary-500 to-primary-600 col-span-1 border-r-2 text-white h-full">
-              <div className="sticky top-0">
-                <div className="bg-white">
-                  <img
-                    alt="Logo"
-                    className="mx-auto"
-                    height={200}
-                    src={"/LOGO.png"}
-                    width={200}
-                  />
-                </div>
-                <div className="p-5 space-y-2">
-                  <h1 className="text-xl font-bold">Bienvenido!</h1>
-                  <h2 className="text-sm">{usuario?.nombre_completo}</h2>
-                </div>
-                <Divider />
-                <div>
-                  <ul className="flex flex-col p-5">
-                    <Link
-                      className="flex items-center gap-5 hover:bg-white/10 rounded-md p-2 transition-colors ease-in-out"
-                      href={"/maestro"}
-                    >
-                      <svg
-                        className="size-6"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth={1.5}
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                      <p>Inicio</p>
-                    </Link>
-                    <Link
-                      className="flex items-center gap-5 hover:bg-white/10 rounded-md p-2 transition-colors ease-in-out"
-                      href={"/maestro/cursos"}
-                    >
-                      <svg
-                        className="size-7"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth={1.5}
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                      <p>Cursos</p>
-                    </Link>
-                    <Link
-                      className="flex items-center gap-5 hover:bg-white/10 rounded-md p-2 transition-colors ease-in-out"
-                      href={"/maestro/perfil"}
-                    >
-                      <svg
-                        className="size-7"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth={1.5}
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                      <p>Perfil</p>
-                    </Link>
-                    <Button
-                      fullWidth
-                      className="mt-5"
-                      color="danger"
-                      variant="faded"
-                      onPress={handleLogoutClick}
-                    >
-                      <svg
-                        className="h-6 w-6 text-red-600"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                        />
-                      </svg>
-                      <p>Cerrar sesión</p>
-                    </Button>
-                  </ul>
+        <div className="h-screen bg-gray-50 overflow-hidden">
+          <main
+            className={`${isDesktopOrLaptop ? "grid grid-cols-8" : ""} h-screen`}
+          >
+            {isDesktopOrLaptop ? (
+              <div className="col-span-2 h-full overflow-hidden">
+                <SidebarContent />
+              </div>
+            ) : (
+              <SideMenu />
+            )}
+
+            <div
+              className={`${isDesktopOrLaptop ? "col-span-6" : ""} relative h-full overflow-y-auto`}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-white to-blue-50/30 pointer-events-none" />
+              <div className="absolute top-20 right-20 w-64 h-64 bg-blue-100/30 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute bottom-20 left-20 w-48 h-48 bg-purple-100/30 rounded-full blur-2xl pointer-events-none" />
+
+              <div className="relative z-10 p-4 md:p-8 lg:p-10 min-h-full mb-20 md:mb-8">
+                <div className="bg-white/70 backdrop-blur-sm rounded-3xl border border-white/20 shadow-xl min-h-full p-6 md:p-8">
+                  {children}
                 </div>
               </div>
             </div>
-          ) : (
-            <SideMenu />
-          )}
-          <div className="col-span-4">{children}</div>
-        </main>
+          </main>
+        </div>
       </ProtectedRoute>
     </MaestroProvider>
   );

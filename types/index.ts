@@ -34,6 +34,7 @@ export type Maestro = {
   celular: string;
   tipo_documento: string;
   numero_identificacion: string;
+  grados_asignados?: { id: number; nombre_grado: string }[];
 };
 
 export type Curso = {

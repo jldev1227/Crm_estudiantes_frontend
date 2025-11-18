@@ -9,6 +9,10 @@ export const OBTENER_MAESTROS = gql`
       celular
       tipo_documento
       numero_identificacion
+      grados_asignados {
+        id
+        nombre_grado
+      }
     }
   }
 `;

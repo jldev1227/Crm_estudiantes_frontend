@@ -7,9 +7,8 @@ import { useAdmin } from "@/app/context/AdminContext";
 import MaestrosResponsive from "@/components/maestroResponsive";
 
 export default function Page() {
-  const { maestros, estaCargando, obtenerMaestros, estadisticas } = useAdmin();
+  const { maestros, estaCargando, obtenerMaestros } = useAdmin();
   const [searchTerm, setSearchTerm] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     obtenerMaestros();
