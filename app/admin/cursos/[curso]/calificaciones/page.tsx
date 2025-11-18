@@ -17,6 +17,7 @@ import {
   XCircle,
   Minus,
   TrendingDown,
+  Download,
 } from "lucide-react";
 import { SharedSelection } from "@heroui/system";
 
@@ -37,6 +38,8 @@ export default function Page() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [downloadingPeriodo, setDownloadingPeriodo] = useState(false);
+  const [downloadingFinal, setDownloadingFinal] = useState(false);
 
   const obtenerCalificacionesRef = useRef(obtenerCalificaciones);
 
@@ -84,6 +87,85 @@ export default function Page() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  const handleDescargarPeriodoZip = useCallback(async () => {
+    try {
+      setDownloadingPeriodo(true);
+      setError("");
+
+      const base = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
+      const url = `${base}/api/reportes/grado/${grado_id}/periodo/${periodoSeleccionado}.zip`;
+      const headers: Record<string, string> = {};
+      if (typeof window !== "undefined") {
+        const token = localStorage.getItem("token");
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const res = await fetch(url, { headers });
+      if (!res.ok) {
+        let msg = `Error ${res.status}`;
+        try {
+          const j = await res.json();
+          if (j?.error) msg = j.error;
+        } catch {}
+        throw new Error(msg);
+      }
+
+      const blob = await res.blob();
+      const cd = res.headers.get("Content-Disposition") || "";
+      let filename = `Reportes - ${calificacionesGrado?.grado?.nombre || "Grado"} - Periodo ${periodoSeleccionado}.zip`;
+      const match = /filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i.exec(cd);
+      if (match) filename = decodeURIComponent(match[1] || match[2]);
+
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(link.href);
+    } catch (e: any) {
+      console.error(e);
+      setError(e?.message || "Error descargando reportes");
+    } finally {
+      setDownloadingPeriodo(false);
+    }
+  }, [grado_id, periodoSeleccionado, calificacionesGrado?.grado?.nombre]);
+
+  const handleDescargarBoletinesZip = useCallback(async () => {
+    try {
+      setDownloadingFinal(true);
+      setError("");
+      const base = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:4000";
+      const url = `${base}/api/reportes/grado/${grado_id}/boletin-final.zip`;
+      const headers: Record<string, string> = {};
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+      const res = await fetch(url, { headers });
+      if (!res.ok) {
+        let msg = `Error ${res.status}`;
+        try { const j = await res.json(); if (j?.error) msg = j.error; } catch {}
+        throw new Error(msg);
+      }
+      const blob = await res.blob();
+      const cd = res.headers.get("Content-Disposition") || "";
+      let filename = `Boletines Finales - ${calificacionesGrado?.grado?.nombre || "Grado"}.zip`;
+      const match = /filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i.exec(cd);
+      if (match) filename = decodeURIComponent(match[1] || match[2]);
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(link.href);
+    } catch (e: any) {
+      console.error(e);
+      setError(e?.message || "Error descargando boletines finales");
+    } finally {
+      setDownloadingFinal(false);
+    }
+  }, [grado_id, calificacionesGrado?.grado?.nombre]);
 
   const handlePeriodoChange = (keys: SharedSelection) => {
     const key = Array.from(keys)[0] as string;
@@ -152,6 +234,7 @@ export default function Page() {
     const promedios = estudiantes.map((est: any) =>
       calcularPromedioEstudiante(est.areas),
     );
+
     const aprobados = promedios.filter((p) => p >= 3.0).length;
     const reprobados = promedios.filter((p) => p < 3.0).length;
     const promedioGeneral =
@@ -184,7 +267,7 @@ export default function Page() {
       <div className="relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-lg">
         <div className="absolute -top-20 -right-20 w-40 h-40 bg-blue-400/10 rounded-full blur-3xl" />
         <div className="relative z-10 p-6">
-          <div className="flex flex-col gap-4 md:flex-row justify-between items-start md:items-center">
+          <div className="flex flex-col gap-4 xl:flex-row justify-between items-start xl:items-center">
             <div className="space-y-2">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-xl bg-blue-500/10">
@@ -213,12 +296,38 @@ export default function Page() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:flex-wrap w-full xl:w-auto items-stretch gap-2 xl:justify-end">
+              <Button
+                className="h-10 bg-indigo-600 hover:bg-indigo-700 text-white w-full sm:w-auto"
+                color="primary"
+                size="sm"
+                startContent={<Download className="w-3.5 h-3.5" />}
+                variant="solid"
+                isLoading={downloadingPeriodo}
+                onPress={handleDescargarPeriodoZip}
+                aria-label="Descargar todos los informes del período en un archivo ZIP"
+              >
+                Informes del período (ZIP)
+              </Button>
+              <Button
+                className="h-10 bg-purple-600 hover:bg-purple-700 text-white w-full sm:w-auto"
+                color="primary"
+                size="sm"
+                startContent={<Download className="w-3.5 h-3.5" />}
+                variant="solid"
+                isLoading={downloadingFinal}
+                onPress={handleDescargarBoletinesZip}
+                aria-label="Descargar todos los boletines finales consolidados en un archivo ZIP"
+              >
+                Boletines finales (ZIP)
+              </Button>
               <Select
-                className="w-32"
+                aria-label="Seleccionar período"
+                className="w-full sm:w-40"
+                disallowEmptySelection
                 classNames={{
                   trigger:
-                    "backdrop-blur-xl bg-white/60 border-white/40 hover:bg-white/80 transition-all h-9",
+                    "h-9 bg-white border border-blue-300 hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all",
                 }}
                 selectedKeys={[periodoSeleccionado.toString()]}
                 size="sm"
@@ -232,11 +341,13 @@ export default function Page() {
               </Select>
 
               <Button
-                className="backdrop-blur-xl bg-white/60 border border-white/40 hover:bg-white/80 transition-all h-9"
+                className="h-10 bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
+                color="primary"
                 size="sm"
                 startContent={<ArrowLeft className="w-3.5 h-3.5" />}
-                variant="flat"
-                onPress={() => router.back()}
+                variant="solid"
+                onPress={() => router.push(`/admin/cursos/${grado_id}`)}
+                aria-label="Volver a la vista del curso"
               >
                 Volver
               </Button>
@@ -262,13 +373,13 @@ export default function Page() {
 
       {/* Stats Cards Minimalistas */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="rounded-2xl backdrop-blur-xl bg-white/50 border border-white/40 p-5 hover:bg-white/60 transition-all">
+        <div className="rounded-2xl p-5 border transition-all bg-green-100/80 border-green-200 hover:bg-green-100">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-medium text-gray-600 mb-1">
                 Aprobados
               </p>
-              <p className="text-2xl font-bold text-green-600">
+              <p className="text-2xl font-bold text-green-700">
                 {stats.aprobados}
               </p>
             </div>
@@ -278,13 +389,13 @@ export default function Page() {
           </div>
         </div>
 
-        <div className="rounded-2xl backdrop-blur-xl bg-white/50 border border-white/40 p-5 hover:bg-white/60 transition-all">
+        <div className="rounded-2xl p-5 border transition-all bg-red-100/80 border-red-200 hover:bg-red-100">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-medium text-gray-600 mb-1">
                 Reprobados
               </p>
-              <p className="text-2xl font-bold text-red-600">
+              <p className="text-2xl font-bold text-red-700">
                 {stats.reprobados}
               </p>
             </div>
@@ -294,11 +405,11 @@ export default function Page() {
           </div>
         </div>
 
-        <div className="rounded-2xl backdrop-blur-xl bg-white/50 border border-white/40 p-5 hover:bg-white/60 transition-all">
+        <div className="rounded-2xl p-5 border transition-all bg-blue-100/80 border-blue-200 hover:bg-blue-100">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-medium text-gray-600 mb-1">Promedio</p>
-              <p className="text-2xl font-bold text-blue-600">
+              <p className="text-2xl font-bold text-blue-700">
                 {stats.promedioGeneral.toFixed(2)}
               </p>
             </div>
