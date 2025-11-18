@@ -131,8 +131,6 @@ export function MaestroProvider({ children }: { children: React.ReactNode }) {
     periodo: number,
   ) => {
     try {
-      console.group("[MAESTRO] Obtener calificaciones");
-      console.info("Variables:", { grado_id, area_id, periodo });
       const { data } = await client.query({
         query: OBTENER_CALIFICACIONES,
         variables: { grado_id, area_id, periodo },
@@ -142,10 +140,6 @@ export function MaestroProvider({ children }: { children: React.ReactNode }) {
       dispatch({
         type: "OBTENER_CALIFICACIONES",
         payload: data.obtenerCalificaciones,
-      });
-
-      console.info("Respuesta:", {
-        registros: data?.obtenerCalificaciones?.length || 0,
       });
 
       return data.obtenerCalificaciones;

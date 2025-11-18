@@ -400,16 +400,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
     dispatch({ type: "SET_LOADING", payload: true });
 
     try {
-      console.group("[ADMIN] Obtener calificaciones (grado completo)");
-      console.info("Variables:", { grado_id, periodo });
-      console.info("Usuario:", {
-        id: usuario?.id,
-        rol: usuario?.rol,
-        ver_calificaciones: usuario?.ver_calificaciones,
-        tokenPresent:
-          typeof window !== "undefined" &&
-          Boolean(localStorage.getItem("token")),
-      });
       const { data } = await client.query({
         query: OBTENER_CALIFICACIONES_GRADO_COMPLETO,
         variables: { grado_id, periodo },
@@ -421,10 +411,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
         const count =
           data.obtenerCalificacionesGradoCompleto?.calificaciones?.length || 0;
 
-        console.info("Respuesta recibida:", {
-          grado: data.obtenerCalificacionesGradoCompleto?.grado?.nombre,
-          calificaciones: count,
-        });
         dispatch({
           type: "OBTENER_CALIFICACIONES_GRADO_COMPLETO",
           payload: data.obtenerCalificacionesGradoCompleto,

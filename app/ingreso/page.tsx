@@ -95,17 +95,6 @@ function LoginForm() {
     const minimumDelay = new Promise((resolve) => setTimeout(resolve, 2500));
 
     try {
-      console.group("[LOGIN] Iniciando sesión");
-      console.info("Rol:", activeTab);
-      if (activeTab === "administrador") {
-        console.info("Payload:", { email, password: password ? "***" : "" });
-      } else {
-        console.info("Payload:", {
-          numero_identificacion: numeroIdentificacion,
-          password: password ? "***" : "",
-          isMaestro,
-        });
-      }
       let data;
 
       if (activeTab === "administrador") {
@@ -125,13 +114,6 @@ function LoginForm() {
         if (data?.loginUsuario) {
           const { token, usuario } = data.loginUsuario;
 
-          console.info("[LOGIN][Admin] Respuesta:", {
-            id: usuario?.id,
-            email: usuario?.email,
-            rol: usuario?.rol,
-            tokenPresent: Boolean(token),
-            tokenLen: token?.length || 0,
-          });
           login({
             id: usuario.id,
             nombre_completo: usuario.nombre_completo,
@@ -161,16 +143,6 @@ function LoginForm() {
         // Handle student login
         if (!isMaestro && data?.loginEstudiante) {
           const { token, estudiante } = data.loginEstudiante;
-
-          console.info("[LOGIN][Estudiante] Respuesta:", {
-            id: estudiante?.id,
-            grado_id: estudiante?.grado_id,
-            grado_nombre: estudiante?.grado?.nombre,
-            pension_activa: estudiante?.pension_activa,
-            ver_calificaciones: estudiante?.ver_calificaciones,
-            tokenPresent: Boolean(token),
-            tokenLen: token?.length || 0,
-          });
 
           // Verificar pensión activa antes de procesar el login
           if (estudiante.pension_activa === false) {
@@ -218,14 +190,6 @@ function LoginForm() {
         // Handle teacher login
         else if (isMaestro && data?.loginMaestro) {
           const { token, maestro } = data.loginMaestro;
-
-          console.info("[LOGIN][Maestro] Respuesta:", {
-            id: maestro?.id,
-            numero_identificacion: maestro?.numero_identificacion,
-            email: maestro?.email,
-            tokenPresent: Boolean(token),
-            tokenLen: token?.length || 0,
-          });
 
           login({
             id: maestro.id,
