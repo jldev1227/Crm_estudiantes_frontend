@@ -14,7 +14,6 @@ import { Select, SelectItem } from "@heroui/select";
 import { DatePicker } from "@heroui/date-picker";
 import { DateValue } from "@internationalized/date";
 import { useParams } from "next/navigation";
-import { useDateFormatter } from "@react-aria/i18n";
 
 import { Grado } from "@/types";
 import { useAdmin } from "@/app/context/AdminContext";
@@ -49,12 +48,6 @@ export default function ModalNuevoEstudiante() {
   );
   const [tipoDocumento, setTipoDocumento] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
-
-  let formatter = useDateFormatter({
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  });
 
   const navigationTabs = [
     { key: "listado", label: "Listado", icon: List },

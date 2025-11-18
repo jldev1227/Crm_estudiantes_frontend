@@ -15,6 +15,8 @@ import { CAMBIAR_GRADO_ESTUDIANTE } from "../graphql/mutation/cambiarGradoEstudi
 import { CAMBIAR_GRADO_ESTUDIANTES_MASIVO } from "../graphql/mutation/cambiarGradoEstudiantesMasivo";
 import { OBTENER_CALIFICACIONES_GRADO_COMPLETO } from "../graphql/queries/obtenerCalificacionesGradoCompleto";
 
+import { useAuth } from "./AuthContext";
+
 import { Curso, Estudiante, EstudianteInput, Maestro } from "@/types";
 
 // Tipos para la respuesta actual de obtenerCalificacionesGradoCompleto
@@ -250,6 +252,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [state, dispatch] = useReducer(adminReducer, initialState);
+  const { usuario } = useAuth();
 
   // Obtenemos instancia de Apollo Client
   const client = useApolloClient();
@@ -284,8 +287,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
       const { data } = await client.query({
         query: OBTENER_ESTADISTICAS_ADMIN,
       });
-
-      console.log(data.obtenerEstadisticasAdmin);
 
       dispatch({
         type: "OBTENER_ESTADISTICAS",
@@ -398,9 +399,17 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
   ): Promise<CalificacionesGradoCompletoResponse | void> => {
     dispatch({ type: "SET_LOADING", payload: true });
 
-    console.log(grado_id, periodo);
-
     try {
+      console.group("[ADMIN] Obtener calificaciones (grado completo)");
+      console.info("Variables:", { grado_id, periodo });
+      console.info("Usuario:", {
+        id: usuario?.id,
+        rol: usuario?.rol,
+        ver_calificaciones: usuario?.ver_calificaciones,
+        tokenPresent:
+          typeof window !== "undefined" &&
+          Boolean(localStorage.getItem("token")),
+      });
       const { data } = await client.query({
         query: OBTENER_CALIFICACIONES_GRADO_COMPLETO,
         variables: { grado_id, periodo },
@@ -409,6 +418,13 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
       });
 
       if (data?.obtenerCalificacionesGradoCompleto) {
+        const count =
+          data.obtenerCalificacionesGradoCompleto?.calificaciones?.length || 0;
+
+        console.info("Respuesta recibida:", {
+          grado: data.obtenerCalificacionesGradoCompleto?.grado?.nombre,
+          calificaciones: count,
+        });
         dispatch({
           type: "OBTENER_CALIFICACIONES_GRADO_COMPLETO",
           payload: data.obtenerCalificacionesGradoCompleto,
@@ -425,6 +441,8 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
         payload: "Error al cargar las calificaciones del grado",
       });
       throw error; // Re-lanzar el error para manejarlo en el componente
+    } finally {
+      console.groupEnd();
     }
   };
 
@@ -461,7 +479,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({
     dispatch({ type: "SET_LOADING", payload: true });
 
     try {
-      console.log(estudianteNuevo);
       const { data } = await client.mutate({
         mutation: CREAR_ESTUDIANTE,
         variables: {

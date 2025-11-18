@@ -406,8 +406,6 @@ export const ReporteEstudiantePDF = ({
   // Simplemente ordenar las áreas, sin distribución manual
   const areasOrdenadas = useMemo(() => {
     if (!areas || areas.length === 0) {
-      console.log("⚠️ No hay áreas disponibles para el PDF");
-
       return [];
     }
 

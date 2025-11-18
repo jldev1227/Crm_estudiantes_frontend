@@ -59,7 +59,6 @@ export default function TablaEstudiantes({
   const [selectedRows, setSelectedRows] = React.useState<Set<number>>(
     new Set(),
   );
-  const [dropdownOpen, setDropdownOpen] = React.useState<number | null>(null);
   const rowsPerPage = 10;
 
   // Actualizar estudiantesState cuando cambie el prop estudiantes
@@ -106,45 +105,6 @@ export default function TablaEstudiantes({
 
       return 0;
     }
-  };
-
-  // Generar iniciales para avatar
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((word) => word[0])
-      .join("")
-      .substring(0, 2)
-      .toUpperCase();
-  };
-
-  // Generar color de avatar basado en el nombre
-  const getAvatarColor = (name: string) => {
-    const colors = [
-      "bg-blue-500",
-      "bg-green-500",
-      "bg-purple-500",
-      "bg-pink-500",
-      "bg-indigo-500",
-      "bg-orange-500",
-      "bg-teal-500",
-      "bg-red-500",
-    ];
-    const index = name.charCodeAt(0) % colors.length;
-
-    return colors[index];
-  };
-
-  // Manejar selección de filas
-  const handleSelectRow = (id: number) => {
-    const newSelected = new Set(selectedRows);
-
-    if (newSelected.has(id)) {
-      newSelected.delete(id);
-    } else {
-      newSelected.add(id);
-    }
-    setSelectedRows(newSelected);
   };
 
   const handleSelectAll = () => {
@@ -367,7 +327,7 @@ export default function TablaEstudiantes({
 
             {/* Cuerpo de la tabla */}
             <tbody className="divide-y divide-gray-100">
-              {items.map((item, index) => (
+              {items.map((item) => (
                 <tr
                   key={item.id}
                   className={`hover:bg-blue-50/50 transition-all duration-200 ${

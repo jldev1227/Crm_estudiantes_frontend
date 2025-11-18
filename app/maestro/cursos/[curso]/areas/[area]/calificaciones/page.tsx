@@ -813,10 +813,6 @@ const SistemaCalificaciones = () => {
     if (calificacionesContext && actividades.length > 0 && !isCualitativo()) {
       const timeout = setTimeout(() => {
         const seCorrigio = validarYCorregirPorcentajes();
-
-        if (seCorrigio) {
-          console.log("Porcentajes corregidos automáticamente");
-        }
       }, 500); // Pequeño delay para evitar conflictos
 
       return () => clearTimeout(timeout);
@@ -1043,12 +1039,6 @@ const SistemaCalificaciones = () => {
         notas: actividades.map((actividad) => {
           const estudianteNotas = calificaciones[estudiante.id] || {};
           const valorStr = estudianteNotas[actividad.id] || "0";
-
-          console.log({
-            estudiante_id: estudiante.id,
-            actividad_id: actividad.id,
-            valor: calificaciones?.[estudiante.id]?.[actividad.id],
-          });
 
           return {
             actividad_id: actividad.id,

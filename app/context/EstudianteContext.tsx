@@ -183,6 +183,13 @@ export const EstudianteProvider: React.FC<{ children: React.ReactNode }> = ({
     periodo: number,
   ): Promise<Calificacion[] | null> => {
     try {
+      console.group("[ESTUDIANTE] Obtener calificaciones");
+      console.info("Usuario:", {
+        id: usuario?.id,
+        grado_id: usuario?.grado_id,
+        ver_calificaciones: usuario?.ver_calificaciones,
+      });
+      console.info("Variables:", { area_id, periodo });
       if (!usuario?.id || !usuario?.grado_id) {
         console.warn("Faltan datos del usuario para obtener calificaciones");
 
@@ -197,13 +204,19 @@ export const EstudianteProvider: React.FC<{ children: React.ReactNode }> = ({
           periodo: periodo,
         },
       });
+      const result =
+        data?.obtenerCalificacionesEstudiante?.calificaciones || null;
 
-      console.log(data);
+      console.info("Respuesta:", {
+        registros: result ? result.length : 0,
+      });
 
-      return data?.obtenerCalificacionesEstudiante.calificaciones || null;
+      return result;
     } catch (error) {
       console.error("Error obteniendo calificaciones:", error);
       throw error;
+    } finally {
+      console.groupEnd();
     }
   };
 
