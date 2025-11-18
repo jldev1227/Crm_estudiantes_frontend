@@ -24,7 +24,7 @@ import { useAuth } from "../../../context/AuthContext";
 import { OBTENER_AREAS_POR_GRADO } from "@/app/graphql/queries/obtenerAreasPorGrado";
 import { formatearFecha } from "@/helpers/formatearFecha";
 import PDFThumbnail from "@/components/PDFThumbnail";
-import { OBTENER_ACTIVIDADES_ESTUDIANTE_GENERAL } from "@/app/graphql/queries/obtenerActividadesEstudiante copy";
+import { OBTENER_ACTIVIDADES_ESTUDIANTE_GENERAL } from "@/app/graphql/queries/obtenerActividadesEstudianteGeneral";
 import { formatearFechaCompleta } from "@/helpers/formatearFechaCompleta";
 import { convertirA12Horas } from "@/helpers/convertirA12Horas";
 

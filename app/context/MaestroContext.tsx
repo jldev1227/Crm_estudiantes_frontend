@@ -145,6 +145,8 @@ export function MaestroProvider({ children }: { children: React.ReactNode }) {
       return data.obtenerCalificaciones;
     } catch (error) {
       console.error("Error obteniendo calificaciones:", error);
+    } finally {
+      console.groupEnd();
     }
   };
 

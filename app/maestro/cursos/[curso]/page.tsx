@@ -7,54 +7,14 @@ import { Divider } from "@heroui/divider";
 import { Chip } from "@heroui/chip";
 import { Tooltip } from "@heroui/tooltip";
 import { Button } from "@heroui/button";
-import { Avatar } from "@heroui/avatar";
+import { Select, SelectItem } from "@heroui/select";
 import { GraduationCap } from "lucide-react";
+import { Download } from "lucide-react";
 
 import EstudiantesResponsive from "@/components/estudiantesResponsive";
 import { useAuth } from "@/app/context/AuthContext";
 import { useValidateCourseAccess } from "@/hooks/useValidateCourseAccess";
 import { useMaestro } from "@/app/context/MaestroContext";
-import { Area } from "@/types";
-
-// Iconos como componentes
-const EyeIcon = () => (
-  <svg
-    className="size-4"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={1.5}
-    viewBox="0 0 24 24"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <path
-      d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
-
-const PlusIcon = () => (
-  <svg
-    className="size-4"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={1.5}
-    viewBox="0 0 24 24"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    <path
-      d="M12 4.5v15m7.5-7.5h-15"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
 
 const UserGroupIcon = () => (
   <svg
@@ -80,8 +40,16 @@ export default function CursoDashboard() {
   const { usuario } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [zipError, setZipError] = useState<string | null>(null);
+  const [downloadingPeriodo, setDownloadingPeriodo] = useState(false);
+  const [downloadingFinal, setDownloadingFinal] = useState(false);
 
-  const { obtenerCursoGeneral, curso } = useMaestro();
+  const { obtenerCursoGeneral, curso, periodoSeleccionado, establecerPeriodo } =
+    useMaestro();
+
+  // Glass style utility
+  const GLASS_CARD =
+    "backdrop-blur-xl bg-white/50 dark:bg-zinc-900/40 border border-white/30 dark:border-white/10 shadow-lg";
 
   // Efecto para cargar datos del curso usando el contexto
   useEffect(() => {
@@ -216,7 +184,7 @@ export default function CursoDashboard() {
   // No course found
   if (!curso) {
     return (
-      <Card className="border border-gray-200">
+      <Card className={GLASS_CARD}>
         <CardBody className="text-center py-8">
           <div className="text-gray-500">
             <GraduationCap strokeWidth={1} />
@@ -231,29 +199,183 @@ export default function CursoDashboard() {
   }
 
   return (
-    <div className="space-y-6 p-4 md:p-10">
+    <div className="space-y-6 p-4 md:p-10 max-w-[1200px] mx-auto">
       {/* Header del Curso */}
-      <Card className="shadow-sm">
+      <Card className={GLASS_CARD}>
         <CardHeader className="pb-3">
-          <div className="flex flex-col sm:flex-row justify-between items-start md:items-center gap-4 w-full">
+          <div className="flex flex-col gap-4 xl:flex-row justify-between items-start xl:items-center w-full">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                <GraduationCap strokeWidth={1} />
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 flex items-center justify-center">
+                <GraduationCap className="text-blue-700" strokeWidth={1} />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-blue-600">
+                <h1 className="text-2xl font-bold text-gray-900">
                   {curso.nombre}
                 </h1>
+                <p className="text-xs text-gray-600">ID: {curso.id}</p>
               </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2 w-full xl:w-auto">
+              <Button
+                className="h-10 bg-indigo-600 hover:bg-indigo-700 text-white w-full sm:w-auto"
+                color="primary"
+                isLoading={downloadingPeriodo}
+                size="sm"
+                startContent={<Download className="w-3.5 h-3.5" />}
+                variant="solid"
+                onPress={async () => {
+                  try {
+                    setZipError(null);
+                    setDownloadingPeriodo(true);
+                    const base =
+                      process.env.NEXT_PUBLIC_BACKEND_URL ||
+                      "http://localhost:4000";
+                    const url = `${base}/api/reportes/grado/${id}/periodo/${periodoSeleccionado || 1}.zip`;
+                    const headers: Record<string, string> = {};
+
+                    if (typeof window !== "undefined") {
+                      const token = localStorage.getItem("token");
+
+                      if (token) headers["Authorization"] = `Bearer ${token}`;
+                    }
+                    const res = await fetch(url, { headers });
+
+                    if (!res.ok) {
+                      let msg = `Error ${res.status}`;
+
+                      try {
+                        const j = await res.json();
+
+                        if (j?.error) msg = j.error;
+                      } catch {}
+                      throw new Error(msg);
+                    }
+                    const blob = await res.blob();
+                    const cd = res.headers.get("Content-Disposition") || "";
+                    let filename = `Reportes - ${curso?.nombre || "Grado"} - Periodo ${periodoSeleccionado || 1}.zip`;
+                    const match =
+                      /filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i.exec(
+                        cd,
+                      );
+
+                    if (match)
+                      filename = decodeURIComponent(match[1] || match[2]);
+                    const link = document.createElement("a");
+
+                    link.href = URL.createObjectURL(blob);
+                    link.download = filename;
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                    URL.revokeObjectURL(link.href);
+                  } catch (e: any) {
+                    setZipError(
+                      e?.message || "Error descargando reportes del período",
+                    );
+                  } finally {
+                    setDownloadingPeriodo(false);
+                  }
+                }}
+              >
+                Informes del período (ZIP)
+              </Button>
+              <Button
+                className="h-10 bg-purple-600 hover:bg-purple-700 text-white w-full sm:w-auto"
+                color="primary"
+                isLoading={downloadingFinal}
+                size="sm"
+                startContent={<Download className="w-3.5 h-3.5" />}
+                variant="solid"
+                onPress={async () => {
+                  try {
+                    setZipError(null);
+                    setDownloadingFinal(true);
+                    const base =
+                      process.env.NEXT_PUBLIC_BACKEND_URL ||
+                      "http://localhost:4000";
+                    const url = `${base}/api/reportes/grado/${id}/boletin-final.zip`;
+                    const headers: Record<string, string> = {};
+
+                    if (typeof window !== "undefined") {
+                      const token = localStorage.getItem("token");
+
+                      if (token) headers["Authorization"] = `Bearer ${token}`;
+                    }
+                    const res = await fetch(url, { headers });
+
+                    if (!res.ok) {
+                      let msg = `Error ${res.status}`;
+
+                      try {
+                        const j = await res.json();
+
+                        if (j?.error) msg = j.error;
+                      } catch {}
+                      throw new Error(msg);
+                    }
+                    const blob = await res.blob();
+                    const cd = res.headers.get("Content-Disposition") || "";
+                    let filename = `Boletines Finales - ${curso?.nombre || "Grado"}.zip`;
+                    const match =
+                      /filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i.exec(
+                        cd,
+                      );
+
+                    if (match)
+                      filename = decodeURIComponent(match[1] || match[2]);
+                    const link = document.createElement("a");
+
+                    link.href = URL.createObjectURL(blob);
+                    link.download = filename;
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                    URL.revokeObjectURL(link.href);
+                  } catch (e: any) {
+                    setZipError(
+                      e?.message || "Error descargando boletines finales",
+                    );
+                  } finally {
+                    setDownloadingFinal(false);
+                  }
+                }}
+              >
+                Boletines finales (ZIP)
+              </Button>
+              <Select
+                aria-label="Seleccionar período"
+                className="w-full sm:w-40"
+                selectedKeys={[(periodoSeleccionado || 1).toString()]}
+                variant="bordered"
+                onSelectionChange={(keys) => {
+                  const key = Array.from(keys)[0] as string;
+                  const p = parseInt(key);
+
+                  establecerPeriodo(p);
+                }}
+              >
+                <SelectItem key="1">Período 1</SelectItem>
+                <SelectItem key="2">Período 2</SelectItem>
+                <SelectItem key="3">Período 3</SelectItem>
+                <SelectItem key="4">Período 4</SelectItem>
+              </Select>
             </div>
           </div>
         </CardHeader>
       </Card>
 
+      {zipError && (
+        <Card className="backdrop-blur-xl bg-red-50/80 border border-red-200/60">
+          <CardBody className="py-3">
+            <p className="text-sm text-red-700 font-medium">{zipError}</p>
+          </CardBody>
+        </Card>
+      )}
+
       {/* Estadísticas del Curso */}
       {estadisticas && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="bg-blue-50 border border-blue-200">
+          <Card className={GLASS_CARD}>
             <CardBody className="text-center py-4">
               <div className="text-2xl font-bold text-blue-600 mb-1">
                 {estadisticas.totalEstudiantes}
@@ -265,7 +387,7 @@ export default function CursoDashboard() {
             </CardBody>
           </Card>
 
-          <Card className="bg-green-50 border border-green-200">
+          <Card className={GLASS_CARD}>
             <CardBody className="text-center py-4">
               <div className="text-2xl font-bold text-green-600 mb-1">
                 {estadisticas.totalAreas}
@@ -274,7 +396,7 @@ export default function CursoDashboard() {
             </CardBody>
           </Card>
 
-          <Card className="bg-orange-50 border border-orange-200">
+          <Card className={GLASS_CARD}>
             <CardBody className="text-center py-4">
               <div className="text-2xl font-bold text-orange-600 mb-1">
                 {estadisticas.totalMaestros}
@@ -283,7 +405,7 @@ export default function CursoDashboard() {
             </CardBody>
           </Card>
 
-          <Card className="bg-purple-50 border border-purple-200">
+          <Card className={GLASS_CARD}>
             <CardBody className="text-center py-4">
               <div className="text-2xl font-bold text-purple-600 mb-1">
                 {estadisticas.porcentajeDirector}%
@@ -296,7 +418,7 @@ export default function CursoDashboard() {
 
       {/* Maestros y sus Áreas */}
       {areasPorMaestro.length > 0 && (
-        <Card className="shadow-sm">
+        <Card className={GLASS_CARD}>
           <CardHeader className="pb-3">
             <div className="flex justify-between items-center w-full">
               <h2 className="text-xl font-bold text-gray-800">
@@ -311,22 +433,10 @@ export default function CursoDashboard() {
           <CardBody className="pt-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {areasPorMaestro.map((grupo: any, index: number) => (
-                <Card key={index} className="bg-gray-50 border">
+                <Card key={index} className={GLASS_CARD}>
                   <CardBody className="p-4">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <Avatar
-                          className={
-                            grupo.esDirector
-                              ? "bg-green-600 text-white"
-                              : "bg-gray-600 text-white"
-                          }
-                          name={grupo.maestro.nombre_completo
-                            .split(" ")
-                            .map((n: string) => n[0])
-                            .join("")}
-                          size="md"
-                        />
                         <div>
                           <h3 className="font-semibold text-gray-800">
                             {grupo.maestro.nombre_completo}
@@ -377,112 +487,8 @@ export default function CursoDashboard() {
         </Card>
       )}
 
-      {/* Listado de Todas las Áreas - CÓDIGO ACTUALIZADO */}
-      {curso.areas && curso.areas.length > 0 && (
-        <Card className="shadow-sm">
-          <CardHeader className="pb-3">
-            <div className="flex justify-between items-center w-full">
-              <h2 className="text-xl font-bold text-gray-800">
-                Todas las Áreas Académicas
-              </h2>
-              <Chip color="primary" size="sm" variant="flat">
-                {curso.areas.length} áreas
-              </Chip>
-            </div>
-          </CardHeader>
-          <Divider />
-          <CardBody className="pt-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {curso.areas.map((area: Area, index: number) => {
-                // ✅ Verificar si el usuario actual es el maestro asignado a esta área
-                const esMaestroAsignado = area.maestro.id === usuario?.id;
-
-                return (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border hover:bg-gray-100 transition-colors"
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                      <Chip
-                        color={getColorArea(area.nombre)}
-                        size="sm"
-                        variant="flat"
-                      >
-                        {area.nombre}
-                      </Chip>
-                      <div className="text-xs text-gray-600">
-                        {area.maestro.nombre_completo
-                          .split(" ")
-                          .slice(0, 2)
-                          .join(" ")}
-                        {/* ✅ Indicador visual si es tu área */}
-                        {esMaestroAsignado && (
-                          <Chip
-                            className="ml-2"
-                            color="success"
-                            size="sm"
-                            variant="dot"
-                          >
-                            Tu área
-                          </Chip>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex gap-1">
-                      {/* ✅ Solo mostrar botones si es el maestro asignado */}
-                      {esMaestroAsignado ? (
-                        <>
-                          <Tooltip content={`Ver ${area.nombre}`}>
-                            <Button
-                              isIconOnly
-                              color="primary"
-                              size="sm"
-                              variant="light"
-                              onPress={() => verArea(area.id)}
-                            >
-                              <EyeIcon />
-                            </Button>
-                          </Tooltip>
-                          <Tooltip
-                            content={`Añadir actividad a ${area.nombre}`}
-                          >
-                            <Button
-                              isIconOnly
-                              color="success"
-                              size="sm"
-                              variant="light"
-                              onPress={() =>
-                                router.push(
-                                  `/maestro/cursos/${curso.id}/areas/${area.id}/actividades/nueva`,
-                                )
-                              }
-                            >
-                              <PlusIcon />
-                            </Button>
-                          </Tooltip>
-                        </>
-                      ) : (
-                        /* ✅ Mostrar indicador de "no accesible" para áreas de otros maestros */
-                        <Tooltip content="Solo el maestro asignado puede acceder">
-                          <div className="flex items-center text-gray-400">
-                            <Chip color="default" size="sm" variant="flat">
-                              Sin acceso
-                            </Chip>
-                          </div>
-                        </Tooltip>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </CardBody>
-        </Card>
-      )}
-
       {/* Sección para el Componente de Estudiantes */}
-      <Card className="shadow-sm">
+      <Card className={GLASS_CARD}>
         <CardHeader className="pb-3">
           <div className="flex justify-between items-center w-full">
             <h2 className="text-xl font-bold text-gray-800">

@@ -17,26 +17,24 @@ import LoaderIngreso from "@/components/loaderIngreso";
 // ✅ Componente de carga para Suspense
 function LoginFormSkeleton() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 min-h-screen">
-      {/* Columna Izquierda */}
-      <div className="hidden md:relative md:col-span-2 md:block">
-        <div className="h-full w-full bg-gray-300 animate-pulse" />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-red-50 relative overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-300/20 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-red-300/20 rounded-full blur-3xl animate-pulse delay-1000" />
       </div>
 
-      {/* Columna Derecha */}
-      <div className="bg-blue-100 md:shadow-md col-span-1 flex flex-col">
-        {/* Logo skeleton */}
-        <div className="mx-auto mt-8 w-[300px] h-[300px] bg-gray-300 animate-pulse rounded" />
-
-        {/* Contenido skeleton */}
-        <div className="bg-white p-6 flex flex-col space-y-6 flex-1">
-          <div className="h-8 bg-gray-300 animate-pulse rounded" />
-          <div className="space-y-4">
-            <div className="h-12 bg-gray-300 animate-pulse rounded" />
-            <div className="h-12 bg-gray-300 animate-pulse rounded" />
-            <div className="h-12 bg-gray-300 animate-pulse rounded" />
+      <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
+        <div className="w-full max-w-md">
+          <div className="bg-white/70 backdrop-blur-xl rounded-3xl shadow-2xl shadow-blue-200/20 border border-white/40 p-8 space-y-6">
+            <div className="h-24 w-24 bg-gray-200 animate-pulse rounded-2xl mx-auto" />
+            <div className="space-y-4">
+              <div className="h-8 bg-gray-200 animate-pulse rounded-lg" />
+              <div className="h-12 bg-gray-200 animate-pulse rounded-xl" />
+              <div className="h-12 bg-gray-200 animate-pulse rounded-xl" />
+              <div className="h-14 bg-gray-200 animate-pulse rounded-xl" />
+            </div>
           </div>
-          <div className="h-14 bg-gray-300 animate-pulse rounded" />
         </div>
       </div>
     </div>
@@ -58,10 +56,6 @@ function LoginForm() {
   const [pensionInactiva, setPensionInactiva] = useState(false);
   const router = useRouter();
   const { login } = useAuth();
-
-  const handleRoleChange = (value: boolean) => {
-    setIsMaestro(value);
-  };
 
   const handleTabChange = (key: React.Key) => {
     setActiveTab(key as string);
@@ -86,12 +80,10 @@ function LoginForm() {
   };
 
   // useMutation hooks
-  const [loginEstudiante, { data: dataEstudiante, error: errorEstudiante }] =
+  const [loginEstudiante, { error: errorEstudiante }] =
     useMutation(LOGIN_ESTUDIANTE);
-  const [loginMaestro, { data: dataMaestro, error: errorMaestro }] =
-    useMutation(LOGIN_MAESTRO);
-  const [loginUsuario, { data: dataUsuario, error: errorUsuario }] =
-    useMutation(LOGIN_USUARIO);
+  const [loginMaestro, { error: errorMaestro }] = useMutation(LOGIN_MAESTRO);
+  const [loginUsuario, { error: errorUsuario }] = useMutation(LOGIN_USUARIO);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -99,17 +91,23 @@ function LoginForm() {
     setPensionInactiva(false);
     setErrorMessage("");
 
+    // Delay mínimo para mostrar el loader con animaciones completas (2.5 segundos)
+    const minimumDelay = new Promise((resolve) => setTimeout(resolve, 2500));
+
     try {
       let data;
 
       if (activeTab === "administrador") {
         // Admin login with email/password
-        const result = await loginUsuario({
-          variables: {
-            email,
-            password,
-          },
-        });
+        const [result] = await Promise.all([
+          loginUsuario({
+            variables: {
+              email,
+              password,
+            },
+          }),
+          minimumDelay,
+        ]);
 
         data = result.data;
 
@@ -130,12 +128,15 @@ function LoginForm() {
         // Student or teacher login with ID/password
         const mutation = isMaestro ? loginMaestro : loginEstudiante;
 
-        const result = await mutation({
-          variables: {
-            numero_identificacion: numeroIdentificacion,
-            password,
-          },
-        });
+        const [result] = await Promise.all([
+          mutation({
+            variables: {
+              numero_identificacion: numeroIdentificacion,
+              password,
+            },
+          }),
+          minimumDelay,
+        ]);
 
         data = result.data;
 
@@ -162,6 +163,7 @@ function LoginForm() {
               fecha_nacimiento: estudiante.fecha_nacimiento,
               celular_padres: estudiante.celular_padres,
               pension_activa: false,
+              ver_calificaciones: estudiante.ver_calificaciones,
               token,
             });
 
@@ -180,6 +182,7 @@ function LoginForm() {
             fecha_nacimiento: estudiante.fecha_nacimiento,
             celular_padres: estudiante.celular_padres,
             pension_activa: true,
+            ver_calificaciones: estudiante.ver_calificaciones,
             token,
           });
           router.push("/estudiante");
@@ -236,6 +239,7 @@ function LoginForm() {
         setErrorMessage("Error de conexión. Inténtalo de nuevo.");
       }
     } finally {
+      console.groupEnd();
       setLoading(false);
     }
   };
@@ -260,129 +264,216 @@ function LoginForm() {
   if (loading) return <LoaderIngreso>Autenticando</LoaderIngreso>;
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 min-h-screen">
-      {/* Columna Izquierda: Imagen de fondo con overlay */}
-      <div className="hidden md:relative md:col-span-2 md:block">
-        {/* Imagen de fondo */}
-        <div
-          className="
-                    h-full w-full
-                    bg-cover bg-no-repeat
-                    bg-[50%_37%]
-                    bg-[url('/banner_ingreso2.jpeg')]
-                    "
-        />
-        {/* Overlay sobre la imagen (opcional) */}
-        <div className="absolute inset-0 bg-black/40" />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-red-50 relative overflow-hidden">
+      {/* Decorative animated background blobs */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-300/30 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-red-300/30 rounded-full blur-3xl animate-pulse delay-1000" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-blue-200/20 rounded-full blur-3xl animate-pulse delay-500" />
       </div>
 
-      {/* Columna Derecha: Formulario */}
-      <form
-        className="bg-blue-100 md:shadow-md col-span-1 flex flex-col"
-        onSubmit={handleSubmit}
-      >
-        {/* Logo */}
-        <img
-          alt="Logo"
-          className="mx-auto mt-8"
-          height={300}
-          src={"/LOGO.png"}
-          width={300}
-        />
+      {/* Subtle grid pattern overlay */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:24px_24px]" />
 
-        {/* Contenido en bloque blanco */}
-        <div className="bg-white p-6 flex flex-col space-y-6 flex-1">
-          <h2 className="text-2xl font-bold text-center">Inicia sesión</h2>
+      {/* Main content */}
+      <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
+        <form className="w-full max-w-md" onSubmit={handleSubmit}>
+          {/* Glass card container */}
+          <div className="bg-white/70 backdrop-blur-xl rounded-3xl shadow-2xl shadow-blue-200/20 border border-white/40 overflow-hidden">
+            {/* Logo section with gradient background */}
+            <div className="relative bg-gradient-to-br from-blue-500/10 via-white/50 to-red-500/10 p-8 border-b border-white/40">
+              <div className="absolute inset-0 bg-white/50 backdrop-blur-sm" />
+              <div className="relative">
+                <img
+                  alt="Logo Vancouver"
+                  className="mx-auto drop-shadow-lg"
+                  height={120}
+                  src={"/LOGO.png"}
+                  width={120}
+                />
+              </div>
+            </div>
 
-          {errorMessage && (
-            <div
-              className={`border-l-4 p-2 px-4 ${
-                pensionInactiva
-                  ? "bg-amber-100 border-amber-500 text-amber-700"
-                  : "bg-red-100 border-red-500 text-red-700"
-              }`}
-            >
-              <p>
-                <strong>{pensionInactiva ? "Aviso:" : "Error:"}</strong>{" "}
-                {errorMessage}
+            {/* Form content */}
+            <div className="p-8 space-y-6">
+              <div className="text-center space-y-2">
+                <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-700 to-red-700 bg-clip-text text-transparent">
+                  Bienvenido
+                </h2>
+                <p className="text-slate-600 text-sm">
+                  Inicia sesión para acceder al sistema
+                </p>
+              </div>
+
+              {/* Error/Warning message with glass effect */}
+              {errorMessage && (
+                <div
+                  className={`
+                    relative overflow-hidden rounded-2xl p-4
+                    ${
+                      pensionInactiva
+                        ? "bg-amber-500/10 border-2 border-amber-500/30"
+                        : "bg-red-500/10 border-2 border-red-500/30"
+                    }
+                    backdrop-blur-sm
+                  `}
+                >
+                  <div className="flex items-start space-x-3">
+                    <div
+                      className={`
+                      flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center
+                      ${pensionInactiva ? "bg-amber-500" : "bg-red-500"}
+                    `}
+                    >
+                      <svg
+                        className="w-4 h-4 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <p
+                        className={`text-sm font-medium ${
+                          pensionInactiva ? "text-amber-800" : "text-red-800"
+                        }`}
+                      >
+                        <strong>{pensionInactiva ? "Aviso:" : "Error:"}</strong>{" "}
+                        {errorMessage}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Tabs with glass effect */}
+              <div className="bg-slate-100/50 backdrop-blur-sm rounded-2xl">
+                <Tabs
+                  classNames={{
+                    tabList: "gap-2 w-full relative rounded-xl bg-transparent",
+                    cursor: "bg-white shadow-sm rounded-xl",
+                    tab: "h-11 font-semibold text-slate-600 data-[selected=true]:text-blue-700",
+                    tabContent:
+                      "group-data-[selected=true]:font-bold group-data-[selected=true]:bg-gradient-to-r group-data-[selected=true]:from-blue-700 group-data-[selected=true]:to-red-700 group-data-[selected=true]:bg-clip-text group-data-[selected=true]:text-transparent",
+                  }}
+                  color="primary"
+                  selectedKey={activeTab}
+                  variant="solid"
+                  onSelectionChange={handleTabChange}
+                >
+                  <Tab key="estudiante" title="Estudiante" />
+                  <Tab key="maestro" title="Maestro" />
+                  <Tab key="administrador" title="Admin" />
+                </Tabs>
+              </div>
+
+              {/* Form inputs with glass effect */}
+              <div className="space-y-4">
+                {activeTab === "administrador" ? (
+                  <Input
+                    classNames={{
+                      input: "bg-white/50",
+                      inputWrapper:
+                        "bg-white/60 backdrop-blur-sm border-2 border-blue-200/50 hover:border-blue-400/50 data-[hover=true]:bg-white/70 group-data-[focus=true]:bg-white/80 group-data-[focus=true]:border-blue-500",
+                      label: "text-slate-700 font-medium",
+                    }}
+                    label="Email"
+                    placeholder="correo@ejemplo.com"
+                    size="lg"
+                    type="email"
+                    value={email}
+                    variant="bordered"
+                    onValueChange={setEmail}
+                  />
+                ) : (
+                  <Input
+                    classNames={{
+                      input: "bg-white/50",
+                      inputWrapper:
+                        "bg-white/60 backdrop-blur-sm border-2 border-blue-200/50 hover:border-blue-400/50 data-[hover=true]:bg-white/70 group-data-[focus=true]:bg-white/80 group-data-[focus=true]:border-blue-500",
+                      label: "text-slate-700 font-medium",
+                    }}
+                    label="Número de documento"
+                    placeholder="Ingresa tu número de documento"
+                    size="lg"
+                    value={numeroIdentificacion}
+                    variant="bordered"
+                    onValueChange={setNumeroIdentificacion}
+                  />
+                )}
+
+                <Input
+                  classNames={{
+                    input: "bg-white/50",
+                    inputWrapper:
+                      "bg-white/60 backdrop-blur-sm border-2 border-blue-200/50 hover:border-blue-400/50 data-[hover=true]:bg-white/70 group-data-[focus=true]:bg-white/80 group-data-[focus=true]:border-red-500",
+                    label: "text-slate-700 font-medium",
+                  }}
+                  label="Contraseña"
+                  placeholder="••••••••"
+                  size="lg"
+                  type="password"
+                  value={password}
+                  variant="bordered"
+                  onValueChange={setPassword}
+                />
+              </div>
+
+              {/* Submit button with gradient and glass effect */}
+              <Button
+                fullWidth
+                className="h-14 text-base font-bold bg-gradient-to-r from-blue-600 via-blue-500 to-red-600 hover:from-blue-700 hover:via-blue-600 hover:to-red-700 text-white shadow-xl shadow-blue-300/30 hover:shadow-blue-400/40 hover:scale-[1.02] transition-all duration-300 border-2 border-white/20"
+                endContent={
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth={2.5}
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      d="m12.75 15 3-3m0 0-3-3m3 3h-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                }
+                size="lg"
+                type="submit"
+              >
+                Ingresar al Sistema
+              </Button>
+
+              {/* Footer text */}
+              <p className="text-center text-xs text-slate-500 pt-2">
+                Gimnasio Pedagógico Vancouver
+                <br />
+                Sistema de Gestión Educativa
               </p>
             </div>
-          )}
-
-          <Tabs
-            classNames={{
-              tabList:
-                "gap-4 w-full relative rounded-none p-0 border-b border-divider",
-              cursor: "w-full bg-primary",
-              tab: "max-w-fit px-0 h-12",
-            }}
-            color="primary"
-            selectedKey={activeTab}
-            variant="underlined"
-            onSelectionChange={handleTabChange}
-          >
-            <Tab key="estudiante" title="Estudiante" />
-            <Tab key="maestro" title="Maestro" />
-            <Tab key="administrador" title="Administrador" />
-          </Tabs>
-
-          <div className="space-y-4">
-            {activeTab === "administrador" ? (
-              // Admin form with email
-              <Input
-                label="Email"
-                placeholder="Ingresa tu email"
-                value={email}
-                variant="bordered"
-                onValueChange={setEmail}
-              />
-            ) : (
-              // Student/Teacher form with ID number
-              <Input
-                label="Número documento"
-                placeholder="Ingresa tu número de documento"
-                value={numeroIdentificacion}
-                variant="bordered"
-                onValueChange={setNumeroIdentificacion}
-              />
-            )}
-
-            <Input
-              label="Contraseña"
-              placeholder="Ingresa tu contraseña"
-              type="password"
-              value={password}
-              variant="bordered"
-              onValueChange={setPassword}
-            />
           </div>
 
-          <Button
-            fullWidth
-            className="h-14"
-            color="primary"
-            endContent={
-              <svg
-                className="size-6"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={1.5}
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="m12.75 15 3-3m0 0-3-3m3 3h-7.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            }
-            type="submit"
-          >
-            Ingresar
-          </Button>
-        </div>
-      </form>
+          {/* Optional: Forgot password link */}
+          <div className="text-center mt-6">
+            <button
+              className="text-sm text-slate-600 hover:text-blue-600 font-medium transition-colors backdrop-blur-sm bg-white/40 px-4 py-2 rounded-full hover:bg-white/60"
+              type="button"
+            >
+              ¿Olvidaste tu contraseña?
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* Bottom decoration */}
+      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 via-red-500 to-blue-600" />
     </div>
   );
 }

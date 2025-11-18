@@ -17,6 +17,16 @@ export type Estudiante = {
   grado: Grado;
 };
 
+export type EstudianteInput = {
+  tipo_documento: string;
+  numero_identificacion: string;
+  fecha_nacimiento: string;
+  nombre_completo: string;
+  celular_padres: string;
+  password?: string;
+  grado_id?: string;
+};
+
 export type Maestro = {
   id: number;
   nombre_completo: string;
@@ -24,6 +34,7 @@ export type Maestro = {
   celular: string;
   tipo_documento: string;
   numero_identificacion: string;
+  grados_asignados: { id: number; nombre_grado: string }[];
 };
 
 export type Curso = {

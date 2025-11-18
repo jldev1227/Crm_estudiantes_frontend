@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { Mail, Shield, Clock, Calendar, Activity } from "lucide-react";
+import { Mail, Shield, Calendar, Activity } from "lucide-react";
 
 import { useAuth } from "@/app/context/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
@@ -95,23 +95,6 @@ export default function PerfilAdministradorPage() {
                       Correo Electrónico
                     </h3>
                     <p className="text-gray-600 break-all">{usuario?.email}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Último Acceso */}
-              <div className="bg-gray-50 p-6 rounded-xl border">
-                <div className="flex items-start space-x-4">
-                  <Clock className="text-green-600 shrink-0 mt-1" size={24} />
-                  <div>
-                    <h3 className="font-semibold text-gray-800 mb-1">
-                      Último Acceso
-                    </h3>
-                    <p className="text-gray-600">
-                      {usuario?.ultimo_login
-                        ? formatearFecha(usuario.ultimo_login)
-                        : "No disponible"}
-                    </p>
                   </div>
                 </div>
               </div>

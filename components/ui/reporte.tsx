@@ -406,8 +406,6 @@ export const ReporteEstudiantePDF = ({
   // Simplemente ordenar las áreas, sin distribución manual
   const areasOrdenadas = useMemo(() => {
     if (!areas || areas.length === 0) {
-      console.log("⚠️ No hay áreas disponibles para el PDF");
-
       return [];
     }
 
@@ -1065,6 +1063,7 @@ export const handleGenerateEstudiantePDF = async (
       celular: "Sin teléfono",
       tipo_documento: "CC",
       numero_identificacion: "00000000",
+      grados_asignados: [],
     };
 
     // ✅ Crear el objeto completo que cumple con ReporteEstudianteProps - SIN PUESTO

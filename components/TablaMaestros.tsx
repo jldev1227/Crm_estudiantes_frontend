@@ -41,11 +41,6 @@ export default function TablaMaestros({
         sortable: false,
       },
       {
-        key: "tipo_documento",
-        label: "TIPO DOCUMENTO",
-        sortable: true,
-      },
-      {
         key: "numero_identificacion",
         label: "NÚMERO IDENTIFICACIÓN",
         sortable: true,
@@ -132,9 +127,9 @@ export default function TablaMaestros({
   };
 
   return (
-    <div className="w-full">
+    <div>
       {/* Tabla con estilo personalizado similar a HeroUI */}
-      <div className="overflow-x-auto rounded-lg border border-gray-200">
+      <div className="rounded-lg border border-gray-200">
         <table className="min-w-full divide-y divide-gray-200">
           {/* Cabecera de la tabla */}
           <thead className="bg-gray-50">
@@ -164,11 +159,6 @@ export default function TablaMaestros({
                 {/* Columna del índice */}
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {(page - 1) * rowsPerPage + index + 1}
-                </td>
-
-                {/* Columnas estándar */}
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {item.tipo_documento}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {item.numero_identificacion}
