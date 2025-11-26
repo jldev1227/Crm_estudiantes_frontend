@@ -399,6 +399,38 @@ export default function TablaEstudiantes({
                           </>
                         )}
                       </div>
+
+                      {/* Información de contacto en móvil */}
+                      <div className="lg:hidden space-y-1 mt-2 pt-2 border-t border-gray-100">
+                        <div className="flex items-center space-x-2 text-xs text-gray-600">
+                          <Phone className="w-3 h-3 text-gray-400" />
+                          <span>{item.celular_padres}</span>
+                        </div>
+                        <div className="flex items-center space-x-2 text-xs text-gray-500">
+                          <Calendar className="w-3 h-3 text-gray-400" />
+                          <span>{item.fecha_nacimiento}</span>
+                        </div>
+                      </div>
+
+                      {/* Botón ver calificaciones en móvil para director */}
+                      {isDirector && isVisible && (
+                        <div className="lg:hidden mt-2">
+                          <Button
+                            className="w-full hover:scale-105 transition-transform"
+                            color="warning"
+                            size="sm"
+                            startContent={<FileText className="w-4 h-4" />}
+                            variant="flat"
+                            onPress={() =>
+                              router.push(
+                                `${params.curso}/calificaciones/${item.id}`,
+                              )
+                            }
+                          >
+                            Ver Calificaciones
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </td>
 

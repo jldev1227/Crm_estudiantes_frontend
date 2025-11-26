@@ -7,6 +7,8 @@ import {
   StyleSheet,
   pdf,
   Image,
+  Svg,
+  Path,
 } from "@react-pdf/renderer";
 
 import { Area, Calificacion, Estudiante, Maestro } from "@/types";
@@ -18,9 +20,10 @@ const PAGE_CONFIG = {
   // Dimensiones de página OFICIO en puntos (1 inch = 72 points)
   HEIGHT: 936, // 13 inches * 72 (altura del oficio)
   WIDTH: 612, // 8.5 inches * 72 (ancho del oficio)
+  // Aumentar margen inferior para dar espacio seguro a la firma
   MARGINS: {
     TOP: 10,
-    BOTTOM: 10,
+    BOTTOM: 60,
     LEFT: 15,
     RIGHT: 15,
   },
@@ -65,6 +68,49 @@ const obtenerNombreCalificacion = (calificacion: string): string => {
 
 const verificarSiEsCualitativo = (nombreGrado: string): boolean => {
   return GRADOS_CUALITATIVOS.includes(nombreGrado?.toUpperCase() || "");
+};
+
+// ==========================================
+// HELPER: NEXT GRADE
+// ==========================================
+const normalizeGrade = (s: string = ""): string =>
+  String(s).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase();
+
+const getNextGrade = (gradoNombre: string = ""): string | null => {
+  switch (normalizeGrade(gradoNombre)) {
+    case "PARVULOS":
+      return "PREJARDIN";
+    case "PREJARDIN":
+      return "JARDIN";
+    case "JARDIN":
+      return "TRANSICION";
+    case "TRANSICION":
+      return "PRIMERO";
+    case "PRIMERO":
+      return "SEGUNDO";
+    case "SEGUNDO":
+      return "TERCERO";
+    case "TERCERO":
+      return "CUARTO";
+    case "CUARTO":
+      return "QUINTO";
+    case "QUINTO":
+      return "SEXTO";
+    case "SEXTO":
+      return "SEPTIMO";
+    case "SEPTIMO":
+      return "OCTAVO";
+    case "OCTAVO":
+      return "NOVENO";
+    case "NOVENO":
+      return "DECIMO";
+    case "DECIMO":
+      return "ONCE";
+    case "ONCE":
+      return null; // Graduado
+    default:
+      return null;
+  }
 };
 
 // ==========================================
@@ -347,30 +393,75 @@ const AreaRowComponent = ({
   );
 };
 
-const FooterComponent = ({ director }: { director: Maestro }) => (
-  <View style={styles.footer}>
-    {/* Contenedor horizontal para las dos firmas */}
-    <View style={styles.signaturesContainer}>
-      {/* Firma izquierda - Director */}
-      <View style={styles.signatureLeft}>
-        <View style={styles.signatureLine} />
-        <Text
-          style={{
-            color: "#000",
-            marginBottom: 2,
-            fontSize: 12,
-            fontWeight: "bold",
-          }}
-        >
-          {director.nombre_completo}
-        </Text>
-        <Text style={{ color: "#666", marginBottom: 2, fontSize: 12 }}>
-          Directora de curso
-        </Text>
+const FooterComponent = ({
+  director,
+  periodo,
+  gradoEstudiante,
+}: {
+  director: Maestro;
+  periodo: string | number;
+  gradoEstudiante: string;
+}) => {
+  const esPeriodo4 = parseInt(String(periodo), 10) === 4;
+  const nextGrade = esPeriodo4 ? getNextGrade(gradoEstudiante) : null;
+
+  return (
+    <View style={styles.footer}>
+      <View style={styles.signaturesContainer}>
+        {/* Firma izquierda */}
+        <View style={styles.signatureLeft}>
+          <View style={styles.signatureLine} />
+          <Text
+            style={{
+              color: "#000",
+              marginBottom: 2,
+              fontSize: 12,
+              fontWeight: "bold",
+            }}
+          >
+            {director.nombre_completo}
+          </Text>
+          <Text style={{ color: "#666", marginBottom: 2, fontSize: 12 }}>
+            Directora de curso
+          </Text>
+        </View>
+        {/* Mensaje de promoción derecha - solo si es periodo 4 */}
+        {esPeriodo4 && nextGrade ? (
+          <View style={styles.promotionMessage}>
+            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 4 }}>
+              {/* Icono decorativo (estrella) para asegurar compatibilidad PDF */}
+              <Svg width={14} height={14} viewBox="0 0 24 24" style={{ marginRight: 6 }}>
+                <Path
+                  d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 22 12 18.56 5.82 22 7 14.14l-5-4.87 6.91-1.01L12 2z"
+                  fill="#DAA520"
+                />
+              </Svg>
+              <Text
+                style={{
+                  fontSize: 12,
+                  color: "#DAA520",
+                  fontWeight: "bold",
+                }}
+              >
+                ¡Felicitaciones! Promovido(a) al grado {nextGrade.toUpperCase()}
+              </Text>
+            </View>
+            <Text
+              style={{
+                fontSize: 10,
+                color: "#374151",
+                textAlign: "right",
+                marginTop: 2,
+              }}
+            >
+              Sigue destacándote en tu proceso académico.
+            </Text>
+          </View>
+        ) : null}
       </View>
     </View>
-  </View>
-);
+  );
+};
 
 // ==========================================
 // COMPONENTE PRINCIPAL CORREGIDO
@@ -483,7 +574,11 @@ export const ReporteEstudiantePDF = ({
         </View>
 
         {/* Footer SOLO en la última página (NO fixed) */}
-        <FooterComponent director={director} />
+        <FooterComponent
+          director={director}
+          periodo={estudiante.periodo}
+          gradoEstudiante={estudiante.grado}
+        />
       </Page>
     </Document>
   );
@@ -727,25 +822,30 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: "center",
     color: "#9E9E9E",
-    marginBottom: 30,
+    marginTop: 20,
+    marginBottom: 20,
   },
   signaturesContainer: {
     flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    width: "50%",
-    marginBottom: 12,
-    margin: "auto", // Centrar el contenedor completo
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+    width: "100%",
+    paddingHorizontal: 20,
   },
   signatureLeft: {
-    flex: 1,
-    alignItems: "center",
+    alignItems: "flex-start",
+    width: "45%",
   },
   signatureLine: {
     borderBottomWidth: 1,
     borderColor: "#000",
-    width: "80%",
+    width: "100%",
     marginBottom: 6,
+  },
+  promotionMessage: {
+    alignItems: "flex-end",
+    justifyContent: "center",
+    width: "45%",
   },
   sectionHeader: {
     fontSize: 11,
