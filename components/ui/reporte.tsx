@@ -19,29 +19,18 @@ const PAGE_CONFIG = {
   HEIGHT: 936, // 13 inches * 72 (altura del oficio)
   WIDTH: 612, // 8.5 inches * 72 (ancho del oficio)
   MARGINS: {
-    TOP: 10, // Reducido para compensar márgenes de impresora
-    BOTTOM: 10, // Reducido para compensar márgenes de impresora
-    LEFT: 15, // Reducido para compensar márgenes de impresora
-    RIGHT: 15, // Reducido para compensar márgenes de impresora
+    TOP: 10,
+    BOTTOM: 10,
+    LEFT: 15,
+    RIGHT: 15,
   },
-  // OPCIÓN ALTERNATIVA: Sin márgenes (descomenta si necesitas)
-  // MARGINS: {
-  //   TOP: 0,
-  //   BOTTOM: 0,
-  //   LEFT: 0,
-  //   RIGHT: 0,
-  // },
   COMPONENT_HEIGHTS: {
-    HEADER: 150, // Header con logo (más espacio por la altura extra)
-    STUDENT_INFO: 0,
-    SECTION_TITLE: 45, // Título "INFORME DE DESEMPEÑO"
-    TABLE_HEADER: 35, // Header de la tabla de asignaturas
-    AREA_ROW: 22, // Fila principal de cada área
-    INDICATOR_BASE: 20, // Base para indicadores (header + padding)
-    INDICATOR_ITEM: 20, // Altura por cada indicador individual
-    NO_INDICATORS: 12, // Mensaje "sin indicadores"
-    FOOTER: 25, // Footer con firma
-    SAFETY_MARGIN: 30, // Margen de seguridad adicional
+    HEADER: 150,
+    SECTION_TITLE: 45,
+    TABLE_HEADER: 35,
+    AREA_ROW: 22,
+    INDICATOR_ITEM: 20,
+    FOOTER: 25,
   },
 };
 
@@ -122,16 +111,12 @@ const ordenarAreasConPrioridad = (
 
 const HeaderComponent = () => (
   <View style={styles.headerContainer}>
-    <Image
-      src={"/LOGO-WHITE.png"}
-      style={{
-        width: 80, // Logo aún más pequeño
-        height: 80, // Logo aún más pequeño
-        position: "absolute",
-        objectFit: "contain",
-        left: 8,
-      }}
-    />
+    <View style={{ width: 112, alignItems: "center", justifyContent: "center" }}>
+      <Image
+        src={"/LOGO-WHITE.png"}
+        style={{ width: 88, height: 88 }}
+      />
+    </View>
     <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
       <View style={{ alignItems: "center", justifyContent: "center" }}>
         <Text style={[styles.header, { textAlign: "center" }]}>
@@ -213,22 +198,22 @@ const TableHeaderComponent = ({
 }) => (
   <View style={styles.tableHeader}>
     <View style={styles.tableColHeader1}>
-      <Text style={[styles.labelText, { color: "#4472C4", fontSize: 12 }]}>
+      <Text style={[styles.labelText, { color: "#4472C4", fontSize: 11 }]}>
         ASIGNATURA
       </Text>
     </View>
     <View style={styles.tableColHeader2}>
-      <Text style={[styles.labelText, { color: "#4472C4", fontSize: 12 }]}>
+      <Text style={[styles.labelText, { color: "#4472C4", fontSize: 11 }]}>
         {esCualitativo ? "VALORACIÓN" : "NOTA"}
       </Text>
     </View>
     <View style={styles.tableColHeader3}>
-      <Text style={[styles.labelText, { color: "#4472C4", fontSize: 12 }]}>
+      <Text style={[styles.labelText, { color: "#4472C4", fontSize: 11 }]}>
         DESEMPEÑO
       </Text>
     </View>
     <View style={styles.tableColHeader4}>
-      <Text style={[styles.labelText, { color: "#4472C4", fontSize: 12 }]}>
+      <Text style={[styles.labelText, { color: "#4472C4", fontSize: 11 }]}>
         FALLAS
       </Text>
     </View>
@@ -272,7 +257,7 @@ const AreaRowComponent = ({
       <View style={[styles.tableRow, { borderBottomWidth: 0 }]}>
         <View style={styles.tableCol1}>
           <Text
-            style={[styles.labelText, { fontSize: 12, fontWeight: "bold" }]}
+            style={[styles.labelText, { fontSize: 11, fontWeight: "bold" }]}
           >
             {area.nombre.toUpperCase()}
           </Text>
@@ -487,7 +472,7 @@ export const ReporteEstudiantePDF = ({
                 <Text
                   style={[
                     styles.noIndicadores,
-                    { fontSize: 12, color: "#666" },
+                    { fontSize: 11, color: "#666" },
                   ]}
                 >
                   No hay calificaciones registradas para este período.
@@ -512,17 +497,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: PAGE_CONFIG.MARGINS.LEFT,
     paddingTop: PAGE_CONFIG.MARGINS.TOP,
     paddingBottom: PAGE_CONFIG.MARGINS.BOTTOM,
-    fontSize: 12, // Fuente ligeramente más grande para aprovechar el espacio
+    fontSize: 12,
   },
   headerContainer: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#4e70be",
-    padding: 8, // Padding aún más reducido para primera página
+    padding: 6,
   },
   header: {
     fontWeight: "bold",
-    fontSize: 12, // Fuente más pequeña
+    fontSize: 12,
     maxWidth: 350,
     marginBottom: 2,
     color: "#fff",
@@ -543,8 +528,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   subHeader: {
-    fontSize: 10, // Fuente más pequeña
-    fontWeight: "medium",
+    fontSize: 10,
     textAlign: "center",
     color: "#fff",
   },
@@ -642,12 +626,12 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   labelText: {
-    fontSize: 12,
+    fontSize: 11,
     textAlign: "center",
     textTransform: "capitalize",
   },
   valueText: {
-    fontSize: 12,
+    fontSize: 11,
     textAlign: "center",
     textTransform: "capitalize",
   },
@@ -656,14 +640,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    padding: 2, // Padding ultra-compacto para primera página
+    padding: 2,
   },
   superiorValue: {
     color: "#2E8B57",
     backgroundColor: "#2E8B5715",
     padding: 4,
     borderRadius: 3,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "bold",
     textAlign: "center",
   },
@@ -672,7 +656,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F0F7FF",
     padding: 4,
     borderRadius: 3,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "bold",
     textAlign: "center",
   },
@@ -681,7 +665,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF9F0",
     padding: 4,
     borderRadius: 3,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "bold",
     textAlign: "center",
   },
@@ -690,7 +674,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FDF1F1",
     padding: 4,
     borderRadius: 3,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "bold",
     textAlign: "center",
   },
@@ -699,7 +683,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F0F0F0",
     padding: 4,
     borderRadius: 3,
-    fontSize: 12,
+    fontSize: 11,
     textAlign: "center",
   },
   // Nuevos estilos para evaluación cualitativa
@@ -708,7 +692,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#2E8B5715",
     padding: 4,
     borderRadius: 3,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "bold",
     textAlign: "center",
   },
@@ -717,7 +701,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F0F7FF",
     padding: 4,
     borderRadius: 3,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "bold",
     textAlign: "center",
   },
@@ -726,7 +710,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFF9F0",
     padding: 4,
     borderRadius: 3,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "bold",
     textAlign: "center",
   },
@@ -735,7 +719,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FDF1F1",
     padding: 4,
     borderRadius: 3,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "bold",
     textAlign: "center",
   },
@@ -764,32 +748,32 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   sectionHeader: {
-    fontSize: 12, // Más compacto
+    fontSize: 11,
     fontWeight: "bold",
     color: "#4472C4",
     textAlign: "center",
     backgroundColor: "#4472C415",
-    padding: 5, // Padding reducido
+    padding: 5,
     borderColor: "#E0E0E0",
     borderBottomWidth: 1,
   },
   indicadoresHeader: {
-    fontSize: 11, // Más legible que 10
+    fontSize: 11,
     fontWeight: "bold",
     color: "#4472C4",
     marginBottom: 2,
     textAlign: "left",
   },
   indicadorItem: {
-    fontSize: 10, // Más legible que 9, pero aún compacto
+    fontSize: 10,
     color: "#333",
     marginBottom: 1,
     paddingLeft: 6,
     textAlign: "left",
-    lineHeight: 1.3, // Ligeramente más espacio
+    lineHeight: 1.3,
   },
   indicadorBullet: {
-    fontSize: 10, // Más legible
+    fontSize: 10,
     color: "#4472C4",
     marginRight: 3,
   },
