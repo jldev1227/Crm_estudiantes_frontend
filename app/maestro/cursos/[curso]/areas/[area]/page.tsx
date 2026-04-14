@@ -35,6 +35,7 @@ import { convertirA12Horas } from "@/helpers/convertirA12Horas";
 import { useMaestro } from "@/app/context/MaestroContext";
 import { formatearFecha } from "@/helpers/formatearFecha";
 import EstudiantesResponsive from "@/components/estudiantesResponsive";
+import ImagenModal from "@/components/ImagenModal";
 
 type ActividadData = {
   id: string;
@@ -57,122 +58,7 @@ type TareaData = {
   pdfs: string[];
 };
 
-// Componente Modal simple para mostrar imágenes
-const ImagenModal = ({
-  isOpen,
-  onClose,
-  imagen,
-  onPrev,
-  onNext,
-  contador,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  imagen: string;
-  onPrev: () => void;
-  onNext: () => void;
-  contador: string;
-}) => {
-  if (!isOpen) return null;
-
-  return (
-    <div
-      className="!mt-0 fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
-      role="button"
-      onClick={onClose}
-    >
-      <div
-        className="max-w-4xl max-h-[85vh] relative"
-        role="button"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Botón de cierre */}
-        <button
-          className="absolute top-2 right-2 z-10 text-white bg-black/50 rounded-full p-2 hover:bg-black/70"
-          onClick={onClose}
-        >
-          <svg
-            className="h-6 w-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M6 18L18 6M6 6l12 12"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-            />
-          </svg>
-        </button>
-
-        {/* Contador */}
-        <div className="absolute top-2 left-2 text-white bg-black/50 px-3 py-1 rounded-md">
-          {contador}
-        </div>
-
-        {/* Imagen */}
-        <img
-          alt="Imagen ampliada"
-          className="max-h-[80vh] max-w-full object-contain rounded-lg"
-          src={imagen}
-        />
-
-        {/* Controles */}
-        <div className="absolute inset-y-0 left-0 flex items-center">
-          <button
-            className="bg-black/30 text-white p-2 rounded-full hover:bg-black/50 ml-2"
-            onClick={(e) => {
-              e.stopPropagation();
-              onPrev();
-            }}
-          >
-            <svg
-              className="h-6 w-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M15 19l-7-7 7-7"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-              />
-            </svg>
-          </button>
-        </div>
-
-        <div className="absolute inset-y-0 right-0 flex items-center">
-          <button
-            className="bg-black/30 text-white p-2 rounded-full hover:bg-black/50 mr-2"
-            onClick={(e) => {
-              e.stopPropagation();
-              onNext();
-            }}
-          >
-            <svg
-              className="h-6 w-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M9 5l7 7-7 7"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-              />
-            </svg>
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
+// Componente Modal — ver @/components/ImagenModal
 
 export default function CursoPage() {
   const params = useParams();
