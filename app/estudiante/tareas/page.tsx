@@ -15,7 +15,6 @@ import {
   CheckCircle,
   XCircle,
   AlertTriangle,
-  ArrowLeft,
   Camera,
   FileDown,
 } from "lucide-react";
@@ -26,6 +25,7 @@ import { OBTENER_AREAS_POR_GRADO } from "@/app/graphql/queries/obtenerAreasPorGr
 import { formatearFecha } from "@/helpers/formatearFecha";
 import { OBTENER_TAREAS_ESTUDIANTE } from "@/app/graphql/queries/obtenerTareasEstudiante";
 import PDFThumbnail from "@/components/PDFThumbnail";
+import ImagenModal from "@/components/ImagenModal";
 
 // Definir los tipos
 interface Area {
@@ -45,83 +45,7 @@ interface Tarea {
   area: Area;
 }
 
-// Componente Modal mejorado para mostrar imágenes
-const ImagenModal = ({
-  isOpen,
-  onClose,
-  imagen,
-  onPrev,
-  onNext,
-  contador,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  imagen: string;
-  onPrev: () => void;
-  onNext: () => void;
-  contador: string;
-}) => {
-  if (!isOpen) return null;
-
-  return (
-    <div
-      className="!mt-0 fixed inset-0 z-50 bg-black/90 flex items-center justify-center backdrop-blur-sm"
-      role="button"
-      onClick={onClose}
-    >
-      <div
-        className="max-w-4xl max-h-[85vh] relative"
-        role="button"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Botón de cierre */}
-        <button
-          className="absolute top-4 right-4 z-10 text-white bg-black/50 rounded-full p-3 hover:bg-black/70 transition-colors"
-          onClick={onClose}
-        >
-          <XCircle size={20} />
-        </button>
-
-        {/* Contador */}
-        <div className="absolute top-4 left-4 text-white bg-black/50 px-4 py-2 rounded-lg font-medium">
-          {contador}
-        </div>
-
-        {/* Imagen */}
-        <img
-          alt="Imagen ampliada"
-          className="max-h-[80vh] max-w-full object-contain rounded-xl shadow-2xl"
-          src={imagen}
-        />
-
-        {/* Controles */}
-        <div className="absolute inset-y-0 left-0 flex items-center">
-          <button
-            className="bg-black/50 text-white p-3 rounded-full hover:bg-black/70 ml-4 transition-colors"
-            onClick={(e) => {
-              e.stopPropagation();
-              onPrev();
-            }}
-          >
-            <ArrowLeft size={20} />
-          </button>
-        </div>
-
-        <div className="absolute inset-y-0 right-0 flex items-center">
-          <button
-            className="bg-black/50 text-white p-3 rounded-full hover:bg-black/70 mr-4 transition-colors"
-            onClick={(e) => {
-              e.stopPropagation();
-              onNext();
-            }}
-          >
-            <ArrowLeft className="rotate-180" size={20} />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
+// Componente Modal — ver @/components/ImagenModal
 
 function normalizarTexto(texto: string): string {
   return texto
