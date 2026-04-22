@@ -344,7 +344,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .split("T")[0];
           const dias = getDaysDifference(fechaEntrega, hoy);
 
-          if (dias >= 0 && dias <= 3) {
+          if (dias >= 0 && dias <= 8) {
             if (!tareasPorDias[dias]) tareasPorDias[dias] = [];
             tareasPorDias[dias].push(tarea);
           }
