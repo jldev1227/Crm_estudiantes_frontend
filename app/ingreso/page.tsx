@@ -109,6 +109,25 @@ function LoginForm() {
           minimumDelay,
         ]);
 
+        if (result.errors && result.errors.length > 0) {
+          const graphQLError = result.errors[0];
+          const message =
+            graphQLError.message ||
+            graphQLError.extensions?.code ||
+            "Error desconocido";
+
+          if (
+            message.toLowerCase().includes("pensión") ||
+            message.toLowerCase().includes("pension")
+          ) {
+            setPensionInactiva(true);
+          }
+
+          setErrorMessage(message);
+
+          return;
+        }
+
         data = result.data;
 
         if (data?.loginUsuario) {
@@ -137,6 +156,27 @@ function LoginForm() {
           }),
           minimumDelay,
         ]);
+
+        console.log(result)
+
+        if (result.errors && result.errors.length > 0) {
+          const graphQLError = result.errors[0];
+          const message =
+            graphQLError.message ||
+            graphQLError.extensions?.code ||
+            "Error desconocido";
+
+          if (
+            message.toLowerCase().includes("pensión") ||
+            message.toLowerCase().includes("pension")
+          ) {
+            setPensionInactiva(true);
+          }
+
+          setErrorMessage(message);
+
+          return;
+        }
 
         data = result.data;
 
@@ -218,6 +258,8 @@ function LoginForm() {
 
       // Detectar si el error está relacionado con pensión inactiva
       const errorMessage = err.message || "";
+
+      console.log(errorMessage)
 
       if (
         errorMessage.toLowerCase().includes("pensión") ||
